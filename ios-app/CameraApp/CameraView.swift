@@ -215,15 +215,11 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         )
 
         if let processed = processed {
-            let uiImage = UIImage(cgImage: processed,
-                                  scale: cgImage.scale,
-                                  orientation: cgImage.imageOrientation)
+            let uiImage = UIImage(cgImage: processed, scale: 1.0, orientation: .up)
             self.delegate?.cameraView(self, didProcessPhoto: uiImage)
         } else {
             // Fallback: deliver unprocessed
-            let uiImage = UIImage(cgImage: cgImage,
-                                  scale: cgImage.scale,
-                                  orientation: cgImage.imageOrientation)
+            let uiImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
             self.delegate?.cameraView(self, didProcessPhoto: uiImage)
         }
     }
