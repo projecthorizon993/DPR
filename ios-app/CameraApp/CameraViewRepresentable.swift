@@ -43,6 +43,8 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
         Coordinator(
             onPhotoCaptured: onPhotoCaptured,
             onVideoRecorded: onVideoRecorded,
+            onRecordingStarted: { },
+            onRecordingStopped: { },
             onError: onError
         )
     }

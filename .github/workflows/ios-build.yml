@@ -44,7 +44,7 @@ jobs:
           mkdir -p build
 
           # Compile and link the app
-          swiftc -target aarch64-apple-ios \
+          swiftc -target aarch64-apple-ios15.0 \
             -sdk "$SDK_PATH" \
             -module-name CameraApp \
             -o build/CameraApp \
