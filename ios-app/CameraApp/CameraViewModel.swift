@@ -49,8 +49,16 @@ final class CameraViewModel: ObservableObject {
 
     init() {
         loadSettings()
-        loadLastThumbnail()
         loadWatermarkLogo()
+    }
+
+    /// Load last thumbnail asynchronously - must be called after view appears, not during init()
+    func loadLastThumbnailAsync() {
+        PhotoLibrary.shared.lastThumbnail { [weak self] image in
+            DispatchQueue.main.async {
+                self?.lastThumbnail = image
+            }
+        }
     }
 
     private func loadWatermarkLogo() {
