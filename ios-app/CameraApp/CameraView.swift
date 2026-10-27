@@ -214,19 +214,17 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
             watermarkAlpha: self.watermarkAlpha
         )
 
-        DispatchQueue.main.async {
-            if let processed = processed {
-                let uiImage = UIImage(cgImage: processed,
-                                      scale: cgImage.scale,
-                                      orientation: cgImage.imageOrientation)
-                self.delegate?.cameraView(self, didProcessPhoto: uiImage)
-            } else {
-                // Fallback: deliver unprocessed
-                let uiImage = UIImage(cgImage: cgImage,
-                                      scale: cgImage.scale,
-                                      orientation: cgImage.imageOrientation)
-                self.delegate?.cameraView(self, didProcessPhoto: uiImage)
-            }
+        if let processed = processed {
+            let uiImage = UIImage(cgImage: processed,
+                                  scale: cgImage.scale,
+                                  orientation: cgImage.imageOrientation)
+            self.delegate?.cameraView(self, didProcessPhoto: uiImage)
+        } else {
+            // Fallback: deliver unprocessed
+            let uiImage = UIImage(cgImage: cgImage,
+                                  scale: cgImage.scale,
+                                  orientation: cgImage.imageOrientation)
+            self.delegate?.cameraView(self, didProcessPhoto: uiImage)
         }
     }
 }
