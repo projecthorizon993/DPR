@@ -72,9 +72,8 @@ jobs:
           # Copy Info.plist
           cp CameraApp/Info.plist "$APP_DIR/Info.plist"
 
-          # Copy assets
-          mkdir -p "$APP_DIR/Resources"
-          cp CameraApp/Assets.xcassets/* "$APP_DIR/Resources/" 2>/dev/null || true
+          # Copy assets (as folder, iOS expects Assets.xcassets as a folder)
+          cp -R CameraApp/Assets.xcassets "$APP_DIR/Assets.xcassets" 2>/dev/null || true
 
           echo "App bundle created:"
           ls -la "$APP_DIR/"
