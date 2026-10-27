@@ -223,8 +223,8 @@ final class CameraCoreBridge: NSObject {
             wmW,
             wmH,
             wmRow,
-            Int32(width - wmW - 20),   // bottom-right, 20px margin (vivo watermark pattern)
-            Int32(height - wmH - 20),
+            width - wmW - Int32(20),   // bottom-right, 20px margin (vivo watermark pattern)
+            height - wmH - Int32(20),
             watermarkAlpha
         )
 
