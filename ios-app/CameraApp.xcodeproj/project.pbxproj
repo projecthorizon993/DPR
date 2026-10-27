@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
 	<key>archiveVersion</key>
-	<integer>1</integer>
+	<string>1</string>
 	<key>classes</key>
 	<dict>
 	</dict>
 	<key>objectVersion</key>
-	<integer>52</integer>
+	<string>52</string>
 	<key>objects</key>
 	<dict>
 		<key>BuildPhase placeholders</key>

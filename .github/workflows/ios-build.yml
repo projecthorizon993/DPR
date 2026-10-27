@@ -28,7 +28,9 @@ jobs:
         id: rust-lib
         run: |
           LIB_PATH=$(find ./rust-core/target/aarch64-apple-ios/release -name "libcamera_core.a" | head -1)
+          LIB_DIR=$(dirname "$LIB_PATH")
           echo "RUST_LIB=$LIB_PATH" >> $GITHUB_OUTPUT
+          echo "RUST_LIB_DIR=$LIB_DIR" >> $GITHUB_OUTPUT
           echo "Found Rust library: $LIB_PATH"
 
       - name: Install Xcode command line tools (ensure xcodebuild)
@@ -47,8 +49,8 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            OTHER_LDFLAGS="-L${{ steps.rust-lib.outputs.RUST_LIB }}" \
-            LIBRARY_SEARCH_PATHS="${{ steps.rust-lib.outputs.RUST_LIB }}/.." \
+            OTHER_LDFLAGS="${{ steps.rust-lib.outputs.RUST_LIB }}" \
+            LIBRARY_SEARCH_PATHS="${{ steps.rust-lib.outputs.RUST_LIB_DIR }}" \
             SKIP_INSTALL=NO
 
       - name: Create unsigned IPA
