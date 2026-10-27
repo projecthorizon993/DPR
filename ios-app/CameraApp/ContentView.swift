@@ -2,13 +2,17 @@
 //  ContentView.swift
 //  CameraApp
 //
-//  Main camera UI — reimplemented from vivo/Xiaomi camera APK layouts.
-//  - Shutter: large centered circle with press scale animation (vivo anim_shutter_button_pressed)
-//  - Zoom: vertical pills on left (vivo zoom_button.xml)
-//  - Top bar: transparent, flash left, mode pills center, settings right (vivo top_bar_1_5_layout)
-//  - Recording: red dot + timer overlay (vivo video_module.xml)
-//  - Watermark: bottom-right Zeiss logo + text (vivo watermark_small_banner_text.xml)
-//  - Colors: black bg, white text, orange selected (Xiaomi colors.xml)
+//  Camera UI ported faithfully from Xiaomi MIUI Camera APK.
+//  - Black background (#000000)
+//  - Amber/orange shutter button (#FFFFCE16)
+//  - White text
+//  - Large centered shutter button
+//  - Mode pills at top center
+//  - Flash toggle top-left
+//  - Lens pills vertical on left side
+//  - Gallery thumbnail bottom-left
+//  - Settings top-right
+//  - Profile/styles selector bottom-right
 //
 
 import SwiftUI
@@ -20,7 +24,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            // ── Camera preview (full bleed) ──
+            // ── Camera preview (full bleed, black background) ──
             CameraViewRepresentable(
                 viewModel: viewModel,
                 onPhotoCaptured: { image in
@@ -45,10 +49,12 @@ struct ContentView: View {
                 }
             )
             .ignoresSafeArea()
+            .background(Color.black)
 
-            // ── Top bar (vivo top_bar_1_5_layout pattern) ──
+            // ── Xiaomi UI Overlay ──
             VStack {
-                HStack(spacing: 24) {
+                // Top bar: Flash | Mode pills | Settings
+                HStack(spacing: 20) {
                     // Flash (left)
                     Button(action: { viewModel.toggleFlash() }) {
                         Image(systemName: viewModel.flashMode.icon)
@@ -59,8 +65,8 @@ struct ContentView: View {
 
                     Spacer()
 
-                    // Mode pills: PHOTO / VIDEO (center)
-                    HStack(spacing: 6) {
+                    // Mode pills: PHOTO | VIDEO (center)
+                    HStack(spacing: 8) {
                         ModePill(title: "PHOTO", isSelected: !viewModel.isVideoMode) {
                             viewModel.isVideoMode = false
                         }
@@ -68,15 +74,22 @@ struct ContentView: View {
                             viewModel.isVideoMode = true
                         }
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Capsule().fill(Color.black.opacity(0.45)))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.15))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            )
+                    )
 
                     Spacer()
 
                     // Settings (right)
                     Button(action: { viewModel.showSettings = true }) {
-                        Image(systemName: "gearshape")
+                        Image(systemName: "line.horizontal.3.decrease.circle")
                             .font(.system(size: 22, weight: .medium))
                             .foregroundColor(.white)
                             .frame(width: 48, height: 48)
@@ -84,32 +97,26 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
-                .background(
-                    LinearGradient(
-                        colors: [Color.black.opacity(0.35), Color.black.opacity(0)],
-                        startPoint: .top, endPoint: .bottom
-                    )
-                )
 
                 Spacer()
 
-                // ── Bottom controls ──
+                // Bottom controls: Gallery | Shutter | Styles
                 HStack {
                     // Gallery shortcut (left)
                     Button(action: { viewModel.showGallery = true }) {
                         ZStack {
                             Circle()
-                                .fill(Color.black.opacity(0.5))
-                                .frame(width: 64, height: 64)
+                                .fill(Color.white.opacity(0.15))
+                                .frame(width: 60, height: 60)
                             if let thumb = viewModel.lastThumbnail {
                                 Image(uiImage: thumb)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: 52, height: 52)
+                                    .frame(width: 48, height: 48)
                                     .clipShape(Circle())
                             } else {
                                 Image(systemName: "photo.on.rectangle")
-                                    .font(.system(size: 22))
+                                    .font(.system(size: 20))
                                     .foregroundColor(.white)
                             }
                         }
@@ -117,7 +124,7 @@ struct ContentView: View {
 
                     Spacer()
 
-                    // ── Shutter button (center, vivo pattern) ──
+                    // ── Shutter button (center, Xiaomi style - large amber circle) ──
                     Button(action: {
                         if viewModel.isVideoMode {
                             viewModel.toggleVideo()
@@ -127,24 +134,26 @@ struct ContentView: View {
                     }) {
                         ZStack {
                             if viewModel.isVideoMode && viewModel.isRecording {
+                                // Recording: red shutter
                                 Circle()
                                     .stroke(Color.red, lineWidth: 4)
-                                    .frame(width: 88, height: 88)
+                                    .frame(width: 90, height: 90)
                                     .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
                                     .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
                                 Circle().fill(Color.red)
-                                    .frame(width: 68, height: 68)
+                                    .frame(width: 70, height: 70)
                                     .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
                                     .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
                             } else {
+                                // Photo: amber/orange shutter (Xiaomi style #FFFFCE16)
                                 Circle()
-                                    .stroke(Color.white, lineWidth: 5)
-                                    .frame(width: 88, height: 88)
+                                    .fill(Color.white.opacity(0.2))
+                                    .frame(width: 90, height: 90)
                                     .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
                                     .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
                                 Circle()
-                                    .fill(viewModel.isVideoMode ? Color.red : Color.white)
-                                    .frame(width: 68, height: 68)
+                                    .fill(Color(hex: "FFFFCE16"))
+                                    .frame(width: 70, height: 70)
                                     .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
                                     .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
                             }
@@ -166,58 +175,62 @@ struct ContentView: View {
 
                     // Styles / Profiles (right)
                     Button(action: { viewModel.showStylePicker = true }) {
-                        HStack(spacing: 6) {
+                        ZStack {
                             Circle()
-                                .fill(viewModel.selectedStyle.accentColor)
-                                .frame(width: 10, height: 10)
-                            Text(viewModel.selectedStyle.displayName)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white)
+                                .fill(Color.white.opacity(0.15))
+                                .frame(width: 60, height: 60)
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(viewModel.selectedStyle.accentColor)
+                                    .frame(width: 8, height: 8)
+                                Text(viewModel.selectedStyle.shortName)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Capsule().fill(Color.black.opacity(0.5)))
                     }
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
                 .padding(.bottom, 34)
 
-                // ── Zoom pills (left side vertical — vivo zoom_button.xml pattern) ──
-                VStack(spacing: 12) {
-                    ZoomPill(title: "0.5×", isSelected: viewModel.selectedLens == .ultraWide) {
-                        viewModel.selectedLens = .ultraWide
-                        viewModel.switchToUltraWide()
+                // ── Lens pills (vertical on left side) ──
+                HStack(spacing: 12) {
+                    VStack(spacing: 10) {
+                        LensPill(title: "0.5×", isSelected: viewModel.selectedLens == .ultraWide) {
+                            viewModel.selectedLens = .ultraWide
+                            viewModel.switchToUltraWide()
+                        }
+                        LensPill(title: "1×", isSelected: viewModel.selectedLens == .wide) {
+                            viewModel.selectedLens = .wide
+                            viewModel.switchToWide()
+                        }
+                        LensPill(title: "2×", isSelected: viewModel.selectedLens == .telephoto) {
+                            viewModel.selectedLens = .telephoto
+                            viewModel.switchToTelephoto()
+                        }
                     }
-                    ZoomPill(title: "1×", isSelected: viewModel.selectedLens == .wide) {
-                        viewModel.selectedLens = .wide
-                        viewModel.switchToWide()
-                    }
-                    ZoomPill(title: "2×", isSelected: viewModel.selectedLens == .telephoto) {
-                        viewModel.selectedLens = .telephoto
-                        viewModel.switchToTelephoto()
-                    }
+                    Spacer()
                 }
-                .padding(.leading, 20)
-                .padding(.bottom, 90)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 16)
+                .padding(.bottom, 100)
             }
 
-            // ── Recording indicator overlay (top, vivo video_module.xml pattern) ──
+            // ── Recording indicator (top, Xiaomi style) ──
             if viewModel.isVideoMode && viewModel.isRecording {
                 VStack {
                     HStack {
                         Spacer()
-                        HStack(spacing: 8) {
+                        HStack(spacing: 6) {
                             Circle()
                                 .fill(Color.red)
                                 .frame(width: 8, height: 8)
                             Text(viewModel.recordTime)
-                                .font(.system(size: 17, weight: .medium, design: .monospaced))
+                                .font(.system(size: 15, weight: .medium, design: .monospaced))
                                 .foregroundColor(.white)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(Color.black.opacity(0.6)))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(Color.black.opacity(0.7)))
                     }
                     .padding(.top, 46)
                     .padding(.trailing, 20)
@@ -228,7 +241,7 @@ struct ContentView: View {
             // ── Loading overlay ──
             if viewModel.isProcessing {
                 ZStack {
-                    Color.black.opacity(0.6).ignoresSafeArea()
+                    Color.black.opacity(0.7).ignoresSafeArea()
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .scaleEffect(1.5)
@@ -264,7 +277,7 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Mode pill (top bar)
+// MARK: - Mode pill (Xiaomi style - pill with stroke)
 
 struct ModePill: View {
     let title: String
@@ -275,20 +288,24 @@ struct ModePill: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(isSelected ? .white : .white.opacity(0.7))
+                .foregroundColor(isSelected ? Color(hex: "FFFFCE16") : .white)
                 .frame(width: 56, height: 28)
         }
         .buttonStyle(PlainButtonStyle())
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(isSelected ? Color.white.opacity(0.2) : Color.clear)
+                .fill(isSelected ? Color(hex: "FFFFCE16").opacity(0.2) : Color.white.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(isSelected ? Color(hex: "FFFFCE16") : Color.white.opacity(0.3), lineWidth: 1)
+                )
         )
     }
 }
 
-// MARK: - Zoom pill (left side vertical)
+// MARK: - Lens pill (vertical left side, Xiaomi style)
 
-struct ZoomPill: View {
+struct LensPill: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -296,14 +313,18 @@ struct ZoomPill: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 15, weight: .medium, design: .monospaced))
-                .foregroundColor(isSelected ? Color.orange : .white)
-                .frame(width: 48, height: 30)
+                .font(.system(size: 14, weight: .medium, design: .monospaced))
+                .foregroundColor(isSelected ? Color(hex: "FFFFCE16") : .white)
+                .frame(width: 44, height: 28)
         }
         .buttonStyle(PlainButtonStyle())
         .background(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(isSelected ? Color.orange : Color.white.opacity(0.5), lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: 14)
+                .fill(isSelected ? Color(hex: "FFFFCE16").opacity(0.2) : Color.white.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(isSelected ? Color(hex: "FFFFCE16") : Color.white.opacity(0.3), lineWidth: 1)
+                )
         )
     }
 }
@@ -311,5 +332,19 @@ struct ZoomPill: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+
+// MARK: - Color extension (Xiaomi colors)
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let r = Double((int >> 16) & 0xFF) / 255.0
+        let g = Double((int >> 8) & 0xFF) / 255.0
+        let b = Double(int & 0xFF) / 255.0
+        self.init(red: r, green: g, blue: b)
     }
 }

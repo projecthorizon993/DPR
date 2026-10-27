@@ -278,10 +278,19 @@ enum CameraStyle: CaseIterable, Codable {
 
     var accentColor: SwiftUI.Color {
         switch self {
-        case .natural: return SwiftUI.Color.gray
-        case .xiaomi: return SwiftUI.Color.orange
-        case .oppo: return SwiftUI.Color.blue
-        case .vivo: return SwiftUI.Color.red
+        case .natural: return SwiftUI.Color.white
+        case .xiaomi: return SwiftUI.Color(hex: "FFFFCE16")
+        case .oppo: return SwiftUI.Color(hex: "FF2274A5")
+        case .vivo: return SwiftUI.Color(hex: "FF0066FF")
+        }
+    }
+
+    var shortName: String {
+        switch self {
+        case .natural: return "N"
+        case .xiaomi: return "MI"
+        case .oppo: return "OP"
+        case .vivo: return "VI"
         }
     }
 
