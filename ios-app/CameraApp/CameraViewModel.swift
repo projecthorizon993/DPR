@@ -52,15 +52,6 @@ final class CameraViewModel: ObservableObject {
         loadWatermarkLogo()
     }
 
-    /// Load last thumbnail asynchronously - call when needed, not during init()
-    func loadLastThumbnailAsync() {
-        PhotoLibrary.shared.lastThumbnail(completion: { [weak self] image in
-            DispatchQueue.main.async {
-                self?.lastThumbnail = image
-            }
-        })
-    }
-
     private func loadWatermarkLogo() {
         // Load the salvaged Zeiss watermark logo from asset bundle
         if let uiImage = UIImage(named: "ZeissLogo") {

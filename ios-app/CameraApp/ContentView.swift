@@ -273,7 +273,6 @@ struct ContentView: View {
         }
         .onAppear {
             viewModel.requestPermissions()
-            viewModel.loadLastThumbnailAsync()
         }
     }
 }
