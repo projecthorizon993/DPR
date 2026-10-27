@@ -33,10 +33,10 @@ jobs:
           echo "RUST_LIB_DIR=$LIB_DIR" >> $GITHUB_OUTPUT
           echo "Found Rust library: $LIB_PATH"
 
-      - name: Install Xcode command line tools (ensure xcodebuild)
+      - name: Generate Xcode project from Package.swift
+        working-directory: ./ios-app
         run: |
-          sudo xcode-select -switch /Applications/Xcode_15.app/Contents/Developer 2>/dev/null || true
-          xcodebuild -version
+          swift package generate-xcodeproj
 
       - name: Build iOS app (archive)
         working-directory: ./ios-app
