@@ -207,27 +207,25 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         }
 
         // Process through Rust core
-        DispatchQueue.global(qos: .userInitiated).async {
-            let processed = CameraCoreBridge.process(
-                image: cgImage,
-                style: self.currentStyle,
-                watermark: self.watermarkImage,
-                watermarkAlpha: self.watermarkAlpha
-            )
+        let processed = CameraCoreBridge.process(
+            image: cgImage,
+            style: self.currentStyle,
+            watermark: self.watermarkImage,
+            watermarkAlpha: self.watermarkAlpha
+        )
 
-            DispatchQueue.main.async {
-                if let processed = processed {
-                    let uiImage = UIImage(cgImage: processed,
-                                          scale: cgImage.scale,
-                                          orientation: cgImage.imageOrientation)
-                    self.delegate?.cameraView(self, didProcessPhoto: uiImage)
-                } else {
-                    // Fallback: deliver unprocessed
-                    let uiImage = UIImage(cgImage: cgImage,
-                                          scale: cgImage.scale,
-                                          orientation: cgImage.imageOrientation)
-                    self.delegate?.cameraView(self, didProcessPhoto: uiImage)
-                }
+        DispatchQueue.main.async {
+            if let processed = processed {
+                let uiImage = UIImage(cgImage: processed,
+                                      scale: cgImage.scale,
+                                      orientation: cgImage.imageOrientation)
+                self.delegate?.cameraView(self, didProcessPhoto: uiImage)
+            } else {
+                // Fallback: deliver unprocessed
+                let uiImage = UIImage(cgImage: cgImage,
+                                      scale: cgImage.scale,
+                                      orientation: cgImage.imageOrientation)
+                self.delegate?.cameraView(self, didProcessPhoto: uiImage)
             }
         }
     }
