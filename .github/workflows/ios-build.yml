@@ -49,7 +49,7 @@ jobs:
             -module-name CameraApp \
             -o build/CameraApp \
             $SWIFT_FILES \
-            "${{ steps.rust-lib.outputs.RUST_LIB }}" \
+            "../${{ steps.rust-lib.outputs.RUST_LIB }}" \
             -framework SwiftUI \
             -framework AVFoundation \
             -framework Photos \
