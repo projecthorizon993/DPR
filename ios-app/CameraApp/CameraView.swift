@@ -207,8 +207,7 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         }
 
         // Process through Rust core
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+        DispatchQueue.global(qos: .userInitiated).async {
             let processed = CameraCoreBridge.process(
                 image: cgImage,
                 style: self.currentStyle,
