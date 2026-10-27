@@ -28,61 +28,68 @@ jobs:
         id: rust-lib
         run: |
           LIB_PATH=$(find ./rust-core/target/aarch64-apple-ios/release -name "libcamera_core.a" | head -1)
-          LIB_DIR=$(dirname "$LIB_PATH")
           echo "RUST_LIB=$LIB_PATH" >> $GITHUB_OUTPUT
-          echo "RUST_LIB_DIR=$LIB_DIR" >> $GITHUB_OUTPUT
           echo "Found Rust library: $LIB_PATH"
 
-      - name: Generate Xcode project from Package.swift
+      - name: Build Swift iOS app with swiftc
         working-directory: ./ios-app
         run: |
-          swift package generate-xcodeproj
+          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          echo "SDK_PATH=$SDK_PATH"
 
-      - name: Build iOS app (archive)
+          # Collect all Swift source files
+          SWIFT_FILES=$(find CameraApp -name "*.swift" | tr '\n' ' ')
+
+          # Create output directory
+          mkdir -p build
+
+          # Compile and link the app
+          swiftc -target aarch64-apple-ios \
+            -sdk "$SDK_PATH" \
+            -module-name CameraApp \
+            -o build/CameraApp \
+            $SWIFT_FILES \
+            "${{ steps.rust-lib.outputs.RUST_LIB }}" \
+            -framework SwiftUI \
+            -framework AVFoundation \
+            -framework Photos \
+            -framework UIKit \
+            -framework CoreGraphics \
+            -framework CoreImage
+
+          echo "Swift build completed"
+
+      - name: Create .app bundle
         working-directory: ./ios-app
         run: |
-          xcodebuild -scheme CameraApp \
-            -sdk iphoneos \
-            -configuration Release \
-            -archivePath ./build/CameraApp.xcarchive \
-            archive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            OTHER_LDFLAGS="${{ steps.rust-lib.outputs.RUST_LIB }}" \
-            LIBRARY_SEARCH_PATHS="${{ steps.rust-lib.outputs.RUST_LIB_DIR }}" \
-            SKIP_INSTALL=NO
+          APP_DIR="build/CameraApp.app"
+          mkdir -p "$APP_DIR"
+
+          # Copy executable
+          cp build/CameraApp "$APP_DIR/CameraApp"
+          chmod +x "$APP_DIR/CameraApp"
+
+          # Copy Info.plist
+          cp CameraApp/Info.plist "$APP_DIR/Info.plist"
+
+          # Copy assets
+          mkdir -p "$APP_DIR/Resources"
+          cp CameraApp/Assets.xcassets/* "$APP_DIR/Resources/" 2>/dev/null || true
+
+          echo "App bundle created:"
+          ls -la "$APP_DIR/"
 
       - name: Create unsigned IPA
         working-directory: ./ios-app
         run: |
-          # Extract .app from archive
-          APP_PATH="./build/CameraApp.xcarchive/Products/Applications/CameraApp.app"
-          echo "App path: $APP_PATH"
-          ls -la "$APP_PATH"
+          rm -rf build/Payload
+          mkdir -p build/Payload
+          cp -R build/CameraApp.app build/Payload/
 
-          # Remove code signature (unsigned build)
-          rm -rf "$APP_PATH/_CodeSignature"
-          rm -rf "$APP_PATH/CodeResources"
-          rm -rf "$APP_PATH/embedded.mobileprovision"
-
-          # Create IPA structure
-          rm -rf ./build/Payload
-          mkdir -p ./build/Payload
-          cp -R "$APP_PATH" ./build/Payload/
-
-          # Zip into IPA
-          cd ./build
+          cd build
           zip -r -X CameraApp-unsigned.ipa Payload/
-          echo "IPA created: ./build/CameraApp-unsigned.ipa"
-          ls -la ./build/CameraApp-unsigned.ipa
-
-      - name: Upload IPA to GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: ./ios-app/build/CameraApp-unsigned.ipa
-          name: Unsigned IPA (${{ github.ref_name }})
+          echo "IPA created:"
+          ls -la CameraApp-unsigned.ipa
 
       - name: Upload IPA as workflow artifact
         uses: actions/upload-artifact@v4
