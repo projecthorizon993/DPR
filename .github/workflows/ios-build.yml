@@ -31,33 +31,45 @@ jobs:
           echo "RUST_LIB=$LIB_PATH" >> $GITHUB_OUTPUT
           echo "Found Rust library: $LIB_PATH"
 
+      - name: Compile Assets.xcassets to Assets.car
+        working-directory: ./ios-app
+        run: |
+          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
+          TOOL_PATH=$(xcrun --find actool)
+          mkdir -p build/Assets
+          "$TOOL_PATH" compile --platform iphoneos --target-device iphone --minimum-deployment-target 15.0 --output build/Assets Assets.xcassets
+          echo "Assets compiled:"
+          ls -la build/Assets/
+
       - name: Build Swift iOS app with swiftc
         working-directory: ./ios-app
         run: |
           SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
-          echo "SDK_PATH=$SDK_PATH"
-
+          
           # Collect all Swift source files
           SWIFT_FILES=$(find CameraApp -name "*.swift" | tr '\n' ' ')
-
+          
           # Create output directory
           mkdir -p build
-
+          
           # Compile and link the app
           swiftc -target aarch64-apple-ios15.0 \
             -sdk "$SDK_PATH" \
             -module-name CameraApp \
             -o build/CameraApp \
             $SWIFT_FILES \
-            "../${{ steps.rust-lib.outputs.RUST_LIB }}" \
+            "../rust-core/target/aarch64-apple-ios/release/libcamera_core.a" \
             -framework SwiftUI \
             -framework AVFoundation \
             -framework Photos \
             -framework UIKit \
             -framework CoreGraphics \
-            -framework CoreImage
+            -framework CoreImage \
+            -Xlinker -rpath -Xlinker /usr/lib/swift \
+            -Xlinker -rpath -Xlinker /usr/lib/swift/iphoneos
 
-          echo "Swift build completed"
+          echo "Swift build completed:"
+          ls -la build/CameraApp
 
       - name: Create .app bundle
         working-directory: ./ios-app
@@ -72,10 +84,11 @@ jobs:
           # Copy Info.plist
           cp CameraApp/Info.plist "$APP_DIR/Info.plist"
 
-          # Copy assets (as folder, iOS expects Assets.xcassets as a folder)
-          cp -R CameraApp/Assets.xcassets "$APP_DIR/Assets.xcassets" 2>/dev/null || true
+          # Copy compiled assets
+          cp -R build/Assets/Assets.car "$APP_DIR/Assets.car" 2>/dev/null || true
 
           echo "App bundle created:"
+          ls -la "$APP_DIR/"
           ls -la "$APP_DIR/"
 
       - name: Create unsigned IPA
