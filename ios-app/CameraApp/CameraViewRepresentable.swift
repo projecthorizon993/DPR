@@ -77,6 +77,14 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
             onRecordingStopped()
         }
 
+        func cameraViewDidStartRecording(_ view: CameraViewController) {
+            onRecordingStarted()
+        }
+
+        func cameraViewDidStopRecording(_ view: CameraViewController) {
+            // Already called from didRecordVideo
+        }
+
         func cameraView(_ view: CameraViewController, didFail error: Error) {
             onError(error)
         }
