@@ -1,0 +1,90 @@
+name: Build Unsigned iOS IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: aarch64-apple-ios
+
+      - name: Build Rust core (aarch64-apple-ios)
+        working-directory: ./rust-core
+        run: |
+          cargo build --release --target aarch64-apple-ios
+
+      - name: Locate Rust static library
+        id: rust-lib
+        run: |
+          LIB_PATH=$(find ./rust-core/target/aarch64-apple-ios/release -name "libcamera_core.a" | head -1)
+          echo "RUST_LIB=$LIB_PATH" >> $GITHUB_OUTPUT
+          echo "Found Rust library: $LIB_PATH"
+
+      - name: Install Xcode command line tools (ensure xcodebuild)
+        run: |
+          sudo xcode-select -switch /Applications/Xcode_15.app/Contents/Developer 2>/dev/null || true
+          xcodebuild -version
+
+      - name: Build iOS app (archive)
+        working-directory: ./ios-app
+        run: |
+          xcodebuild -scheme CameraApp \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath ./build/CameraApp.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            OTHER_LDFLAGS="-L${{ steps.rust-lib.outputs.RUST_LIB }}" \
+            LIBRARY_SEARCH_PATHS="${{ steps.rust-lib.outputs.RUST_LIB }}/.." \
+            SKIP_INSTALL=NO
+
+      - name: Create unsigned IPA
+        working-directory: ./ios-app
+        run: |
+          # Extract .app from archive
+          APP_PATH="./build/CameraApp.xcarchive/Products/Applications/CameraApp.app"
+          echo "App path: $APP_PATH"
+          ls -la "$APP_PATH"
+
+          # Remove code signature (unsigned build)
+          rm -rf "$APP_PATH/_CodeSignature"
+          rm -rf "$APP_PATH/CodeResources"
+          rm -rf "$APP_PATH/embedded.mobileprovision"
+
+          # Create IPA structure
+          rm -rf ./build/Payload
+          mkdir -p ./build/Payload
+          cp -R "$APP_PATH" ./build/Payload/
+
+          # Zip into IPA
+          cd ./build
+          zip -r -X CameraApp-unsigned.ipa Payload/
+          echo "IPA created: ./build/CameraApp-unsigned.ipa"
+          ls -la ./build/CameraApp-unsigned.ipa
+
+      - name: Upload IPA to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ./ios-app/build/CameraApp-unsigned.ipa
+          name: Unsigned IPA (${{ github.ref_name }})
+
+      - name: Upload IPA as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: camera-app-unsigned-ipa
+          path: ./ios-app/build/CameraApp-unsigned.ipa
+          retention-days: 7

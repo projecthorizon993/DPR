@@ -1,0 +1,22 @@
+# Xcode
+*.pbxuser
+*.xcuserstate
+.xcodeproj/project.xcworkspace/xcshareddata/
+DerivedData/
+*.ipa
+*.xcarchive
+.build/
+
+# Swift
+.swiftpm/
+Package.resolved
+
+# Rust
+/target/
+Cargo.lock
+
+# macOS
+.DS_Store
+
+# iOS
+*.dSYM/
