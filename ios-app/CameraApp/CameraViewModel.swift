@@ -52,14 +52,13 @@ final class CameraViewModel: ObservableObject {
         loadWatermarkLogo()
     }
 
-    /// Load last thumbnail asynchronously - must be called after view appears, not during init()
+    /// Load last thumbnail asynchronously - call when needed, not during init()
     func loadLastThumbnailAsync() {
-        let callback: (UIImage?) -> Void = { [weak self] image in
+        PhotoLibrary.shared.lastThumbnail(completion: { [weak self] image in
             DispatchQueue.main.async {
                 self?.lastThumbnail = image
             }
-        }
-        PhotoLibrary.shared.lastThumbnail(callback)
+        })
     }
 
     private func loadWatermarkLogo() {
