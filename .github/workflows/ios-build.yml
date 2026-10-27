@@ -31,16 +31,6 @@ jobs:
           echo "RUST_LIB=$LIB_PATH" >> $GITHUB_OUTPUT
           echo "Found Rust library: $LIB_PATH"
 
-      - name: Compile Assets.xcassets to Assets.car
-        working-directory: ./ios-app
-        run: |
-          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
-          TOOL_PATH=$(xcrun --find actool)
-          mkdir -p build/Assets
-          "$TOOL_PATH" compile --platform iphoneos --target-device iphone --minimum-deployment-target 15.0 --output build/Assets Assets.xcassets
-          echo "Assets compiled:"
-          ls -la build/Assets/
-
       - name: Build Swift iOS app with swiftc
         working-directory: ./ios-app
         run: |
@@ -84,11 +74,11 @@ jobs:
           # Copy Info.plist
           cp CameraApp/Info.plist "$APP_DIR/Info.plist"
 
-          # Copy compiled assets
-          cp -R build/Assets/Assets.car "$APP_DIR/Assets.car" 2>/dev/null || true
+          # Copy raw assets (watermark images) for runtime loading
+          mkdir -p "$APP_DIR/Assets"
+          cp -R CameraApp/Assets.xcassets "$APP_DIR/Assets/" 2>/dev/null || true
 
           echo "App bundle created:"
-          ls -la "$APP_DIR/"
           ls -la "$APP_DIR/"
 
       - name: Create unsigned IPA
