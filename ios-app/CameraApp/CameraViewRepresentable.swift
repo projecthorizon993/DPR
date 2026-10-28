@@ -36,6 +36,7 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
         vc.watermarkImage = viewModel.watermarkImage
         vc.watermarkAlpha = viewModel.watermarkAlpha
         vc.isVideoMode = viewModel.isVideoMode
+        vc.flashMode = viewModel.flashMode.flashMode
         viewModel.cameraController = vc
     }
 

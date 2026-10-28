@@ -159,6 +159,14 @@ enum FlashMode: String, CaseIterable {
         case .off: return "bolt.slash"
         }
     }
+
+    var flashMode: AVCapturePhotoOutput.FlashMode {
+        switch self {
+        case .auto: return .auto
+        case .on: return .on
+        case .off: return .off
+        }
+    }
 }
 
 enum Lens: String, CaseIterable {
