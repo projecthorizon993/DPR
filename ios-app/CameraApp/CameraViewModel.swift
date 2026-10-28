@@ -9,6 +9,10 @@ import SwiftUI
 import AVFoundation
 import Photos
 import UIKit
+import os.log
+
+/// Logging helper
+private let log = OSLog(subsystem: "com.cameraapp.profile", category: "CameraViewModel")
 
 final class CameraViewModel: ObservableObject {
 
@@ -56,6 +60,9 @@ final class CameraViewModel: ObservableObject {
         // Load the salvaged Zeiss watermark logo from asset bundle
         if let uiImage = UIImage(named: "ZeissLogo") {
             watermarkImage = uiImage.cgImage
+            logInfo("Watermark logo loaded: Zeiss")
+        } else {
+            logWarn("Watermark logo not found: ZeissLogo")
         }
     }
 
@@ -64,6 +71,9 @@ final class CameraViewModel: ObservableObject {
         PhotoLibrary.shared.lastThumbnail { [weak self] image in
             DispatchQueue.main.async {
                 self?.lastThumbnail = image
+                if image != nil {
+                    logInfo("Last thumbnail loaded")
+                }
             }
         }
     }
@@ -73,9 +83,25 @@ final class CameraViewModel: ObservableObject {
     func requestPermissions() {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         if status == .notDetermined {
-            AVCaptureDevice.requestAccess(for: .video) { _ in }
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        logInfo("Camera permission granted")
+                    } else {
+                        logWarn("Camera permission denied")
+                    }
+                }
+            }
         }
-        PHPhotoLibrary.requestAuthorization(for: .readWrite) { _ in }
+        PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
+            DispatchQueue.main.async {
+                if status == .authorized || status == .limited {
+                    logInfo("Photo library access granted")
+                } else {
+                    logWarn("Photo library access denied")
+                }
+            }
+        }
     }
 
     // MARK: - Actions

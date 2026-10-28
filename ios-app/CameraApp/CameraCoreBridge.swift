@@ -186,7 +186,7 @@ final class CameraCoreBridge: NSObject {
         let saturation = effectParams[0]
         let vignette = effectParams[1]
         let noise = effectParams[2]
-        let _ = effectParams[3] // sharpen reserved for future
+        // effectParams[3] = sharpen reserved for future
 
         // Generate LUT data from Rust for this style (17^3)
         let lutSize: Int32 = style.lutSize

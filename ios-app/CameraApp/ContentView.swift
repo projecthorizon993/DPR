@@ -46,6 +46,7 @@ struct ContentView: View {
                     viewModel.stopRecordingTimer()
                 },
                 onError: { error in
+                    logError("Camera error: \(error.localizedDescription)")
                     viewModel.errorMessage = error.localizedDescription
                     viewModel.showError = true
                 }

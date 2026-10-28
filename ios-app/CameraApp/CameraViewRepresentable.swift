@@ -24,6 +24,7 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
         vc.watermarkImage = viewModel.watermarkImage
         vc.watermarkAlpha = viewModel.watermarkAlpha
         vc.isVideoMode = viewModel.isVideoMode
+        vc.flashMode = viewModel.flashMode.flashMode
 
         // Link controller back to view model so UI actions reach AVFoundation
         viewModel.cameraController = vc
@@ -44,8 +45,8 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
         Coordinator(
             onPhotoCaptured: onPhotoCaptured,
             onVideoRecorded: onVideoRecorded,
-            onRecordingStarted: { },
-            onRecordingStopped: { },
+            onRecordingStarted: onRecordingStarted,
+            onRecordingStopped: onRecordingStopped,
             onError: onError
         )
     }
@@ -89,5 +90,13 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
         func cameraView(_ view: CameraViewController, didFail error: Error) {
             onError(error)
         }
+
+        deinit {
+            logInfo("CameraViewRepresentable.Coordinator deinitialized")
+        }
+    }
+
+    deinit {
+        logInfo("CameraViewRepresentable deinitialized")
     }
 }
