@@ -44,7 +44,7 @@ final class CameraViewController: UIViewController {
     var watermarkAlpha: Float = 0.6
     var isVideoMode = false
     var videoURL: URL?
-    var flashMode: AVCapturePhotoOutput.FlashMode = .auto
+    var flashMode: AVCaptureDevice.FlashMode = .auto
 
     private var isCaptureInProgress = false
 

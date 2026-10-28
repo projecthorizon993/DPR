@@ -160,7 +160,7 @@ enum FlashMode: String, CaseIterable {
         }
     }
 
-    var flashMode: AVCapturePhotoOutput.FlashMode {
+    var flashMode: AVCaptureDevice.FlashMode {
         switch self {
         case .auto: return .auto
         case .on: return .on
