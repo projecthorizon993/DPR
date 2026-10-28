@@ -53,29 +53,32 @@ final class PhotoLibrary {
         }
     }
 
-    func lastThumbnail() -> UIImage? {
+    /// Load last thumbnail asynchronously - do NOT call on main thread during app launch
+    func lastThumbnail(completion: @escaping (UIImage?) -> Void) {
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         fetchOptions.fetchLimit = 1
         let result = PHAsset.fetchAssets(with: .image, options: fetchOptions)
-        guard let asset = result.firstObject else { return nil }
+        guard let asset = result.firstObject else {
+            DispatchQueue.main.async {
+                completion(nil)
+            }
+            return
+        }
 
         let options = PHImageRequestOptions()
         options.deliveryMode = .fastFormat
         options.resizeMode = .fast
-        var thumbnail: UIImage?
-        let semaphore = DispatchSemaphore(value: 0)
         PHCachingImageManager().requestImage(
             for: asset,
             targetSize: CGSize(width: 120, height: 120),
             contentMode: .aspectFill,
             options: options
         ) { image, _ in
-            thumbnail = image
-            semaphore.signal()
+            DispatchQueue.main.async {
+                completion(image)
+            }
         }
-        semaphore.wait()
-        return thumbnail
     }
 }
 

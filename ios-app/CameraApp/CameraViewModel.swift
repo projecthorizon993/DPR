@@ -139,8 +139,11 @@ final class CameraViewModel: ObservableObject {
         UserDefaults.standard.set(watermarkAlpha, forKey: "watermarkAlpha")
     }
 
-    private func loadLastThumbnail() {
-        lastThumbnail = photoLibrary.lastThumbnail()
+    func loadLastThumbnail() {
+        let handler: (UIImage?) -> Void = { [weak self] image in
+            self?.lastThumbnail = image
+        }
+        photoLibrary.lastThumbnail(completion: handler)
     }
 }
 
