@@ -51,7 +51,7 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
         )
     }
 
-final class Coordinator: NSObject, CameraViewDelegate {
+    final class Coordinator: NSObject, CameraViewDelegate {
         let onPhotoCaptured: (UIImage) -> Void
         let onVideoRecorded: (URL) -> Void
         let onRecordingStarted: () -> Void

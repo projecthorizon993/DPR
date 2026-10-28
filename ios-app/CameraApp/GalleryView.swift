@@ -26,7 +26,7 @@ struct GalleryView: View {
             }
             .navigationTitle("Gallery")
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear { viewModel.loadLastThumbnail() }
+            .onAppear { viewModel.loadLastThumbnailAsync() }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }

@@ -9,6 +9,7 @@
 import Foundation
 import CoreGraphics
 import UIKit
+import SwiftUI
 
 // MARK: - C ABI declarations (imported from Rust camera_core staticlib)
 
@@ -363,7 +364,3 @@ enum CameraStyle: CaseIterable, Codable {
         }
     }
 }
-
-// MARK: - SwiftUI Color import
-
-import SwiftUI
