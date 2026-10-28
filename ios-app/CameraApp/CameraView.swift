@@ -50,8 +50,41 @@ final class CameraViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupPreview()
+        setupSessionInterruptionHandling()
         sessionQueue.async { [weak self] in
             self?.configureSession()
+        }
+    }
+
+    private func setupSessionInterruptionHandling() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(sessionWasInterrupted),
+            name: .AVCaptureSessionWasInterrupted,
+            object: session
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(sessionInterruptionEnded),
+            name: .AVCaptureSessionInterruptionEnded,
+            object: session
+        )
+    }
+
+    @objc private func sessionWasInterrupted(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let reasonValue = userInfo[AVCaptureSessionInterruptionReasonKey] as? Int,
+              let reason = AVCaptureSession.InterruptionReason(rawValue: reasonValue) else {
+            return
+        }
+        DispatchQueue.main.async {
+            self.delegate?.cameraView(self, didFail: CameraError.captureInterrupted)
+        }
+    }
+
+    @objc private func sessionInterruptionEnded(_ notification: Notification) {
+        DispatchQueue.main.async {
+            self.session.startRunning()
         }
     }
 
@@ -125,7 +158,8 @@ final class CameraViewController: UIViewController {
         isCaptureInProgress = true
 
         let settings = AVCapturePhotoSettings()
-        settings.flashMode = .auto
+        settings.flashMode = flashMode
+        settings.isHighResolutionPhotoEnabled = true
 
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
@@ -156,27 +190,50 @@ final class CameraViewController: UIViewController {
 
     func switchCamera(to deviceType: AVCaptureDevice.DeviceType) {
         sessionQueue.async { [weak self] in
-            self?.session.beginConfiguration()
+            guard let self = self else { return }
+            
+            self.session.beginConfiguration()
+            
             // Remove existing input
-            if let input = self?.videoDeviceInput {
-                self?.session.removeInput(input)
+            if let input = self.videoDeviceInput {
+                self.session.removeInput(input)
             }
+            
             // Add new input
             let discovery = AVCaptureDevice.DiscoverySession(
                 deviceTypes: [deviceType],
                 mediaType: .video,
                 position: .back
             )
-            guard let device = discovery.devices.first,
-                  let input = try? AVCaptureDeviceInput(device: device) else {
-                self?.session.commitConfiguration()
+            guard let device = discovery.devices.first else {
+                self.session.commitConfiguration()
+                DispatchQueue.main.async {
+                    self.delegate?.cameraView(self, didFail: CameraError.noCameraAvailable)
+                }
                 return
             }
-            if self?.session.canAddInput(input) == true {
-                self?.session.addInput(input)
-                self?.videoDeviceInput = input
+            
+            do {
+                let input = try AVCaptureDeviceInput(device: device)
+                if self.session.canAddInput(input) {
+                    self.session.addInput(input)
+                    self.videoDeviceInput = input
+                } else {
+                    self.session.commitConfiguration()
+                    DispatchQueue.main.async {
+                        self.delegate?.cameraView(self, didFail: CameraError.noCameraAvailable)
+                    }
+                    return
+                }
+            } catch {
+                self.session.commitConfiguration()
+                DispatchQueue.main.async {
+                    self.delegate?.cameraView(self, didFail: error)
+                }
+                return
             }
-            self?.session.commitConfiguration()
+            
+            self.session.commitConfiguration()
         }
     }
 
@@ -199,7 +256,8 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         }
 
         guard let imageData = photo.fileDataRepresentation(),
-              let cgImage = UIImage(data: imageData)?.cgImage else {
+              let uiImage = UIImage(data: imageData),
+              let cgImage = uiImage.cgImage else {
             DispatchQueue.main.async {
                 self.delegate?.cameraView(self, didFail: CameraError.invalidImageData)
             }
@@ -215,11 +273,11 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         )
 
         if let processed = processed {
-            let uiImage = UIImage(cgImage: processed, scale: 1.0, orientation: .up)
-            self.delegate?.cameraView(self, didProcessPhoto: uiImage)
+            let resultImage = UIImage(cgImage: processed, scale: uiImage.scale, orientation: uiImage.imageOrientation)
+            self.delegate?.cameraView(self, didProcessPhoto: resultImage)
         } else {
             // Fallback: deliver unprocessed
-            let uiImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+            let uiImage = UIImage(cgImage: cgImage, scale: uiImage.scale, orientation: uiImage.imageOrientation)
             self.delegate?.cameraView(self, didProcessPhoto: uiImage)
         }
     }
