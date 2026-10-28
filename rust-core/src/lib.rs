@@ -85,16 +85,19 @@ pub extern "C" fn apply_lut_3d(
     lut_size: i32,
 ) -> i32 {
     if pixels.is_null() || lut_data.is_null() {
+        rust_log_error("apply_lut_3d", "null pointer");
         return -1;
     }
     if width <= 0 || height <= 0 || row_bytes <= 0 {
+        rust_log_error("apply_lut_3d", &format!("invalid dimensions: {}x{} row_bytes={}", width, height, row_bytes));
         return -2;
     }
     if lut_size < 2 {
+        rust_log_error("apply_lut_3d", &format!("invalid lut_size: {}", lut_size));
         return -3;
     }
-    // row_bytes must be >= width * 4 (RGBA)
     if row_bytes < width * 4 {
+        rust_log_error("apply_lut_3d", &format!("row_bytes {} < width*4={}", row_bytes, width * 4));
         return -4;
     }
 
@@ -126,6 +129,7 @@ pub extern "C" fn apply_lut_3d(
             }
         }
     }
+    rust_log_info("apply_lut_3d", &format!("processed {}x{} row_bytes={} lut_size={}", width, height, row_bytes, lut_size));
     0
 }
 
@@ -193,12 +197,15 @@ pub extern "C" fn apply_color_matrix(
     matrix: *const f32,
 ) -> i32 {
     if pixels.is_null() || matrix.is_null() {
+        rust_log_error("apply_color_matrix", "null pointer");
         return -1;
     }
     if width <= 0 || height <= 0 || row_bytes <= 0 {
+        rust_log_error("apply_color_matrix", &format!("invalid dimensions: {}x{} row_bytes={}", width, height, row_bytes));
         return -2;
     }
     if row_bytes < width * 4 {
+        rust_log_error("apply_color_matrix", &format!("row_bytes {} < width*4={}", row_bytes, width * 4));
         return -4;
     }
 
@@ -229,6 +236,7 @@ pub extern "C" fn apply_color_matrix(
             }
         }
     }
+    rust_log_info("apply_color_matrix", &format!("processed {}x{} row_bytes={}", width, height, row_bytes));
     0
 }
 
