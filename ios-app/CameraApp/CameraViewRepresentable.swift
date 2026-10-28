@@ -91,3 +91,4 @@ final class Coordinator: NSObject, CameraViewDelegate {
             onError(error)
         }
     }
+}
