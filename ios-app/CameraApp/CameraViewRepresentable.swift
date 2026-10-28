@@ -51,7 +51,7 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
         )
     }
 
-    final class Coordinator: NSObject, CameraViewDelegate {
+final class Coordinator: NSObject, CameraViewDelegate {
         let onPhotoCaptured: (UIImage) -> Void
         let onVideoRecorded: (URL) -> Void
         let onRecordingStarted: () -> Void
@@ -90,13 +90,4 @@ struct CameraViewRepresentable: UIViewControllerRepresentable {
         func cameraView(_ view: CameraViewController, didFail error: Error) {
             onError(error)
         }
-
-        deinit {
-            logInfo("CameraViewRepresentable.Coordinator deinitialized")
-        }
     }
-
-    deinit {
-        logInfo("CameraViewRepresentable deinitialized")
-    }
-}
