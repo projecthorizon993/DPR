@@ -25,8 +25,46 @@
 #![allow(clippy::cast_sign_loss)]
 
 use std::slice;
+use std::io::Write;
 
 mod lut_data;
+
+// ---------------------------------------------------------------------------
+// Logging for iOS - writes to stderr which iOS captures
+// ---------------------------------------------------------------------------
+
+/// Log a message to stderr for iOS crash logs
+#[allow(dead_code)]
+fn rust_log(level: &str, tag: &str, message: &str) {
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs_f64())
+        .unwrap_or(0.0);
+    
+    let log_line = format!("[{:.3}] [{}][{}] {}\n", timestamp, level, tag, message);
+    
+    // Write to stderr - iOS captures this in crash logs
+    let _ = std::io::stderr().write_all(log_line.as_bytes());
+    let _ = std::io::stderr().flush();
+}
+
+/// Log an error
+#[allow(dead_code)]
+fn rust_log_error(tag: &str, message: &str) {
+    rust_log("ERROR", tag, message);
+}
+
+/// Log a warning
+#[allow(dead_code)]
+fn rust_log_warn(tag: &str, message: &str) {
+    rust_log("WARN", tag, message);
+}
+
+/// Log info
+#[allow(dead_code)]
+fn rust_log_info(tag: &str, message: &str) {
+    rust_log("INFO", tag, message);
+}
 
 // ---------------------------------------------------------------------------
 // 3D LUT interpolation (trilinear)
@@ -35,6 +73,8 @@ mod lut_data;
 /// Apply a 3D LUT to an RGBA8 buffer in place.
 /// `lut_data` is `size^3 * 3` floats (R,G,B per node), in [0,1].
 /// `size` is typically 17 or 33.
+/// `row_bytes` must be >= width * 4. Only `width * 4` bytes per row are processed;
+/// any padding bytes at the end of each row are left untouched.
 #[no_mangle]
 pub extern "C" fn apply_lut_3d(
     pixels: *mut u8,
@@ -53,17 +93,22 @@ pub extern "C" fn apply_lut_3d(
     if lut_size < 2 {
         return -3;
     }
+    // row_bytes must be >= width * 4 (RGBA)
+    if row_bytes < width * 4 {
+        return -4;
+    }
 
     let size = lut_size as usize;
     let inv_size_minus_one = 1.0f32 / ((size - 1) as f32);
     let lut = unsafe { slice::from_raw_parts(lut_data, size * size * size * 3) };
+    let bytes_per_row = width as usize * 4;
 
     unsafe {
         let rows = slice::from_raw_parts_mut(pixels, height as usize * row_bytes as usize);
         for y in 0..height as usize {
             let row = rows.get_mut(y * row_bytes as usize..(y + 1) * row_bytes as usize);
             let Some(row) = row else { continue };
-            for x in (0..width as usize).step_by(4) {
+            for x in 0..width as usize {
                 let base = x * 4;
                 if base + 3 >= row.len() {
                     break;
@@ -138,6 +183,7 @@ fn trilinear_lut(
 
 /// Apply a 3x3 color matrix to RGB channels.
 /// `matrix` is 9 floats in row-major order.
+/// `row_bytes` must be >= width * 4. Only width*4 bytes per row are processed.
 #[no_mangle]
 pub extern "C" fn apply_color_matrix(
     pixels: *mut u8,
@@ -152,15 +198,19 @@ pub extern "C" fn apply_color_matrix(
     if width <= 0 || height <= 0 || row_bytes <= 0 {
         return -2;
     }
+    if row_bytes < width * 4 {
+        return -4;
+    }
 
     let m = unsafe { slice::from_raw_parts(matrix, 9) };
+    let bytes_per_row = width as usize * 4;
 
     unsafe {
         let rows = slice::from_raw_parts_mut(pixels, height as usize * row_bytes as usize);
         for y in 0..height as usize {
             let row = rows.get_mut(y * row_bytes as usize..(y + 1) * row_bytes as usize);
             let Some(row) = row else { continue };
-            for x in (0..width as usize).step_by(4) {
+            for x in 0..width as usize {
                 let base = x * 4;
                 if base + 3 >= row.len() {
                     break;
@@ -195,6 +245,7 @@ pub extern "C" fn apply_color_matrix(
 /// Apply a 512^3 3D LUT encoded as a 512x512 2D texture (vivo style).
 /// `lut_texture` is 512x512 RGBA8 pixels encoding the 3D LUT.
 /// `strength` = 0.0 (no effect) to 1.0 (full LUT applied).
+/// `row_bytes` must be >= width * 4.
 #[no_mangle]
 pub extern "C" fn apply_lut_512(
     pixels: *mut u8,
@@ -215,6 +266,9 @@ pub extern "C" fn apply_lut_512(
     if lut_width != 512 || lut_height != 512 {
         return -3;
     }
+    if row_bytes < width * 4 {
+        return -4;
+    }
 
     let lut = unsafe { slice::from_raw_parts(lut_texture, 512 * 512 * 4) };
 
@@ -223,7 +277,7 @@ pub extern "C" fn apply_lut_512(
         for y in 0..height as usize {
             let row = rows.get_mut(y * row_bytes as usize..(y + 1) * row_bytes as usize);
             let Some(row) = row else { continue };
-            for x in (0..width as usize).step_by(4) {
+            for x in 0..width as usize {
                 let base = x * 4;
                 if base + 3 >= row.len() {
                     break;
@@ -291,6 +345,7 @@ pub extern "C" fn apply_lut_512(
 
 /// Adjust RGB saturation around luminance.
 /// `saturation` = 1.0 is unchanged, >1.0 more saturated, <1.0 less saturated.
+/// `row_bytes` must be >= width * 4.
 #[no_mangle]
 pub extern "C" fn apply_saturation(
     pixels: *mut u8,
@@ -305,13 +360,16 @@ pub extern "C" fn apply_saturation(
     if width <= 0 || height <= 0 || row_bytes <= 0 {
         return -2;
     }
+    if row_bytes < width * 4 {
+        return -4;
+    }
 
     unsafe {
         let rows = slice::from_raw_parts_mut(pixels, height as usize * row_bytes as usize);
         for y in 0..height as usize {
             let row = rows.get_mut(y * row_bytes as usize..(y + 1) * row_bytes as usize);
             let Some(row) = row else { continue };
-            for x in (0..width as usize).step_by(4) {
+            for x in 0..width as usize {
                 let base = x * 4;
                 if base + 3 >= row.len() {
                     break;
@@ -340,6 +398,7 @@ pub extern "C" fn apply_saturation(
 
 /// Apply a simple gamma curve to RGB channels.
 /// `gamma` > 0. Typical: 1.0 (none), 0.8 (brighten), 1.2 (darken).
+/// `row_bytes` must be >= width * 4.
 #[no_mangle]
 pub extern "C" fn apply_tone_curve(
     pixels: *mut u8,
@@ -357,6 +416,9 @@ pub extern "C" fn apply_tone_curve(
     if gamma <= 0.0 {
         return -3;
     }
+    if row_bytes < width * 4 {
+        return -4;
+    }
 
     let inv_gamma = 1.0 / gamma;
 
@@ -365,7 +427,7 @@ pub extern "C" fn apply_tone_curve(
         for y in 0..height as usize {
             let row = rows.get_mut(y * row_bytes as usize..(y + 1) * row_bytes as usize);
             let Some(row) = row else { continue };
-            for x in (0..width as usize).step_by(4) {
+            for x in 0..width as usize {
                 let base = x * 4;
                 if base + 3 >= row.len() {
                     break;
@@ -389,6 +451,7 @@ pub extern "C" fn apply_tone_curve(
 
 /// Apply radial vignette darkening.
 /// `strength` = 0.0 is none, 1.0 is strong corner darkening.
+/// `row_bytes` must be >= width * 4.
 #[no_mangle]
 pub extern "C" fn apply_vignette(
     pixels: *mut u8,
@@ -403,6 +466,9 @@ pub extern "C" fn apply_vignette(
     if width <= 0 || height <= 0 || row_bytes <= 0 {
         return -2;
     }
+    if row_bytes < width * 4 {
+        return -4;
+    }
 
     let cx = width as f32 / 2.0;
     let cy = height as f32 / 2.0;
@@ -413,7 +479,7 @@ pub extern "C" fn apply_vignette(
         for y in 0..height as usize {
             let row = rows.get_mut(y * row_bytes as usize..(y + 1) * row_bytes as usize);
             let Some(row) = row else { continue };
-            for x in (0..width as usize).step_by(4) {
+            for x in 0..width as usize {
                 let base = x * 4;
                 if base + 3 >= row.len() {
                     break;

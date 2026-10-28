@@ -57,6 +57,13 @@ final class CameraViewController: UIViewController {
         }
     }
 
+    private func setupPreview() {
+        previewView.frame = view.bounds
+        previewView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(previewView)
+        view.sendSubviewToBack(previewView)
+    }
+
     private func setupSessionInterruptionHandling() {
         NotificationCenter.default.addObserver(
             self,
@@ -89,18 +96,12 @@ final class CameraViewController: UIViewController {
         }
     }
 
-    private func setupPreview() {
-        previewView.frame = view.bounds
-        previewView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-        view.addSubview(previewView)
-        view.sendSubviewToBack(previewView)
-    }
-
     private func configureSession() {
         session.beginConfiguration()
 
-        // Input — choose best wide camera
         session.sessionPreset = .photo
+
+        // Input — choose best wide camera
         guard let videoDevice = AVCaptureDevice.DiscoverySession(
             deviceTypes: [.builtInWideAngleCamera, .builtInUltraWideCamera, .builtInTelephotoCamera],
             mediaType: .video,
@@ -192,14 +193,14 @@ final class CameraViewController: UIViewController {
     func switchCamera(to deviceType: AVCaptureDevice.DeviceType) {
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
-            
+
             self.session.beginConfiguration()
-            
+
             // Remove existing input
             if let input = self.videoDeviceInput {
                 self.session.removeInput(input)
             }
-            
+
             // Add new input
             let discovery = AVCaptureDevice.DiscoverySession(
                 deviceTypes: [deviceType],
@@ -213,7 +214,7 @@ final class CameraViewController: UIViewController {
                 }
                 return
             }
-            
+
             do {
                 let input = try AVCaptureDeviceInput(device: device)
                 if self.session.canAddInput(input) {
@@ -233,7 +234,7 @@ final class CameraViewController: UIViewController {
                 }
                 return
             }
-            
+
             self.session.commitConfiguration()
         }
     }
@@ -274,8 +275,8 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
         )
 
         if let processed = processed {
-            let resultImage = UIImage(cgImage: processed, scale: uiImage.scale, orientation: uiImage.imageOrientation)
-            self.delegate?.cameraView(self, didProcessPhoto: resultImage)
+            let uiImage = UIImage(cgImage: processed, scale: uiImage.scale, orientation: uiImage.imageOrientation)
+            self.delegate?.cameraView(self, didProcessPhoto: uiImage)
         } else {
             // Fallback: deliver unprocessed
             let uiImage = UIImage(cgImage: cgImage, scale: uiImage.scale, orientation: uiImage.imageOrientation)

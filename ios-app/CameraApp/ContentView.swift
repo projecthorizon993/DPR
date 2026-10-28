@@ -3,16 +3,18 @@
 //  CameraApp
 //
 //  Camera UI ported faithfully from Xiaomi MIUI Camera APK.
-//  - Black background (#000000)
+//  - Pure black background
 //  - Amber/orange shutter button (#FFFFCE16)
-//  - White text
+//  - White text and icons
 //  - Large centered shutter button
-//  - Mode pills at top center
+//  - Mode pills at top center (PHOTO / VIDEO)
 //  - Flash toggle top-left
+//  - Settings top-right
 //  - Lens pills vertical on left side
 //  - Gallery thumbnail bottom-left
-//  - Settings top-right
 //  - Profile/styles selector bottom-right
+//  - Recording indicator top-right
+//  - Post-capture review screen with style badge
 //
 
 import SwiftUI
@@ -53,198 +55,192 @@ struct ContentView: View {
 
             // ── Xiaomi UI Overlay ──
             VStack {
-                // Top bar: Flash | Mode pills | Settings
-                HStack(spacing: 20) {
-                    // Flash (left)
-                    Button(action: { viewModel.toggleFlash() }) {
-                        Image(systemName: viewModel.flashMode.icon)
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 48, height: 48)
-                    }
-
-                    Spacer()
-
-                    // Mode pills: PHOTO | VIDEO (center)
-                    HStack(spacing: 8) {
-                        ModePill(title: "PHOTO", isSelected: !viewModel.isVideoMode) {
-                            viewModel.isVideoMode = false
+                // ── Top bar: Flash | Mode pills | Settings ──
+                VStack(spacing: 0) {
+                    HStack(spacing: 24) {
+                        // Flash (left)
+                        Button(action: { viewModel.toggleFlash() }) {
+                            Image(systemName: viewModel.flashMode.icon)
+                                .font(.system(size: 22, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(width: 48, height: 48)
                         }
-                        ModePill(title: "VIDEO", isSelected: viewModel.isVideoMode) {
-                            viewModel.isVideoMode = true
+
+                        Spacer()
+
+                        // Mode pills: PHOTO / VIDEO (center)
+                        HStack(spacing: 6) {
+                            ModePill(title: "PHOTO", isSelected: !viewModel.isVideoMode) {
+                                viewModel.isVideoMode = false
+                            }
+                            ModePill(title: "VIDEO", isSelected: viewModel.isVideoMode) {
+                                viewModel.isVideoMode = true
+                            }
                         }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(0.15))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            )
-                    )
-
-                    Spacer()
-
-                    // Settings (right)
-                    Button(action: { viewModel.showSettings = true }) {
-                        Image(systemName: "line.horizontal.3.decrease.circle")
-                            .font(.system(size: 22, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 48, height: 48)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
-
-                Spacer()
-
-                // Bottom controls: Gallery | Shutter | Styles
-                HStack {
-                    // Gallery shortcut (left)
-                    Button(action: { viewModel.showGallery = true }) {
-                        ZStack {
-                            Circle()
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
                                 .fill(Color.white.opacity(0.15))
-                                .frame(width: 60, height: 60)
-                            if let thumb = viewModel.lastThumbnail {
-                                Image(uiImage: thumb)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 48, height: 48)
-                                    .clipShape(Circle())
-                            } else {
-                                Image(systemName: "photo.on.rectangle")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.white)
-                            }
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                        )
+
+                        Spacer()
+
+                        // Settings (right)
+                        Button(action: { viewModel.showSettings = true }) {
+                            Image(systemName: "line.horizontal.3.decrease.circle")
+                                .font(.system(size: 22, weight: .medium))
+                                .foregroundColor(.white)
+                                .frame(width: 48, height: 48)
                         }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
 
                     Spacer()
 
-                    // ── Shutter button (center, Xiaomi style - large amber circle) ──
-                    Button(action: {
-                        if viewModel.isVideoMode {
-                            viewModel.toggleVideo()
-                        } else {
-                            viewModel.capturePhoto()
-                        }
-                    }) {
-                        ZStack {
-                            if viewModel.isVideoMode && viewModel.isRecording {
-                                // Recording: red shutter
+                    // ── Bottom controls: Gallery | Shutter | Styles ──
+                    HStack {
+                        // Gallery shortcut (left)
+                        Button(action: { viewModel.showGallery = true }) {
+                            ZStack {
                                 Circle()
-                                    .stroke(Color.red, lineWidth: 4)
-                                    .frame(width: 90, height: 90)
-                                    .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
-                                    .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
-                                Circle().fill(Color.red)
-                                    .frame(width: 70, height: 70)
-                                    .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
-                                    .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
-                            } else {
-                                // Photo: amber/orange shutter (Xiaomi style #FFFFCE16)
-                                Circle()
-                                    .fill(Color.white.opacity(0.2))
-                                    .frame(width: 90, height: 90)
-                                    .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
-                                    .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
-                                Circle()
-                                    .fill(Color(hex: "FFFFCE16"))
-                                    .frame(width: 70, height: 70)
-                                    .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
-                                    .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
-                            }
-                        }
-                    }
-                    .simultaneousGesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { _ in viewModel.shutterPressed = true }
-                            .onEnded { _ in
-                                viewModel.shutterPressed = false
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                    viewModel.shutterPressed = false
+                                    .fill(Color.white.opacity(0.15))
+                                    .frame(width: 60, height: 60)
+                                if let thumb = viewModel.lastThumbnail {
+                                    Image(uiImage: thumb)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 48, height: 48)
+                                        .clipShape(Circle())
+                                } else {
+                                    Image(systemName: "photo.on.rectangle")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.white)
                                 }
                             }
-                    )
-                    .disabled(viewModel.isProcessing)
+                        }
 
-                    Spacer()
+                        Spacer()
 
-                    // Styles / Profiles (right)
-                    Button(action: { viewModel.showStylePicker = true }) {
+                        // ── Shutter button (center, Xiaomi style) ──
                         ZStack {
+                            // Outer ring
                             Circle()
-                                .fill(Color.white.opacity(0.15))
-                                .frame(width: 60, height: 60)
-                            HStack(spacing: 4) {
+                                .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                                .frame(width: 94, height: 94)
+                            // Inner button
+                            ZStack {
+                                if viewModel.isVideoMode && viewModel.isRecording {
+                                    // Recording: red shutter
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 72, height: 72)
+                                        .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
+                                        .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
+                                } else {
+                                    // Photo: amber/orange shutter (Xiaomi style #FFFFCE16)
+                                    Circle()
+                                        .fill(Color(hex: "FFFFCE16"))
+                                        .frame(width: 72, height: 72)
+                                        .scaleEffect(viewModel.shutterPressed ? 0.9 : 1.0)
+                                        .animation(.easeInOut(duration: 0.1), value: viewModel.shutterPressed)
+                                }
+                            }
+                            .simultaneousGesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { _ in viewModel.shutterPressed = true }
+                                    .onEnded { _ in
+                                        viewModel.shutterPressed = false
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                            viewModel.shutterPressed = false
+                                        }
+                                    }
+                            )
+                            .disabled(viewModel.isProcessing)
+                        }
+
+                        Spacer()
+
+                        // Styles / Profiles (right)
+                        Button(action: { viewModel.showStylePicker = true }) {
+                            ZStack {
                                 Circle()
-                                    .fill(viewModel.selectedStyle.accentColor)
-                                    .frame(width: 8, height: 8)
-                                Text(viewModel.selectedStyle.shortName)
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .fill(Color.white.opacity(0.15))
+                                    .frame(width: 60, height: 60)
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(viewModel.selectedStyle.accentColor)
+                                        .frame(width: 8, height: 8)
+                                    Text(viewModel.selectedStyle.shortName)
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white)
+                                }
                             }
                         }
                     }
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 34)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 34)
 
-                // ── Lens pills (vertical on left side) ──
-                HStack(spacing: 12) {
-                    VStack(spacing: 10) {
-                        LensPill(title: "0.5×", isSelected: viewModel.selectedLens == .ultraWide) {
-                            viewModel.selectedLens = .ultraWide
-                            viewModel.switchToUltraWide()
+                    // ── Lens pills (vertical on left side) ──
+                    HStack(spacing: 12) {
+                        VStack(spacing: 10) {
+                            LensPill(title: "0.5×", isSelected: viewModel.selectedLens == .ultraWide) {
+                                viewModel.selectedLens = .ultraWide
+                                viewModel.switchToUltraWide()
+                            }
+                            LensPill(title: "1×", isSelected: viewModel.selectedLens == .wide) {
+                                viewModel.selectedLens = .wide
+                                viewModel.switchToWide()
+                            }
+                            LensPill(title: "2×", isSelected: viewModel.selectedLens == .telephoto) {
+                                viewModel.selectedLens = .telephoto
+                                viewModel.switchToTelephoto()
+                            }
                         }
-                        LensPill(title: "1×", isSelected: viewModel.selectedLens == .wide) {
-                            viewModel.selectedLens = .wide
-                            viewModel.switchToWide()
-                        }
-                        LensPill(title: "2×", isSelected: viewModel.selectedLens == .telephoto) {
-                            viewModel.selectedLens = .telephoto
-                            viewModel.switchToTelephoto()
-                        }
-                    }
-                    Spacer()
-                }
-                .padding(.leading, 16)
-                .padding(.bottom, 100)
-            }
-
-            // ── Recording indicator (top, Xiaomi style) ──
-            if viewModel.isVideoMode && viewModel.isRecording {
-                VStack {
-                    HStack {
                         Spacer()
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 8, height: 8)
-                            Text(viewModel.recordTime)
-                                .font(.system(size: 15, weight: .medium, design: .monospaced))
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Capsule().fill(Color.black.opacity(0.7)))
                     }
-                    .padding(.top, 46)
-                    .padding(.trailing, 20)
-                    Spacer()
+                    .padding(.leading, 16)
+                    .padding(.bottom, 100)
                 }
-            }
 
-            // ── Loading overlay ──
-            if viewModel.isProcessing {
-                ZStack {
-                    Color.black.opacity(0.7).ignoresSafeArea()
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(1.5)
+                // ── Recording indicator (top right, Xiaomi style) ──
+                if viewModel.isVideoMode && viewModel.isRecording {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 8, height: 8)
+                                    .scaleEffect(viewModel.shutterPressed ? 1.2 : 1.0)
+                                    .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: viewModel.shutterPressed)
+                                Text(viewModel.recordTime)
+                                    .font(.system(size: 15, weight: .medium, design: .monospaced))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Capsule().fill(Color.black.opacity(0.7)))
+                        }
+                        .padding(.top, 46)
+                        .padding(.trailing, 20)
+                        Spacer()
+                    }
+                }
+
+                // ── Loading overlay ──
+                if viewModel.isProcessing {
+                    ZStack {
+                        Color.black.opacity(0.7).ignoresSafeArea()
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.5)
+                    }
                 }
             }
         }
@@ -273,11 +269,12 @@ struct ContentView: View {
         }
         .onAppear {
             viewModel.requestPermissions()
+            viewModel.loadLastThumbnailAsync()
         }
     }
 }
 
-// MARK: - Mode pill (Xiaomi style - pill with stroke)
+// MARK: - Mode pill (Xiaomi style)
 
 struct ModePill: View {
     let title: String
@@ -303,7 +300,7 @@ struct ModePill: View {
     }
 }
 
-// MARK: - Lens pill (vertical left side, Xiaomi style)
+// MARK: - Lens pill (vertical left side)
 
 struct LensPill: View {
     let title: String

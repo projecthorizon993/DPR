@@ -59,6 +59,15 @@ final class CameraViewModel: ObservableObject {
         }
     }
 
+    /// Load last thumbnail asynchronously - call when view appears, not during init()
+    func loadLastThumbnailAsync() {
+        PhotoLibrary.shared.lastThumbnail { [weak self] image in
+            DispatchQueue.main.async {
+                self?.lastThumbnail = image
+            }
+        }
+    }
+
     // MARK: - Permissions
 
     func requestPermissions() {
