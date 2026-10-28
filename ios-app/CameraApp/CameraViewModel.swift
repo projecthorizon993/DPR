@@ -44,7 +44,7 @@ final class CameraViewModel: ObservableObject {
     private var recordingTimer: Timer?
     private var recordingStart: Date?
 
-    // Camera controller reference (set from CameraViewRepresentable coordinator)
+    // Camera controller reference
     weak var cameraController: CameraViewController?
 
     init() {
@@ -111,10 +111,10 @@ final class CameraViewModel: ObservableObject {
 
     func startRecordingTimer() {
         recordingStart = Date()
-        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            guard let start = self.recordingStart else { return }
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let start = self?.recordingStart else { return }
             let elapsed = Date().timeIntervalSince(start)
-            self.recordTime = self.formatTime(elapsed)
+            self?.recordTime = self?.formatTime(elapsed) ?? "00:00"
         }
     }
 
@@ -147,13 +147,6 @@ final class CameraViewModel: ObservableObject {
         UserDefaults.standard.set(selectedStyle.rawValue, forKey: "selectedStyle")
         UserDefaults.standard.set(watermarkAlpha, forKey: "watermarkAlpha")
     }
-
-    func loadLastThumbnail() {
-        let handler: (UIImage?) -> Void = { [weak self] image in
-            self?.lastThumbnail = image
-        }
-        photoLibrary.lastThumbnail(completion: handler)
-    }
 }
 
 // MARK: - Supporting enums
@@ -180,6 +173,14 @@ enum FlashMode: String, CaseIterable {
 
 enum Lens: String, CaseIterable {
     case ultraWide, wide, telephoto
+
+    var displayName: String {
+        switch self {
+        case .ultraWide: return "0.5×"
+        case .wide: return "1×"
+        case .telephoto: return "2×"
+        }
+    }
 }
 
 extension CameraStyle: RawRepresentable {

@@ -133,14 +133,17 @@ final class CameraCoreBridge: NSObject {
     // MARK: - Photo processing
 
     /// Process a CGImage (RGBA8) through the Rust core.
-    /// Applies color matrix, 3D LUT, tone curve, and watermark.
+    /// Applies color matrix, 3D LUT, tone curve, saturation, vignette, noise, and watermark.
     /// Returns a new CGImage or nil on failure.
     static func process(image: CGImage,
                         style: CameraStyle,
                         watermark: CGImage?,
                         watermarkAlpha: Float) -> CGImage? {
         guard let colorSpace = image.colorSpace,
-              colorSpace.model == .rgb else { return nil }
+              colorSpace.model == .rgb else {
+            logError("Image color space is not RGB")
+            return nil
+        }
 
         let width = image.width
         let height = image.height
@@ -156,11 +159,17 @@ final class CameraCoreBridge: NSObject {
             bytesPerRow: bytesPerRow,
             space: colorSpace,
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else { return nil }
+        ) else {
+            logError("Failed to create CGContext for image \(width)x\(height)")
+            return nil
+        }
 
         context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        guard let rawPointer = context.data else { return nil }
+        guard let rawPointer = context.data else {
+            logError("CGContext data pointer is nil")
+            return nil
+        }
 
         // Extract style parameters
         let (matrixPtr, gamma) = style.renderParams()
@@ -172,7 +181,7 @@ final class CameraCoreBridge: NSObject {
             fill_effect_params_for_style(styleId, buf.baseAddress!, Int32(buf.count))
         }
         if rcParams < 0 {
-            print("fill_effect_params_for_style error: \(rcParams)")
+            logError("fill_effect_params_for_style error: \(rcParams)")
         }
         let saturation = effectParams[0]
         let vignette = effectParams[1]
@@ -189,7 +198,7 @@ final class CameraCoreBridge: NSObject {
             if rc < 0 {
                 lutDataPtr?.deallocate()
                 lutDataPtr = nil
-                print("fill_lut_for_style error: \(rc)")
+                logError("fill_lut_for_style error: \(rc)")
             }
         }
         defer {
@@ -223,13 +232,13 @@ final class CameraCoreBridge: NSObject {
             wmW,
             wmH,
             wmRow,
-            Int32(width) - wmW - Int32(20),   // bottom-right, 20px margin (vivo watermark pattern)
+            Int32(width) - wmW - Int32(20),   // bottom-right, 20px margin
             Int32(height) - wmH - Int32(20),
             watermarkAlpha
         )
 
         guard rc == 0 else {
-            print("CameraCore error: \(rc)")
+            logError("process_photo error: \(rc)")
             return nil
         }
 

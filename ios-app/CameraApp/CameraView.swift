@@ -80,11 +80,6 @@ final class CameraViewController: UIViewController {
     }
 
     @objc private func sessionWasInterrupted(_ notification: Notification) {
-        guard let userInfo = notification.userInfo,
-              let reasonValue = userInfo[AVCaptureSessionInterruptionReasonKey] as? Int,
-              let reason = AVCaptureSession.InterruptionReason(rawValue: reasonValue) else {
-            return
-        }
         DispatchQueue.main.async {
             self.delegate?.cameraView(self, didFail: CameraError.captureInterrupted)
         }
