@@ -7,7 +7,6 @@
 //!   - apply_saturation: RGB saturation adjustment
 //!   - apply_vignette: radial vignette darkening
 //!   - apply_noise: film grain noise
-//!   - apply_sharpen: unsharp mask sharpening
 //!   - blend_watermark: alpha-blend watermark onto pixel buffer
 //!   - process_photo: combined pipeline (matrix + LUT + tone + effects + watermark)
 //!   - fill_lut_for_style: generate LUT data for a given brand style
@@ -708,20 +707,12 @@ pub extern "C" fn fill_lut_for_style(
         return -3;
     }
 
-    let matrix = match style_id {
-        0 => lut_data::StyleMatrix::natural().matrix,
-        1 => lut_data::StyleMatrix::xiaomi().matrix,
-        2 => lut_data::StyleMatrix::oppo().matrix,
-        3 => lut_data::StyleMatrix::vivo().matrix,
+    let style = match style_id {
+        0 => lut_data::StyleMatrix::natural(),
+        1 => lut_data::StyleMatrix::xiaomi(),
+        2 => lut_data::StyleMatrix::oppo(),
+        3 => lut_data::StyleMatrix::vivo(),
         _ => return -4,
-    };
-
-    let gamma = match style_id {
-        0 => 1.0,
-        1 => 1.04,
-        2 => 1.02,
-        3 => 1.0,
-        _ => 1.0,
     };
 
     let size_usize = size as usize;
@@ -736,11 +727,11 @@ pub extern "C" fn fill_lut_for_style(
                 for b in 0..size_usize {
                     let bf = b as f32 / (size_usize - 1) as f32;
 
-                    let nr = rf * matrix[0] + gf * matrix[1] + bf * matrix[2];
-                    let ng = rf * matrix[3] + gf * matrix[4] + bf * matrix[5];
-                    let nb = rf * matrix[6] + gf * matrix[7] + bf * matrix[8];
+                    let nr = rf * style.matrix[0] + gf * style.matrix[1] + bf * style.matrix[2];
+                    let ng = rf * style.matrix[3] + gf * style.matrix[4] + bf * style.matrix[5];
+                    let nb = rf * style.matrix[6] + gf * style.matrix[7] + bf * style.matrix[8];
 
-                    let inv_gamma = 1.0 / gamma;
+                    let inv_gamma = 1.0 / style.gamma;
                     out_slice[idx] = (nr.clamp(0.0, 1.0).powf(inv_gamma)).clamp(0.0, 1.0);
                     out_slice[idx + 1] = (ng.clamp(0.0, 1.0).powf(inv_gamma)).clamp(0.0, 1.0);
                     out_slice[idx + 2] = (nb.clamp(0.0, 1.0).powf(inv_gamma)).clamp(0.0, 1.0);
