@@ -504,6 +504,7 @@ pub extern "C" fn apply_vignette(
 
 /// Add pseudo-random film grain noise.
 /// `strength` = 0.0 is none, 1.0 is strong noise.
+/// `row_bytes` must be >= width * 4.
 #[no_mangle]
 pub extern "C" fn apply_noise(
     pixels: *mut u8,
@@ -519,6 +520,9 @@ pub extern "C" fn apply_noise(
     if width <= 0 || height <= 0 || row_bytes <= 0 {
         return -2;
     }
+    if row_bytes < width * 4 {
+        return -4;
+    }
 
     // Simple xorshift32 PRNG
     let mut state: u32 = seed;
@@ -528,7 +532,7 @@ pub extern "C" fn apply_noise(
         for y in 0..height as usize {
             let row = rows.get_mut(y * row_bytes as usize..(y + 1) * row_bytes as usize);
             let Some(row) = row else { continue };
-            for x in (0..width as usize).step_by(4) {
+            for x in 0..width as usize {
                 let base = x * 4;
                 if base + 3 >= row.len() {
                     break;
@@ -554,6 +558,7 @@ pub extern "C" fn apply_noise(
 
 /// Alpha-blend a watermark RGBA8 buffer onto the main buffer at (x, y).
 /// `wm_alpha` multiplies the watermark alpha (0.0 = invisible, 1.0 = full).
+/// `row_bytes` must be >= width * 4.
 #[no_mangle]
 pub extern "C" fn blend_watermark(
     pixels: *mut u8,
@@ -573,6 +578,9 @@ pub extern "C" fn blend_watermark(
     }
     if width <= 0 || height <= 0 || row_bytes <= 0 {
         return -2;
+    }
+    if row_bytes < width * 4 {
+        return -4;
     }
     if wm_width <= 0 || wm_height <= 0 || wm_row_bytes <= 0 {
         return -3;
