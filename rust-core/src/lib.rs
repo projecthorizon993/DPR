@@ -416,15 +416,19 @@ pub extern "C" fn apply_tone_curve(
     gamma: f32,
 ) -> i32 {
     if pixels.is_null() {
+        rust_log_error("apply_tone_curve", "null pointer");
         return -1;
     }
     if width <= 0 || height <= 0 || row_bytes <= 0 {
+        rust_log_error("apply_tone_curve", &format!("invalid dimensions: {}x{} row_bytes={}", width, height, row_bytes));
         return -2;
     }
     if gamma <= 0.0 {
+        rust_log_error("apply_tone_curve", &format!("invalid gamma: {}", gamma));
         return -3;
     }
     if row_bytes < width * 4 {
+        rust_log_error("apply_tone_curve", &format!("row_bytes {} < width*4={}", row_bytes, width * 4));
         return -4;
     }
 
@@ -450,6 +454,7 @@ pub extern "C" fn apply_tone_curve(
             }
         }
     }
+    rust_log_info("apply_tone_curve", &format!("processed {}x{} row_bytes={} gamma={}", width, height, row_bytes, gamma));
     0
 }
 
@@ -469,12 +474,15 @@ pub extern "C" fn apply_vignette(
     strength: f32,
 ) -> i32 {
     if pixels.is_null() {
+        rust_log_error("apply_vignette", "null pointer");
         return -1;
     }
     if width <= 0 || height <= 0 || row_bytes <= 0 {
+        rust_log_error("apply_vignette", &format!("invalid dimensions: {}x{} row_bytes={}", width, height, row_bytes));
         return -2;
     }
     if row_bytes < width * 4 {
+        rust_log_error("apply_vignette", &format!("row_bytes {} < width*4={}", row_bytes, width * 4));
         return -4;
     }
 
@@ -503,6 +511,7 @@ pub extern "C" fn apply_vignette(
             }
         }
     }
+    rust_log_info("apply_vignette", &format!("processed {}x{} row_bytes={} strength={}", width, height, row_bytes, strength));
     0
 }
 
@@ -523,12 +532,15 @@ pub extern "C" fn apply_noise(
     seed: u32,
 ) -> i32 {
     if pixels.is_null() {
+        rust_log_error("apply_noise", "null pointer");
         return -1;
     }
     if width <= 0 || height <= 0 || row_bytes <= 0 {
+        rust_log_error("apply_noise", &format!("invalid dimensions: {}x{} row_bytes={}", width, height, row_bytes));
         return -2;
     }
     if row_bytes < width * 4 {
+        rust_log_error("apply_noise", &format!("row_bytes {} < width*4={}", row_bytes, width * 4));
         return -4;
     }
 
@@ -557,6 +569,7 @@ pub extern "C" fn apply_noise(
             }
         }
     }
+    rust_log_info("apply_noise", &format!("processed {}x{} row_bytes={} strength={} seed={}", width, height, row_bytes, strength, seed));
     0
 }
 
@@ -582,15 +595,19 @@ pub extern "C" fn blend_watermark(
     wm_alpha: f32,
 ) -> i32 {
     if pixels.is_null() || wm_pixels.is_null() {
+        rust_log_error("blend_watermark", "null pointer");
         return -1;
     }
     if width <= 0 || height <= 0 || row_bytes <= 0 {
+        rust_log_error("blend_watermark", &format!("invalid dimensions: {}x{} row_bytes={}", width, height, row_bytes));
         return -2;
     }
     if row_bytes < width * 4 {
+        rust_log_error("blend_watermark", &format!("row_bytes {} < width*4={}", row_bytes, width * 4));
         return -4;
     }
     if wm_width <= 0 || wm_height <= 0 || wm_row_bytes <= 0 {
+        rust_log_error("blend_watermark", &format!("invalid watermark dimensions: {}x{} row_bytes={}", wm_width, wm_height, wm_row_bytes));
         return -3;
     }
 
@@ -602,6 +619,7 @@ pub extern "C" fn blend_watermark(
     let end_y = (offset_y + wm_height).min(height) as usize;
 
     if start_x >= end_x || start_y >= end_y {
+        rust_log_warn("blend_watermark", "watermark out of bounds, skipping");
         return 0;
     }
 
@@ -646,6 +664,7 @@ pub extern "C" fn blend_watermark(
             }
         }
     }
+    rust_log_info("blend_watermark", &format!("blended {}x{} watermark at ({},{}) alpha={}", width, height, offset_x, offset_y, wm_alpha));
     0
 }
 
@@ -694,16 +713,25 @@ pub extern "C" fn process_photo(
     wm_alpha: f32,
 ) -> i32 {
     if pixels.is_null() {
+        rust_log_error("process_photo", "null pointer");
         return -1;
     }
     if width <= 0 || height <= 0 || row_bytes <= 0 {
+        rust_log_error("process_photo", &format!("invalid dimensions: {}x{} row_bytes={}", width, height, row_bytes));
         return -2;
     }
+    if row_bytes < width * 4 {
+        rust_log_error("process_photo", &format!("row_bytes {} < width*4={}", row_bytes, width * 4));
+        return -4;
+    }
+
+    rust_log_info("process_photo", &format!("started {}x{} row_bytes={}", width, height, row_bytes));
 
     // 1. Color matrix
     if !matrix.is_null() {
         let rc = apply_color_matrix(pixels, width, height, row_bytes, matrix);
         if rc != 0 {
+            rust_log_error("process_photo", &format!("color matrix failed: {}", rc));
             return rc;
         }
     }
@@ -712,6 +740,7 @@ pub extern "C" fn process_photo(
     if !lut_data.is_null() && lut_size >= 2 {
         let rc = apply_lut_3d(pixels, width, height, row_bytes, lut_data, lut_size);
         if rc != 0 {
+            rust_log_error("process_photo", &format!("LUT failed: {}", rc));
             return rc;
         }
     }
@@ -720,6 +749,7 @@ pub extern "C" fn process_photo(
     if gamma > 0.0 && gamma != 1.0 {
         let rc = apply_tone_curve(pixels, width, height, row_bytes, gamma);
         if rc != 0 {
+            rust_log_error("process_photo", &format!("tone curve failed: {}", rc));
             return rc;
         }
     }
@@ -728,6 +758,7 @@ pub extern "C" fn process_photo(
     if saturation > 0.0 && saturation != 1.0 {
         let rc = apply_saturation(pixels, width, height, row_bytes, saturation);
         if rc != 0 {
+            rust_log_error("process_photo", &format!("saturation failed: {}", rc));
             return rc;
         }
     }
@@ -736,6 +767,7 @@ pub extern "C" fn process_photo(
     if vignette > 0.0 {
         let rc = apply_vignette(pixels, width, height, row_bytes, vignette);
         if rc != 0 {
+            rust_log_error("process_photo", &format!("vignette failed: {}", rc));
             return rc;
         }
     }
@@ -744,6 +776,7 @@ pub extern "C" fn process_photo(
     if noise > 0.0 {
         let rc = apply_noise(pixels, width, height, row_bytes, noise, noise_seed);
         if rc != 0 {
+            rust_log_error("process_photo", &format!("noise failed: {}", rc));
             return rc;
         }
     }
@@ -756,10 +789,12 @@ pub extern "C" fn process_photo(
             wm_offset_x, wm_offset_y, wm_alpha,
         );
         if rc != 0 {
+            rust_log_error("process_photo", &format!("watermark failed: {}", rc));
             return rc;
         }
     }
 
+    rust_log_info("process_photo", "completed successfully");
     0
 }
 
