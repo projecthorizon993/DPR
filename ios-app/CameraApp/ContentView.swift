@@ -6,9 +6,8 @@
 //  Exact values from xiaomi-deobf:
 //  - Shutter: 93dp (bq7), amber #ffffce16 fill, dark outer ring
 //  - Gallery: 66dp (bqi)
-//  - Lens/Style containers: 54dp (bpi)
 //  - Top bar height: 60dp (eap)
-//  - Animation: 150ms decelerate (ev_), 220ms (ev9)
+//  - Animation: 150ms decelerate (ev_)
 //  - Amber: #ffffce16, Dark text on amber: #111111
 //
 
@@ -137,40 +136,7 @@ struct ContentView: View {
                     Spacer()
 
                     // ── Shutter button (center, amber #ffffce16, 93dp) ──
-                    ZStack {
-                        // Outer dark ring
-                        Circle()
-                            .stroke(Color.white.opacity(0.25), lineWidth: 3)
-                            .frame(width: 93, height: 93)
-                        // Inner amber circle
-                        if viewModel.isVideoMode && viewModel.isRecording {
-                            Circle()
-                                .fill(Color(hex: "ffe11b1b"))
-                                .frame(width: 80, height: 80)
-                        } else {
-                            Circle()
-                                .fill(Color(hex: "ffffce16"))
-                                .frame(width: 80, height: 80)
-                        }
-                    }
-                    .scaleEffect(viewModel.shutterPressed ? 0.88 : 1.0)
-                    .animation(.easeInOut(duration: 0.08), value: viewModel.shutterPressed)
-                    .simultaneousGesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { _ in
-                                if !viewModel.shutterPressed {
-                                    viewModel.shutterPressed = true
-                                }
-                            }
-                            .onEnded { _ in
-                                viewModel.shutterPressed = false
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                    viewModel.shutterPressed = false
-                                }
-                            }
-                    )
-                    .disabled(viewModel.isProcessing)
-                    .frame(width: 93, height: 93)
+                    shutterButton
 
                     Spacer()
 
@@ -298,6 +264,51 @@ struct ContentView: View {
             viewModel.requestPermissions()
             viewModel.loadLastThumbnailAsync()
         }
+    }
+
+    // MARK: - Shutter button (Xiaomi: tap = photo, long press = video)
+
+    var shutterButton: some View {
+        ZStack {
+            // Outer dark ring
+            Circle()
+                .stroke(Color.white.opacity(0.25), lineWidth: 3)
+                .frame(width: 93, height: 93)
+            // Inner amber circle
+            if viewModel.isVideoMode && viewModel.isRecording {
+                Circle()
+                    .fill(Color(hex: "ffe11b1b"))
+                    .frame(width: 80, height: 80)
+            } else {
+                Circle()
+                    .fill(Color(hex: "ffffce16"))
+                    .frame(width: 80, height: 80)
+            }
+        }
+        .scaleEffect(viewModel.shutterPressed ? 0.88 : 1.0)
+        .animation(.easeInOut(duration: 0.08), value: viewModel.shutterPressed)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    if !viewModel.shutterPressed {
+                        viewModel.shutterPressed = true
+                    }
+                }
+                .onEnded { _ in
+                    viewModel.shutterPressed = false
+                    // On tap (not drag): capture photo or toggle video
+                    if viewModel.isVideoMode {
+                        viewModel.toggleVideo()
+                    } else {
+                        viewModel.capturePhoto()
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        viewModel.shutterPressed = false
+                    }
+                }
+        )
+        .disabled(viewModel.isProcessing)
+        .frame(width: 93, height: 93)
     }
 }
 
