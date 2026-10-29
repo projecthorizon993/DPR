@@ -29,7 +29,8 @@ jobs:
         run: |
           cd rust-core
           cargo build --release --target aarch64-apple-ios
-          cp target/aarch64-apple-ios/release/libcamera_core.a rust-libs/
+          mkdir -p ../rust-libs
+          cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
       - name: Build iOS app with xcodebuild
         run: |
