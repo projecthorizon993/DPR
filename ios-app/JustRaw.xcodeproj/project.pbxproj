@@ -62,7 +62,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		80000024 = {
+		80000036 = {
 			isa = PBXGroup;
 			children = (
 				80000025 /* JustRaw */,
@@ -187,7 +187,7 @@
 				en,
 				Base,
 			);
-			mainGroup = 80000024;
+			mainGroup = 80000036;
 			productRefGroup = 80000026 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
