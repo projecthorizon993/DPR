@@ -101,14 +101,17 @@ final class CameraService: NSObject, ObservableObject {
     /// 最大缩放因子
     @Published var maxZoomFactor: CGFloat = 1.0
     
-    /// 活动传感器分辨率
-    var activeSensorResolution: CMVideoDimensions = CMVideoDimensions(width: 4032, height: 3024)
-    
     /// 是否启用闪光灯
     @Published var isFlashEnabled: Bool = false
     
     /// 是否支持闪光灯
     @Published var supportsFlash: Bool = false
+    
+    /// 录制开始时间
+    private var recordingStart: Date?
+    
+    /// 录制计时器
+    private var recordingTimer: Timer?
     
     /// 当前对焦点
     @Published var focusPoint: CGPoint?
