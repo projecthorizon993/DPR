@@ -3,11 +3,13 @@
 //  CameraApp
 //
 //  Ported DIRECTLY from Xiaomi MIUI Camera APK (decompiled layout values).
-//  Exact values from xiaomi-deobf/res:
-//  - Shutter: 93.09dp (bq7), amber #FFFFCE16 fill, dark outer ring
-//  - Mode pills: corner 6dp, pad 16dp/10dp, text 14sp, amber fill + dark text when selected
-//  - Lens pills: amber fill + dark text when selected
-//  - Flash: amber when ON
+//  Exact values from xiaomi-deobf:
+//  - Shutter: 93dp (bq7), amber #ffffce16 fill, dark outer ring
+//  - Gallery: 66dp (bqi)
+//  - Lens/Style containers: 54dp (bpi)
+//  - Top bar height: 60dp (eap)
+//  - Animation: 150ms decelerate (ev_), 220ms (ev9)
+//  - Amber: #ffffce16, Dark text on amber: #111111
 //
 
 import SwiftUI
@@ -31,13 +33,13 @@ struct ContentView: View {
                     viewModel.showReview = true
                 },
                 onRecordingStarted: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
                         viewModel.isRecording = true
                     }
                     viewModel.startRecordingTimer()
                 },
                 onRecordingStopped: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
                         viewModel.isRecording = false
                     }
                     viewModel.stopRecordingTimer()
@@ -58,7 +60,7 @@ struct ContentView: View {
                     Button(action: { viewModel.toggleFlash() }) {
                         Image(systemName: viewModel.flashMode.icon)
                             .font(.system(size: 24, weight: .medium))
-                            .foregroundColor(viewModel.flashMode == .on ? Color(hex: "FFFFCE16") : .white)
+                            .foregroundColor(viewModel.flashMode == .on ? Color(hex: "ffffce16") : .white)
                             .frame(width: 56, height: 56)
                             .contentShape(Rectangle())
                     }
@@ -71,7 +73,7 @@ struct ContentView: View {
                             title: "PHOTO",
                             isSelected: !viewModel.isVideoMode
                         ) {
-                            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                            withAnimation(.easeInOut(duration: 0.15)) {
                                 viewModel.isVideoMode = false
                             }
                         }
@@ -79,7 +81,7 @@ struct ContentView: View {
                             title: "VIDEO",
                             isSelected: viewModel.isVideoMode
                         ) {
-                            withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                            withAnimation(.easeInOut(duration: 0.15)) {
                                 viewModel.isVideoMode = true
                             }
                         }
@@ -88,7 +90,7 @@ struct ContentView: View {
                         Capsule()
                             .fill(Color.white.opacity(0.10))
                             .overlay(
-                                Capsule().stroke(Color.white.opacity(0.30), lineWidth: 1)
+                                Capsule().stroke(Color.white.opacity(0.24), lineWidth: 1)
                             )
                     )
                     .frame(height: 30)
@@ -105,23 +107,23 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 12)
+                .padding(.top, 8)
 
                 Spacer()
 
                 // ── Bottom bar: Gallery | Shutter | Style ──
                 HStack(spacing: 0) {
-                    // Gallery shortcut (bottom-left)
+                    // Gallery shortcut (bottom-left, 66dp)
                     Button(action: { viewModel.showGallery = true }) {
                         ZStack {
                             Circle()
                                 .fill(Color.white.opacity(0.15))
-                                .frame(width: 70, height: 70)
+                                .frame(width: 66, height: 66)
                             if let thumb = viewModel.lastThumbnail {
                                 Image(uiImage: thumb)
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: 58, height: 58)
+                                    .frame(width: 54, height: 54)
                                     .clipShape(Circle())
                             } else {
                                 Image(systemName: "photo.on.rectangle")
@@ -130,24 +132,24 @@ struct ContentView: View {
                             }
                         }
                     }
-                    .frame(width: 70, height: 70)
+                    .frame(width: 66, height: 66)
 
                     Spacer()
 
-                    // ── Shutter button (center, amber #FFFFCE16, 93dp) ──
+                    // ── Shutter button (center, amber #ffffce16, 93dp) ──
                     ZStack {
-                        // Outer dark ring (like Xiaomi shutter outer stroke)
+                        // Outer dark ring
                         Circle()
                             .stroke(Color.white.opacity(0.25), lineWidth: 3)
                             .frame(width: 93, height: 93)
                         // Inner amber circle
                         if viewModel.isVideoMode && viewModel.isRecording {
                             Circle()
-                                .fill(Color.red)
+                                .fill(Color(hex: "ffe11b1b"))
                                 .frame(width: 80, height: 80)
                         } else {
                             Circle()
-                                .fill(Color(hex: "FFFFCE16"))
+                                .fill(Color(hex: "ffffce16"))
                                 .frame(width: 80, height: 80)
                         }
                     }
@@ -172,7 +174,7 @@ struct ContentView: View {
 
                     Spacer()
 
-                    // Styles / Profiles (bottom-right)
+                    // Styles / Profiles (bottom-right, 70dp container)
                     Button(action: { viewModel.showStylePicker = true }) {
                         ZStack {
                             Circle()
@@ -201,7 +203,7 @@ struct ContentView: View {
                     title: "0.5×",
                     isSelected: viewModel.selectedLens == .ultraWide
                 ) {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
                         viewModel.selectedLens = .ultraWide
                         viewModel.switchToUltraWide()
                     }
@@ -210,7 +212,7 @@ struct ContentView: View {
                     title: "1×",
                     isSelected: viewModel.selectedLens == .wide
                 ) {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
                         viewModel.selectedLens = .wide
                         viewModel.switchToWide()
                     }
@@ -219,7 +221,7 @@ struct ContentView: View {
                     title: "2×",
                     isSelected: viewModel.selectedLens == .telephoto
                 ) {
-                    withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
                         viewModel.selectedLens = .telephoto
                         viewModel.switchToTelephoto()
                     }
@@ -227,8 +229,8 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, 22)
-            .padding(.top, 110)
-            .padding(.bottom, 140)
+            .padding(.top, 70)     // below top bar (60dp + margin)
+            .padding(.bottom, 130) // above bottom bar
 
             // ── Recording indicator (top-right) ──
             if viewModel.isVideoMode && viewModel.isRecording {
@@ -299,7 +301,7 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Mode pill (Xiaomi: selected = amber fill + dark text)
+// MARK: - Mode pill (Xiaomi: selected = amber fill + dark text #111111)
 
 struct ModePill: View {
     let title: String
@@ -310,16 +312,16 @@ struct ModePill: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(isSelected ? Color(red: 0.15, green: 0.15, blue: 0.15) : .white)
+                .foregroundColor(isSelected ? Color(red: 0.067, green: 0.067, blue: 0.067) : .white)
                 .frame(width: 56, height: 28)
         }
         .buttonStyle(PlainButtonStyle())
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color(hex: "FFFFCE16") : Color.clear)
+                .fill(isSelected ? Color(hex: "ffffce16") : Color.clear)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.35), lineWidth: 1)
+                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.24), lineWidth: 1)
                 )
         )
         .padding(.horizontal, 16)
@@ -338,20 +340,20 @@ struct LensPill: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                .foregroundColor(isSelected ? Color(red: 0.15, green: 0.15, blue: 0.15) : .white)
+                .foregroundColor(isSelected ? Color(red: 0.067, green: 0.067, blue: 0.067) : .white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
                 .frame(width: 44, height: 28)
         }
         .buttonStyle(PlainButtonStyle())
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color(hex: "FFFFCE16") : Color.clear)
+                .fill(isSelected ? Color(hex: "ffffce16") : Color.clear)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.35), lineWidth: 1)
+                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.24), lineWidth: 1)
                 )
         )
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
     }
 }
 
@@ -361,7 +363,7 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-// MARK: - Color extension (Xiaomi amber #FFFFCE16)
+// MARK: - Color extension (Xiaomi amber #ffffce16)
 
 extension Color {
     init(hex: String) {
