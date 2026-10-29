@@ -1,237 +1,413 @@
-// !$*UTF8*$!
-{
-	archiveVersion = 1;
-	classes = {
-	};
-	objectVersion = 77;
-	rootObject = 80000010 /* PBXProject */;
-	objects = {
-
-/* Begin PBXBuildFile section */
-		80000001 /* JustRawApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000002 /* JustRawApp.swift */; };
-		80000003 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 80000004 /* Info.plist */; };
-		80000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 80000006 /* Assets.xcassets */; };
-/* End PBXBuildFile section */
-
-/* Begin PBXFileReference section */
-		80000002 /* JustRawApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JustRawApp.swift; sourceTree = "<group>"; };
-		80000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		80000006 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-/* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-/* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXGroup section */
-		80000007 = {
-			isa = PBXGroup;
-			children = (
-				80000002 /* JustRawApp.swift */,
-				80000004 /* Info.plist */,
-				80000006 /* Assets.xcassets */,
-			);
-			sourceTree = "<group>";
-		};
-		80000008 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				80000009 /* JustRaw.app */,
-			);
-			sourceTree = "<group>";
-		};
-		80000009 /* JustRaw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JustRaw.app; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXGroup section */
-
-/* Begin PBXHeadersBuildPhase section */
-/* End PBXHeadersBuildPhase section */
-
-/* Begin PBXNativeTarget section */
-		8000000A /* JustRaw */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 8000000D /* Build configuration list for PBXNativeTarget "JustRaw" */;
-			buildPhases = (
-				8000000B /* Sources */,
-				8000000C /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = JustRaw;
-			productName = JustRaw;
-			productReference = 80000009 /* JustRaw.app */;
-			productType = "com.apple.product-type.application";
-		};
-/* End PBXNativeTarget section */
-
-/* Begin PBXProject section */
-		80000010 /* PBXProject */ = {
-			isa = PBXProject;
-			attributes = {
-				LastSwiftUpdateCheck = 1600;
-				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-					8000000A = {
-						CreatedOnToolsVersion = 16.0;
-					};
-				};
-			};
-			buildConfigurationList = 80000011 /* Build configuration list for PBXProject "JustRaw" */;
-			developmentRegion = en;
-			hasScannedForEncodings = 0;
-			knownRegions = (
-				en,
-				Base,
-			);
-			mainGroup = 80000007;
-			productRefGroup = 80000008 /* Products */;
-			projectDirPath = "";
-			projectRoot = "";
-			targets = (
-				8000000A /* JustRaw */,
-			);
-		};
-/* End PBXProject section */
-
-/* Begin PBXResourcesBuildPhase section */
-		8000000C /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				80000003 /* Info.plist in Resources */,
-				80000005 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
-
-/* Begin PBXSourcesBuildPhase section */
-		8000000B /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				80000001 /* JustRawApp.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXSourcesBuildPhase section */
-
-/* Begin XCBuildConfiguration section */
-		80000012 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		80000013 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		80000014 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = raw.JustRaw;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		80000015 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = raw.JustRaw;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-/* End XCBuildConfiguration section */
-
-/* Begin XCConfigurationList section */
-		80000011 /* Build configuration list for PBXProject "JustRaw" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				80000012 /* Debug */,
-				80000013 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		8000000D /* Build configuration list for PBXNativeTarget "JustRaw" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				80000014 /* Debug */,
-				80000015 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-/* End XCConfigurationList section */
-
-/* Begin XCVersionGroup section */
-/* End XCVersionGroup section */
-};
-/* End PBXProject section */
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>archiveVersion</key>
+	<string>1</string>
+	<key>classes</key>
+	<dict/>
+	<key>objectVersion</key>
+	<string>46</string>
+	<key>objects</key>
+	<dict>
+		<key>PBXBuildFile</key>
+		<dict>
+			<key>1</key>
+			<dict>
+				<key>fileRef</key>
+				<string>2</string>
+			</dict>
+			<key>3</key>
+			<dict>
+				<key>fileRef</key>
+				<string>4</string>
+			</dict>
+			<key>5</key>
+			<dict>
+				<key>fileRef</key>
+				<string>6</string>
+			</dict>
+		</dict>
+		<key>PBXFileReference</key>
+		<dict>
+			<key>2</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>JustRawApp.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>4</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>text.plist.xml</string>
+				<key>path</key>
+				<string>Info.plist</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>6</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>folder.assetcatalog</string>
+				<key>path</key>
+				<string>Assets.xcassets</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+		</dict>
+		<key>PBXFrameworksBuildPhase</key>
+		<dict>
+			<key>7</key>
+			<dict>
+				<key>buildActionMask</key>
+				<integer>2147483647</integer>
+				<key>files</key>
+				<array/>
+				<key>runOnlyForDeploymentPostprocessing</key>
+				<false/>
+			</dict>
+		</dict>
+		<key>PBXGroup</key>
+		<dict>
+			<key>8</key>
+			<dict>
+				<key>children</key>
+				<array>
+					<string>2</string>
+					<string>4</string>
+					<string>6</string>
+				</array>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>9</key>
+			<dict>
+				<key>children</key>
+				<array>
+					<string>10</string>
+				</array>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>10</key>
+			<dict>
+				<key>explicitFileType</key>
+				<string>wrapper.application</string>
+				<key>includeInIndex</key>
+				<false/>
+				<key>path</key>
+				<string>JustRaw.app</string>
+				<key>sourceTree</key>
+				<string>BUILT_PRODUCTS_DIR</string>
+			</dict>
+		</dict>
+		<key>PBXNativeTarget</key>
+		<dict>
+			<key>11</key>
+			<dict>
+				<key>buildConfigurationList</key>
+				<string>14</string>
+				<key>buildPhases</key>
+				<array>
+					<string>12</string>
+					<string>7</string>
+					<string>13</string>
+				</array>
+				<key>buildRules</key>
+				<array/>
+				<key>dependencies</key>
+				<array/>
+				<key>name</key>
+				<string>JustRaw</string>
+				<key>productName</key>
+				<string>JustRaw</string>
+				<key>productReference</key>
+				<string>10</string>
+				<key>productType</key>
+				<string>com.apple.product-type.application</string>
+			</dict>
+		</dict>
+		<key>PBXProject</key>
+		<dict>
+			<key>15</key>
+			<dict>
+				<key>attributes</key>
+				<dict>
+					<key>LastSwiftUpdateCheck</key>
+					<string>1600</string>
+					<key>LastUpgradeCheck</key>
+					<string>1600</string>
+					<key>TargetAttributes</key>
+					<dict>
+						<key>11</key>
+						<dict>
+							<key>CreatedOnToolsVersion</key>
+							<string>16.0</string>
+						</dict>
+					</dict>
+				</dict>
+				<key>buildConfigurationList</key>
+				<string>16</string>
+				<key>developmentRegion</key>
+				<string>en</string>
+				<key>hasScannedForEncodings</key>
+				<false/>
+				<key>knownRegions</key>
+				<array>
+					<string>en</string>
+					<string>Base</string>
+				</array>
+				<key>mainGroup</key>
+				<string>8</string>
+				<key>productRefGroup</key>
+				<string>9</string>
+				<key>projectDirPath</key>
+				<string></string>
+				<key>projectRoot</key>
+				<string></string>
+				<key>targets</key>
+				<array>
+					<string>11</string>
+				</array>
+			</dict>
+		</dict>
+		<key>PBXResourcesBuildPhase</key>
+		<dict>
+			<key>13</key>
+			<dict>
+				<key>buildActionMask</key>
+				<integer>2147483647</integer>
+				<key>files</key>
+				<array>
+					<string>3</string>
+					<string>5</string>
+				</array>
+				<key>runOnlyForDeploymentPostprocessing</key>
+				<false/>
+			</dict>
+		</dict>
+		<key>PBXSourcesBuildPhase</key>
+		<dict>
+			<key>12</key>
+			<dict>
+				<key>buildActionMask</key>
+				<integer>2147483647</integer>
+				<key>files</key>
+				<array>
+					<string>1</string>
+				</array>
+				<key>runOnlyForDeploymentPostprocessing</key>
+				<false/>
+			</dict>
+		</dict>
+		<key>XCBuildConfiguration</key>
+		<dict>
+			<key>17</key>
+			<dict>
+				<key>buildSettings</key>
+				<dict>
+					<key>CLANG_ENABLE_OBJC_ARC</key>
+					<true/>
+					<key>CLANG_ENABLE_OBJC_WEAK</key>
+					<true/>
+					<key>GCC_C_LANGUAGE_STANDARD</key>
+					<string>gnu17</string>
+					<key>GCC_DYNAMIC_NO_PIC</key>
+					<false/>
+					<key>GCC_NO_COMMON_BLOCKS</key>
+					<true/>
+					<key>GCC_OPTIMIZATION_LEVEL</key>
+					<string>0</string>
+					<key>GCC_PREPROCESSOR_DEFINITIONS</key>
+					<array>
+						<string>DEBUG=1</string>
+						<string>$(inherited)</string>
+					</array>
+					<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
+					<true/>
+					<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
+					<string>yes_error</string>
+					<key>GCC_WARN_UNDECLARED_SELECTOR</key>
+					<true/>
+					<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
+					<string>yes_aggressive</string>
+					<key>GCC_WARN_UNUSED_FUNCTION</key>
+					<true/>
+					<key>GCC_WARN_UNUSED_VARIABLE</key>
+					<true/>
+					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+					<string>18.0</string>
+					<key>MTL_ENABLE_DEBUG_INFO</key>
+					<string>include-source</string>
+					<key>MTL_FAST_MATH</key>
+					<true/>
+					<key>ONLY_ACTIVE_ARCH</key>
+					<true/>
+					<key>SDKROOT</key>
+					<string>iphoneos</string>
+					<key>SWIFT_ACTIVE_COMPILATION_CONDITIONS</key>
+					<string>DEBUG $(inherited)</string>
+					<key>SWIFT_OPTIMIZATION_LEVEL</key>
+					<string>-Onone</string>
+					<key>SWIFT_VERSION</key>
+					<string>5.0</string>
+				</dict>
+				<key>name</key>
+				<string>Debug</string>
+			</dict>
+			<key>18</key>
+			<dict>
+				<key>buildSettings</key>
+				<dict>
+					<key>CLANG_ENABLE_OBJC_ARC</key>
+					<true/>
+					<key>CLANG_ENABLE_OBJC_WEAK</key>
+					<true/>
+					<key>GCC_C_LANGUAGE_STANDARD</key>
+					<string>gnu17</string>
+					<key>GCC_NO_COMMON_BLOCKS</key>
+					<true/>
+					<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
+					<true/>
+					<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
+					<string>yes_error</string>
+					<key>GCC_WARN_UNDECLARED_SELECTOR</key>
+					<true/>
+					<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
+					<string>yes_aggressive</string>
+					<key>GCC_WARN_UNUSED_FUNCTION</key>
+					<true/>
+					<key>GCC_WARN_UNUSED_VARIABLE</key>
+					<true/>
+					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+					<string>18.0</string>
+					<key>MTL_ENABLE_DEBUG_INFO</key>
+					<string>no</string>
+					<key>MTL_FAST_MATH</key>
+					<true/>
+					<key>ONLY_ACTIVE_ARCH</key>
+					<true/>
+					<key>SDKROOT</key>
+					<string>iphoneos</string>
+					<key>SWIFT_COMPILATION_MODE</key>
+					<string>wholemodule</string>
+					<key>SWIFT_OPTIMIZATION_LEVEL</key>
+					<string>-O</string>
+					<key>SWIFT_VERSION</key>
+					<string>5.0</string>
+					<key>VALIDATE_PRODUCT</key>
+					<true/>
+				</dict>
+				<key>name</key>
+				<string>Release</string>
+			</dict>
+			<key>19</key>
+			<dict>
+				<key>buildSettings</key>
+				<dict>
+					<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
+					<string>AppIcon</string>
+					<key>CODE_SIGN_STYLE</key>
+					<string>Automatic</string>
+					<key>CURRENT_PROJECT_VERSION</key>
+					<integer>1</integer>
+					<key>DEVELOPMENT_TEAM</key>
+					<string></string>
+					<key>GENERATE_INFOPLIST_FILE</key>
+					<false/>
+					<key>INFOPLIST_FILE</key>
+					<string>Info.plist</string>
+					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+					<string>18.0</string>
+					<key>LD_RUNPATH_SEARCH_PATHS</key>
+					<array>
+						<string>$(inherited)</string>
+						<string>@executable_path/Frameworks</string>
+					</array>
+					<key>MARKETING_VERSION</key>
+					<string>1.0</string>
+					<key>PRODUCT_BUNDLE_IDENTIFIER</key>
+					<string>raw.JustRaw</string>
+					<key>PRODUCT_NAME</key>
+					<string>$(TARGET_NAME)</string>
+					<key>SWIFT_VERSION</key>
+					<string>5.0</string>
+					<key>TARGETED_DEVICE_FAMILY</key>
+					<string>1,2</string>
+				</dict>
+				<key>name</key>
+				<string>Debug</string>
+			</dict>
+			<key>20</key>
+			<dict>
+				<key>buildSettings</key>
+				<dict>
+					<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
+					<string>AppIcon</string>
+					<key>CODE_SIGN_STYLE</key>
+					<string>Automatic</string>
+					<key>CURRENT_PROJECT_VERSION</key>
+					<integer>1</integer>
+					<key>DEVELOPMENT_TEAM</key>
+					<string></string>
+					<key>GENERATE_INFOPLIST_FILE</key>
+					<false/>
+					<key>INFOPLIST_FILE</key>
+					<string>Info.plist</string>
+					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+					<string>18.0</string>
+					<key>LD_RUNPATH_SEARCH_PATHS</key>
+					<array>
+						<string>$(inherited)</string>
+						<string>@executable_path/Frameworks</string>
+					</array>
+					<key>MARKETING_VERSION</key>
+					<string>1.0</string>
+					<key>PRODUCT_BUNDLE_IDENTIFIER</key>
+					<string>raw.JustRaw</string>
+					<key>PRODUCT_NAME</key>
+					<string>$(TARGET_NAME)</string>
+					<key>SWIFT_VERSION</key>
+					<string>5.0</string>
+					<key>TARGETED_DEVICE_FAMILY</key>
+					<string>1,2</string>
+				</dict>
+				<key>name</key>
+				<string>Release</string>
+			</dict>
+		</dict>
+		<key>XCConfigurationList</key>
+		<dict>
+			<key>16</key>
+			<dict>
+				<key>buildConfigurations</key>
+				<array>
+					<string>17</string>
+					<string>18</string>
+				</array>
+				<key>defaultConfigurationIsVisible</key>
+				<false/>
+				<key>defaultConfigurationName</key>
+				<string>Release</string>
+			</dict>
+			<key>14</key>
+			<dict>
+				<key>buildConfigurations</key>
+				<array>
+					<string>19</string>
+					<string>20</string>
+				</array>
+				<key>defaultConfigurationIsVisible</key>
+				<false/>
+				<key>defaultConfigurationName</key>
+				<string>Release</string>
+			</dict>
+		</dict>
+	</dict>
+	<key>rootObject</key>
+	<string>15</string>
+</dict>
+</plist>
