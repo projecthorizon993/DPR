@@ -4,7 +4,7 @@
 	classes = {
 	};
 	objectVersion = 77;
-	rootObject = 8000002F /* PBXProject */;
+	rootObject = 80000040 /* PBXProject */;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -69,15 +69,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		8000002F = {
-			isa = PBXGroup;
-			children = (
-				80000030 /* JustRaw */,
-				80000031 /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		80000030 /* JustRaw */ = {
+		8000002F /* JustRaw group */ = {
 			isa = PBXGroup;
 			children = (
 				80000002 /* JustRawApp.swift */,
@@ -106,7 +98,7 @@
 			path = .;
 			sourceTree = "<group>";
 		};
-		80000031 /* Products */ = {
+		80000030 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				80000032 /* JustRaw.app */,
@@ -140,7 +132,7 @@
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		8000002F /* PBXProject */ = {
+		80000040 /* PBXProject */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
@@ -159,8 +151,8 @@
 				en,
 				Base,
 			);
-			mainGroup = 8000002F;
-			productRefGroup = 80000031 /* Products */;
+			mainGroup = 8000002F /* JustRaw group */;
+			productRefGroup = 80000030 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
