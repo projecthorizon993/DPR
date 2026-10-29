@@ -1,389 +1,163 @@
-//
-//  ContentView.swift
-//  CameraApp
-//
-//  Ported DIRECTLY from Xiaomi MIUI Camera APK (decompiled layout values).
-//  Exact values from xiaomi-deobf:
-//  - Shutter: 93dp (bq7), amber #ffffce16 fill, dark outer ring
-//  - Gallery: 66dp (bqi)
-//  - Top bar height: 60dp (eap)
-//  - Animation: 150ms decelerate (ev_)
-//  - Amber: #ffffce16, Dark text on amber: #111111
-//
-
 import SwiftUI
-import PhotosUI
-import UIKit
 
 struct ContentView: View {
-    @StateObject private var viewModel = CameraViewModel()
-
+    
+    @EnvironmentObject var permissionManager: PermissionManager
+    @EnvironmentObject var appStateManager: AppStateManager
+    @EnvironmentObject var cameraService: CameraService
+    
+    @State private var showingCamera = false
+    @State private var isCheckingPermissions = false
+    
     var body: some View {
-        ZStack {
-            // ── Camera preview (full bleed, black) ──
-            CameraViewRepresentable(
-                viewModel: viewModel,
-                onPhotoCaptured: { image in
-                    viewModel.reviewImage = image
-                    viewModel.showReview = true
-                },
-                onVideoRecorded: { url in
-                    viewModel.reviewVideoURL = url
-                    viewModel.showReview = true
-                },
-                onRecordingStarted: {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        viewModel.isRecording = true
-                    }
-                    viewModel.startRecordingTimer()
-                },
-                onRecordingStopped: {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        viewModel.isRecording = false
-                    }
-                    viewModel.stopRecordingTimer()
-                },
-                onError: { error in
-                    logError("Camera error: \(error.localizedDescription)")
-                    viewModel.errorMessage = error.localizedDescription
-                    viewModel.showError = true
-                }
-            )
-            .ignoresSafeArea()
-            .background(Color.black)
-
-            // ── Top bar: Flash | Mode pills | Settings ──
-            VStack {
-                HStack(spacing: 0) {
-                    // Flash toggle (top-left)
-                    Button(action: { viewModel.toggleFlash() }) {
-                        Image(systemName: viewModel.flashMode.icon)
-                            .font(.system(size: 24, weight: .medium))
-                            .foregroundColor(viewModel.flashMode == .on ? Color(hex: "ffffce16") : .white)
-                            .frame(width: 56, height: 56)
-                            .contentShape(Rectangle())
-                    }
-
-                    Spacer()
-
-                    // Mode pills: PHOTO / VIDEO (top center)
-                    HStack(spacing: 0) {
-                        ModePill(
-                            title: "PHOTO",
-                            isSelected: !viewModel.isVideoMode
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                viewModel.isVideoMode = false
-                            }
-                        }
-                        ModePill(
-                            title: "VIDEO",
-                            isSelected: viewModel.isVideoMode
-                        ) {
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                viewModel.isVideoMode = true
-                            }
-                        }
-                    }
-                    .background(
-                        Capsule()
-                            .fill(Color.white.opacity(0.10))
-                            .overlay(
-                                Capsule().stroke(Color.white.opacity(0.24), lineWidth: 1)
-                            )
-                    )
-                    .frame(height: 30)
-
-                    Spacer()
-
-                    // Settings (top-right) — ellipsis like Xiaomi
-                    Button(action: { viewModel.showSettings = true }) {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 24, weight: .medium))
+        NavigationView {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                VStack(spacing: 30) {
+                    // 应用标题
+                    VStack(spacing: 12) {
+                        Text("JustRaw")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
                             .foregroundColor(.white)
-                            .frame(width: 56, height: 56)
-                            .contentShape(Rectangle())
+                        
+                        Text("专业 RAW 相机")
+                            .font(.title2)
+                            .foregroundColor(.gray)
                     }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-
-                Spacer()
-
-                // ── Bottom bar: Gallery | Shutter | Style ──
-                HStack(spacing: 0) {
-                    // Gallery shortcut (bottom-left, 66dp)
-                    Button(action: { viewModel.showGallery = true }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white.opacity(0.15))
-                                .frame(width: 66, height: 66)
-                            if let thumb = viewModel.lastThumbnail {
-                                Image(uiImage: thumb)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 54, height: 54)
-                                    .clipShape(Circle())
+                    
+                    // 功能介绍
+                    VStack(alignment: .leading, spacing: 8) {
+                        FeatureRow(icon: "camera.aperture", text: "绕过 Apple 计算摄影算法")
+                        FeatureRow(icon: "doc.badge.camera", text: "直接拍摄 DNG 格式照片")
+                        FeatureRow(icon: "iphone", text: "专为 iPhone 13 mini 优化")
+                        FeatureRow(icon: "hand.tap", text: "手动对焦与全局测光")
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(12)
+                    
+                    // 开始拍照按钮
+                    Button(action: startCamera) {
+                        HStack {
+                            if isCheckingPermissions {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
                             } else {
-                                Image(systemName: "photo.on.rectangle")
-                                    .font(.system(size: 20, weight: .medium))
-                                    .foregroundColor(.white)
+                                Image(systemName: "camera.fill")
+                                    .font(.title2)
                             }
+                            
+                            Text(isCheckingPermissions ? "检查权限中..." : "开始拍照")
+                                .font(.headline)
+                                .fontWeight(.semibold)
                         }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(isCheckingPermissions ? Color.gray : Color.blue)
+                        .cornerRadius(12)
                     }
-                    .frame(width: 66, height: 66)
-
-                    Spacer()
-
-                    // ── Shutter button (center, amber #ffffce16, 93dp) ──
-                    shutterButton
-
-                    Spacer()
-
-                    // Styles / Profiles (bottom-right, 70dp container)
-                    Button(action: { viewModel.showStylePicker = true }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white.opacity(0.15))
-                                .frame(width: 70, height: 70)
-                            HStack(spacing: 4) {
-                                Circle()
-                                    .fill(viewModel.selectedStyle.accentColor)
-                                    .frame(width: 11, height: 11)
-                                Text(viewModel.selectedStyle.shortName)
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white)
+                    .disabled(isCheckingPermissions)
+                    
+                    // 权限状态指示
+                    if !permissionManager.areAllPermissionsGranted {
+                        VStack(spacing: 8) {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text("需要相机和相册权限")
+                                    .foregroundColor(.orange)
+                                    .font(.subheadline)
                             }
+                            
+                            Button("前往设置") {
+                                openAppSettings()
+                            }
+                            .foregroundColor(.blue)
+                            .font(.subheadline)
                         }
+                        .padding()
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(8)
                     }
-                    .frame(width: 70, height: 70)
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 40)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            // ── Lens pills: vertical stack on LEFT ──
-            VStack(spacing: 12) {
-                LensPill(
-                    title: "0.5×",
-                    isSelected: viewModel.selectedLens == .ultraWide
-                ) {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        viewModel.selectedLens = .ultraWide
-                        viewModel.switchToUltraWide()
-                    }
-                }
-                LensPill(
-                    title: "1×",
-                    isSelected: viewModel.selectedLens == .wide
-                ) {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        viewModel.selectedLens = .wide
-                        viewModel.switchToWide()
-                    }
-                }
-                LensPill(
-                    title: "2×",
-                    isSelected: viewModel.selectedLens == .telephoto
-                ) {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        viewModel.selectedLens = .telephoto
-                        viewModel.switchToTelephoto()
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 22)
-            .padding(.top, 70)     // below top bar (60dp + margin)
-            .padding(.bottom, 130) // above bottom bar
-
-            // ── Recording indicator (top-right) ──
-            if viewModel.isVideoMode && viewModel.isRecording {
-                VStack {
-                    HStack {
-                        Spacer()
-                        HStack(spacing: 7) {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 8, height: 8)
-                                .animation(
-                                    .easeInOut(duration: 0.8)
-                                    .repeatForever(autoreverses: true),
-                                    value: viewModel.isRecording
-                                )
-                            Text(viewModel.recordTime)
-                                .font(.system(size: 15, weight: .semibold, design: .monospaced))
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(Color.black.opacity(0.65)))
-                    }
-                    .padding(.top, 14)
-                    .padding(.trailing, 24)
+                    
                     Spacer()
+                    
+                    // 版本信息
+                    Text("v1.0.0 - 开发中")
+                        .font(.caption)
+                        .foregroundColor(.gray)
                 }
-                .ignoresSafeArea()
-            }
-
-            // ── Loading overlay ──
-            if viewModel.isProcessing {
-                ZStack {
-                    Color.black.opacity(0.6).ignoresSafeArea()
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(1.4)
-                }
+                .padding()
             }
         }
-        .sheet(isPresented: $viewModel.showStylePicker) {
-            StylePickerView(selectedStyle: $viewModel.selectedStyle)
-        }
-        .sheet(isPresented: $viewModel.showSettings) {
-            SettingsView(viewModel: viewModel)
-        }
-        .sheet(isPresented: $viewModel.showGallery) {
-            GalleryView(viewModel: viewModel)
-        }
-        .sheet(isPresented: $viewModel.showReview) {
-            ReviewView(
-                image: $viewModel.reviewImage,
-                videoURL: $viewModel.reviewVideoURL,
-                isPresented: $viewModel.showReview,
-                onSave: { viewModel.showReview = false },
-                onRetake: { viewModel.showReview = false }
-            )
-        }
-        .alert("Camera Error", isPresented: $viewModel.showError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(viewModel.errorMessage ?? "Unknown error")
+        .navigationBarHidden(true)
+        .fullScreenCover(isPresented: $showingCamera) {
+            CameraView()
         }
         .onAppear {
-            viewModel.requestPermissions()
-            viewModel.loadLastThumbnailAsync()
-        }
-    }
-
-    // MARK: - Shutter button (Xiaomi: tap = photo, long press = video)
-
-    var shutterButton: some View {
-        ZStack {
-            // Outer dark ring
-            Circle()
-                .stroke(Color.white.opacity(0.25), lineWidth: 3)
-                .frame(width: 93, height: 93)
-            // Inner amber circle
-            if viewModel.isVideoMode && viewModel.isRecording {
-                Circle()
-                    .fill(Color(hex: "ffe11b1b"))
-                    .frame(width: 80, height: 80)
-            } else {
-                Circle()
-                    .fill(Color(hex: "ffffce16"))
-                    .frame(width: 80, height: 80)
+            // 应用启动时自动检查权限
+            Task {
+                await checkAndRequestPermissions()
             }
         }
-        .scaleEffect(viewModel.shutterPressed ? 0.88 : 1.0)
-        .animation(.easeInOut(duration: 0.08), value: viewModel.shutterPressed)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    if !viewModel.shutterPressed {
-                        viewModel.shutterPressed = true
-                    }
+    }
+    
+    // MARK: - 私有方法
+    
+    private func startCamera() {
+        isCheckingPermissions = true
+        
+        Task {
+            await checkAndRequestPermissions()
+            
+            DispatchQueue.main.async {
+                isCheckingPermissions = false
+                
+                if permissionManager.areAllPermissionsGranted {
+                    showingCamera = true
+                } else {
+                    // 权限被拒绝，显示提示
                 }
-                .onEnded { _ in
-                    viewModel.shutterPressed = false
-                    // On tap (not drag): capture photo or toggle video
-                    if viewModel.isVideoMode {
-                        viewModel.toggleVideo()
-                    } else {
-                        viewModel.capturePhoto()
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        viewModel.shutterPressed = false
-                    }
-                }
-        )
-        .disabled(viewModel.isProcessing)
-        .frame(width: 93, height: 93)
-    }
-}
-
-// MARK: - Mode pill (Xiaomi: selected = amber fill + dark text #111111)
-
-struct ModePill: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(isSelected ? Color(red: 0.067, green: 0.067, blue: 0.067) : .white)
-                .frame(width: 56, height: 28)
+            }
         }
-        .buttonStyle(PlainButtonStyle())
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color(hex: "ffffce16") : Color.clear)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.24), lineWidth: 1)
-                )
-        )
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
     }
-}
-
-// MARK: - Lens pill (vertical left, Xiaomi style)
-
-struct LensPill: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                .foregroundColor(isSelected ? Color(red: 0.067, green: 0.067, blue: 0.067) : .white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .frame(width: 44, height: 28)
+    
+    private func checkAndRequestPermissions() async {
+        await permissionManager.requestAllPermissions()
+    }
+    
+    private func openAppSettings() {
+        if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(settingsUrl)
         }
-        .buttonStyle(PlainButtonStyle())
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color(hex: "ffffce16") : Color.clear)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.24), lineWidth: 1)
-                )
-        )
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+/// 功能特性行组件
+struct FeatureRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(.blue)
+                .font(.system(size: 16, weight: .medium))
+                .frame(width: 20)
+            
+            Text(text)
+                .foregroundColor(.white)
+                .font(.body)
+            
+            Spacer()
+        }
     }
 }
 
-// MARK: - Color extension (Xiaomi amber #ffffce16)
-
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let r = Double((int >> 16) & 0xFF) / 255.0
-        let g = Double((int >> 8) & 0xFF) / 255.0
-        let b = Double(int & 0xFF) / 255.0
-        self.init(red: r, green: g, blue: b)
-    }
+#Preview {
+    ContentView()
 }

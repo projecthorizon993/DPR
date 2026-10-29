@@ -55,14 +55,12 @@ final class Logger {
         queue.async {
             if let data = logEntry.data(using: .utf8) {
                 if FileManager.default.fileExists(atPath: self.logFileURL.path) {
-                    // Append to existing file
                     if let fileHandle = try? FileHandle(forWritingTo: self.logFileURL) {
                         fileHandle.seekToEndOfFile()
                         fileHandle.write(data)
                         fileHandle.closeFile()
                     }
                 } else {
-                    // Create new file
                     try? data.write(to: self.logFileURL, options: .atomic)
                 }
             }

@@ -3,99 +3,79 @@ name: Build Unsigned iOS IPA
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 120
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Xcode toolchain
+        run: |
+          sudo xcode-select -switch /Applications/Xcode_15.app/Contents/Developer
+          xcodebuild -version
+
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: aarch64-apple-ios
+          profile: minimal
+          override: true
 
-      - name: Build Rust core (aarch64-apple-ios)
-        working-directory: ./rust-core
+      - name: Build Rust camera_core library
         run: |
+          cd JustRaw/rust-core
           cargo build --release --target aarch64-apple-ios
+          cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
-      - name: Locate Rust static library
-        id: rust-lib
+      - name: Build iOS app with xcodebuild
         run: |
-          LIB_PATH=$(find ./rust-core/target/aarch64-apple-ios/release -name "libcamera_core.a" | head -1)
-          echo "RUST_LIB=$LIB_PATH" >> $GITHUB_OUTPUT
-          echo "Found Rust library: $LIB_PATH"
+          xcodebuild -project JustRaw.xcodeproj \
+            -scheme JustRaw \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath ./build/JustRaw.xcarchive \
+            DEVELOPMENT_TEAM="" \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE="" \
+            archive
 
-      - name: Build Swift iOS app with swiftc
-        working-directory: ./ios-app
+      - name: Export unsigned IPA
         run: |
-          SDK_PATH=$(xcrun --sdk iphoneos --show-sdk-path)
-          
-          # Collect all Swift source files
-          SWIFT_FILES=$(find CameraApp -name "*.swift" | tr '\n' ' ')
-          
-          # Create output directory
-          mkdir -p build
-          
-          # Compile and link the app
-          swiftc -target aarch64-apple-ios15.0 \
-            -sdk "$SDK_PATH" \
-            -module-name CameraApp \
-            -o build/CameraApp \
-            $SWIFT_FILES \
-            "../rust-core/target/aarch64-apple-ios/release/libcamera_core.a" \
-            -framework SwiftUI \
-            -framework AVFoundation \
-            -framework Photos \
-            -framework UIKit \
-            -framework CoreGraphics \
-            -framework CoreImage \
-            -Xlinker -rpath -Xlinker /usr/lib/swift \
-            -Xlinker -rpath -Xlinker /usr/lib/swift/iphoneos
+          mkdir -p ./build/export
+          cat > ./build/export-options.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>teamID</key>
+              <string></string>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath ./build/JustRaw.xcarchive \
+            -exportPath ./build/export \
+            -exportOptionsPlist ./build/export-options.plist
 
-          echo "Swift build completed:"
-          ls -la build/CameraApp
-
-      - name: Create .app bundle
-        working-directory: ./ios-app
+      - name: Rename and move IPA
         run: |
-          APP_DIR="build/CameraApp.app"
-          mkdir -p "$APP_DIR"
+          cp ./build/export/JustRaw.ipa ./CameraApp-unsigned.ipa
 
-          # Copy executable
-          cp build/CameraApp "$APP_DIR/CameraApp"
-          chmod +x "$APP_DIR/CameraApp"
-
-          # Copy Info.plist
-          cp CameraApp/Info.plist "$APP_DIR/Info.plist"
-
-          # Copy raw assets (watermark images) for runtime loading
-          mkdir -p "$APP_DIR/Assets"
-          cp -R CameraApp/Assets.xcassets "$APP_DIR/Assets/" 2>/dev/null || true
-
-          echo "App bundle created:"
-          ls -la "$APP_DIR/"
-
-      - name: Create unsigned IPA
-        working-directory: ./ios-app
-        run: |
-          rm -rf build/Payload
-          mkdir -p build/Payload
-          cp -R build/CameraApp.app build/Payload/
-
-          cd build
-          zip -r -X CameraApp-unsigned.ipa Payload/
-          echo "IPA created:"
-          ls -la CameraApp-unsigned.ipa
-
-      - name: Upload IPA as workflow artifact
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: camera-app-unsigned-ipa
-          path: ./ios-app/build/CameraApp-unsigned.ipa
+          path: ./CameraApp-unsigned.ipa
           retention-days: 7

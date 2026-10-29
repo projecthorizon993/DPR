@@ -1,0 +1,461 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		80000001 /* JustRawApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000002 /* JustRawApp.swift */; };
+		80000003 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000004 /* CameraView.swift */; };
+		80000005 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000006 /* CameraPreviewView.swift */; };
+		80000007 /* CameraSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000008 /* CameraSettingsView.swift */; };
+		80000009 /* ZoomSliderControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000A /* ZoomSliderControl.swift */; };
+		8000000B /* StylePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000C /* StylePickerView.swift */; };
+		8000000D /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000E /* Logger.swift */; };
+		8000000F /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000010 /* CameraService.swift */; };
+		80000011 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000012 /* PermissionManager.swift */; };
+		80000013 /* PhotoSaveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000014 /* PhotoSaveService.swift */; };
+		80000015 /* RAWProcessorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000016 /* RAWProcessorService.swift */; };
+		80000017 /* CameraCoreBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000018 /* CameraCoreBridge.swift */; };
+		80000019 /* AppStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000001A /* AppStateManager.swift */; };
+		8000001B /* LaunchJustRawIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000001C /* LaunchJustRawIntent.swift */; };
+		8000001D /* libcamera_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8000001E /* libcamera_core.a */; };
+		8000001F /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 80000020 /* Info.plist */; };
+		80000021 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 80000022 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		80000002 /* JustRawApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JustRawApp.swift; sourceTree = "<group>"; };
+		80000004 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		80000006 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		80000008 /* CameraSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSettingsView.swift; sourceTree = "<group>"; };
+		8000000A /* ZoomSliderControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomSliderControl.swift; sourceTree = "<group>"; };
+		8000000C /* StylePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerView.swift; sourceTree = "<group>"; };
+		8000000E /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		80000010 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
+		80000012 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
+		80000014 /* PhotoSaveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSaveService.swift; sourceTree = "<group>"; };
+		80000016 /* RAWProcessorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAWProcessorService.swift; sourceTree = "<group>"; };
+		80000018 /* CameraCoreBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCoreBridge.swift; sourceTree = "<group>"; };
+		8000001A /* AppStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateManager.swift; sourceTree = "<group>"; };
+		8000001C /* LaunchJustRawIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchJustRawIntent.swift; sourceTree = "<group>"; };
+		8000001E /* libcamera_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libcamera_core.a; sourceTree = "<group>"; };
+		80000018 /* CameraCoreBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCoreBridge.swift; sourceTree = "<group>"; };
+		80000020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		80000022 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		80000023 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8000001D /* libcamera_core.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		80000024 = {
+			isa = PBXGroup;
+			children = (
+				80000025 /* JustRaw */,
+				80000026 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		80000025 /* JustRaw */ = {
+			isa = PBXGroup;
+			children = (
+				80000002 /* JustRawApp.swift */,
+				80000027 /* Views */,
+				80000028 /* Services */,
+				80000029 /* Utils */,
+				8000002A /* Models */,
+				8000002B /* Intents */,
+				8000001E /* libcamera_core.a */,
+				80000020 /* Info.plist */,
+				80000022 /* Assets.xcassets */,
+			);
+			path = JustRaw;
+			sourceTree = "<group>";
+		};
+		80000027 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				80000004 /* CameraView.swift */,
+				80000006 /* CameraPreviewView.swift */,
+				80000008 /* CameraSettingsView.swift */,
+				8000000A /* ZoomSliderControl.swift */,
+				8000000C /* StylePickerView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		80000028 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				80000010 /* CameraService.swift */,
+				80000012 /* PermissionManager.swift */,
+				80000014 /* PhotoSaveService.swift */,
+				80000016 /* RAWProcessorService.swift */,
+				80000018 /* CameraCoreBridge.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		80000029 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				8000000E /* Logger.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		8000002A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8000001A /* AppStateManager.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		8000002B /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				8000001C /* LaunchJustRawIntent.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+		80000026 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8000002C /* JustRaw.app */,
+			);
+			sourceTree = "<group>";
+		};
+		8000002C /* JustRaw.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JustRaw.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		8000002D /* JustRaw */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8000002E /* Build configuration list for PBXNativeTarget "JustRaw" */;
+			buildPhases = (
+				8000002F /* Sources */,
+				80000023 /* Frameworks */,
+				80000030 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = JustRaw;
+			productName = JustRaw;
+			productReference = 8000002C /* JustRaw.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		80000024 = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					8000002D = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 80000031 /* Build configuration list for PBXProject "JustRaw" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 80000024;
+			productRefGroup = 80000026 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8000002D /* JustRaw */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		80000030 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8000001F /* Info.plist in Resources */,
+				80000021 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8000002F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				80000001 /* JustRawApp.swift in Sources */,
+				80000003 /* CameraView.swift in Sources */,
+				80000005 /* CameraPreviewView.swift in Sources */,
+				80000007 /* CameraSettingsView.swift in Sources */,
+				80000009 /* ZoomSliderControl.swift in Sources */,
+				8000000B /* StylePickerView.swift in Sources */,
+				8000000D /* Logger.swift in Sources */,
+				8000000F /* CameraService.swift in Sources */,
+				80000011 /* PermissionManager.swift in Sources */,
+				80000013 /* PhotoSaveService.swift in Sources */,
+				80000015 /* RAWProcessorService.swift in Sources */,
+				80000017 /* CameraCoreBridge.swift in Sources */,
+				80000019 /* AppStateManager.swift in Sources */,
+				8000001B /* LaunchJustRawIntent.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		80000032 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/JustRaw/rust-core/src",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/JustRaw/rust-libs",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_LDFLAGS = (
+					"-lcamera_core",
+					"$(inherited)",
+				);
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		80000033 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/JustRaw/rust-core/src",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/JustRaw/rust-libs",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				OTHER_LDFLAGS = (
+					"-lcamera_core",
+					"$(inherited)",
+				);
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		80000034 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphoneos*]" = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"JustRaw/Preview Content\"";
+				DEVELOPMENT_TEAM = 6GV43A5U4N;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JustRaw/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = raw.JustRaw;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		80000035 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphoneos*]" = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"JustRaw/Preview Content\"";
+				DEVELOPMENT_TEAM = 6GV43A5U4N;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = JustRaw/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = raw.JustRaw;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		80000031 /* Build configuration list for PBXProject "JustRaw" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				80000032 /* Debug */,
+				80000033 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8000002E /* Build configuration list for PBXNativeTarget "JustRaw" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				80000034 /* Debug */,
+				80000035 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 80000024 /* Project object */;
+}

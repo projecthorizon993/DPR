@@ -1,6 +1,6 @@
 //
 //  CameraCoreBridge.swift
-//  CameraApp
+//  JustRaw
 //
 //  Swift <-> Rust FFI bridge for camera_core processing.
 //  Links against libcamera_core.a (built for aarch64-apple-ios).
@@ -9,7 +9,6 @@
 import Foundation
 import CoreGraphics
 import UIKit
-import SwiftUI
 
 // MARK: - C ABI declarations (imported from Rust camera_core staticlib)
 
@@ -60,8 +59,6 @@ func apply_lut_3d(
 ) -> Int32
 
 /// Apply 512^3 LUT from 2D texture (vivo style).
-/// lutTexture: 512x512 RGBA8 image data encoding the 3D LUT
-/// strength: 0.0 (none) to 1.0 (full)
 @_silgen_name("apply_lut_512")
 func apply_lut_512(
     _ pixels: UnsafeMutableRawPointer?,
@@ -333,8 +330,6 @@ enum CameraStyle: CaseIterable, Codable {
 
         case .xiaomi:
             // Warm, vivid look — derived from Xiaomi libMiFilterSDK.so
-            // cloud_filter filter 73 (Leica): LutSize=512, ExtraParam=1.4,1.0,0.2,1.0,0.25,0.4
-            // Shader: warm red/orange highlights, blended colors
             let matrix: [Float] = [
                 1.10, 0.03, -0.05,
                 -0.02, 1.05, 0.01,
@@ -344,7 +339,6 @@ enum CameraStyle: CaseIterable, Codable {
 
         case .oppo:
             // Cool, crisp — Hasselblad/Zeiss-inspired
-            // Shader: blue/cyan highlights, crisp contrast
             let matrix: [Float] = [
                 1.03, -0.01, -0.04,
                 0.00, 1.07, -0.02,
@@ -354,7 +348,6 @@ enum CameraStyle: CaseIterable, Codable {
 
         case .vivo:
             // Portrait-soft, warm skin tones (Zeiss-inspired)
-            // Shader: soft warm highlights, gentle contrast
             let matrix: [Float] = [
                 1.07, 0.01, -0.02,
                 0.01, 1.03, -0.03,
@@ -362,5 +355,21 @@ enum CameraStyle: CaseIterable, Codable {
             ]
             return (matrix.withUnsafeBufferPointer { $0.baseAddress }, 1.0)
         }
+    }
+}
+
+// MARK: - SwiftUI Color import
+
+import SwiftUI
+
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let r = Double((int >> 16) & 0xFF) / 255.0
+        let g = Double((int >> 8) & 0xFF) / 255.0
+        let b = Double(int & 0xFF) / 255.0
+        self.init(red: r, green: g, blue: b)
     }
 }
