@@ -8,6 +8,7 @@
 
 import Foundation
 import CoreGraphics
+import SwiftUI
 import UIKit
 
 // MARK: - C ABI declarations (imported from Rust camera_core staticlib)
@@ -385,8 +386,6 @@ enum CameraStyle: CaseIterable, Codable {
 }
 
 // MARK: - SwiftUI Color import
-
-import SwiftUI
 
 extension Color {
     init(hex: String) {

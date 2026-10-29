@@ -80,6 +80,12 @@ final class CameraService: NSObject, ObservableObject {
     /// 当前相机模式
     @Published var currentMode: CameraMode = .rawPhoto
     
+    /// 是否为视频模式
+    @Published var isVideoMode = false
+    
+    /// 设置页面是否显示
+    @Published var showSettings = false
+    
     /// 当前相机位置
     @Published var currentCameraPosition: AVCaptureDevice.Position = .back
     
@@ -94,6 +100,9 @@ final class CameraService: NSObject, ObservableObject {
     
     /// 最大缩放因子
     @Published var maxZoomFactor: CGFloat = 1.0
+    
+    /// 活动传感器分辨率
+    var activeSensorResolution: CMVideoDimensions = CMVideoDimensions(width: 4032, height: 3024)
     
     /// 是否启用闪光灯
     @Published var isFlashEnabled: Bool = false
@@ -298,10 +307,13 @@ final class CameraService: NSObject, ObservableObject {
         // 设置缩放范围
         maxZoomFactor = device.activeFormat.videoMaxZoomFactor
         
+        // 设置活动传感器分辨率
+        activeSensorResolution = CMVideoFormatDescriptionGetDimensions(device.activeFormat.formatDescription)
+        
         Logger.shared.info(
             module: .camera,
             operation: "UpdateCapabilities",
-            details: "RAW: \(supportsRAWCapture), Flash: \(supportsFlash), MaxZoom: \(maxZoomFactor)"
+            details: "RAW: \(supportsRAWCapture), Flash: \(supportsFlash), MaxZoom: \(maxZoomFactor), Resolution: \(activeSensorResolution.width)x\(activeSensorResolution.height)"
         )
     }
     

@@ -15,6 +15,10 @@ Package.resolved
 /target/
 Cargo.lock
 
+# Prebuilt static libraries (built by CI, not committed)
+rust-libs/*.a
+*.a
+
 # macOS
 .DS_Store
 

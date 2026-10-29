@@ -15,8 +15,8 @@ Tasks sharing files (resolved by sequential execution):
 Ruling: All conflicts resolved by sequential execution order. Proceed with Task 1.
 
 ## Tasks
-1. [x] Fix dangling pointer in renderParams() — CameraCoreBridge.swift:326-358 (CRITICAL) — COMPLETE
-2. [ ] Shutter button amber #FFFFCE16 not white — CameraView.swift:496 (CRITICAL)
+1. [x] Fix dangling pointer in renderParams() — CameraCoreBridge.swift:326-358 (CRITICAL) — COMPLETE (f33c3f9, APPROVED)
+2. [ ] Shutter button amber #FFFFCE16 not white — CameraView.swift:496 (CRITICAL) — IN PROGRESS
 3. [ ] Zeiss watermark never applied (nil) — CameraView.swift:72, RAWProcessorService.swift:72 (CRITICAL)
 4. [ ] GitHub Actions Xcode 15 for iOS 18 — ios-build.yml:18 (CRITICAL)
 5. [ ] Info.plist path mismatch — project.pbxproj vs root Info.plist (CRITICAL)

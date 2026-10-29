@@ -62,8 +62,8 @@
 
 | Task | Status | Commit | Report | Review |
 |------|--------|--------|--------|--------|
-| 1. renderParams dangling pointer | pending | | | |
-| 2. Shutter amber #FFFFCE16 | pending | | | |
+| 1. renderParams dangling pointer | COMPLETE | f33c3f9 | TASK-1-REPORT.md | APPROVED |
+| 2. Shutter amber #FFFFCE16 | IN PROGRESS | | | |
 | 3. Zeiss watermark applied | pending | | | |
 | 4. Xcode 16 in CI | pending | | | |
 | 5. Info.plist path fix | pending | | | |

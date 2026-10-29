@@ -69,7 +69,7 @@ final class RAWProcessorService: ObservableObject {
                         guard let rustProcessed = CameraCoreBridge.process(
                             image: cgImage,
                             style: style,
-                            watermark: nil,
+                            watermark: UIImage(named: "ZeissLogo")?.cgImage,
                             watermarkAlpha: 0.6
                         ) else {
                             throw RAWProcessorError.processingFailed("Rust色彩处理失败")

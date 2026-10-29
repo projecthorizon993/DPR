@@ -263,11 +263,11 @@ struct CameraView: View {
                             .font(.title2)
                         
                         if currentZoomFactor > 1.0 {
-                            Text("双照片已保存：原始RAW + 裁剪JPEG")
+                            Text("Dual photos saved: Original RAW + Cropped JPEG")
                                 .foregroundColor(.white)
                                 .font(.headline)
                         } else {
-                            Text("RAW照片已保存到相册")
+                            Text("RAW photo saved to album")
                                 .foregroundColor(.white)
                                 .font(.headline)
                         }
@@ -315,7 +315,7 @@ struct CameraView: View {
                             .font(.title2)
                         
                         VStack(alignment: .leading) {
-                            Text("照片保存失败")
+                            Text("Photo save failed")
                                 .foregroundColor(.white)
                                 .font(.headline)
                             
@@ -338,19 +338,19 @@ struct CameraView: View {
                     .ignoresSafeArea()
                     .overlay(
                         VStack(spacing: 16) {
-                            // 错误图标
+                            // Error icon
                             Image(systemName: errorInfo.iconName)
                                 .foregroundColor(errorInfo.iconColor)
                                 .font(.system(size: 48))
                             
-                            // 错误标题
+                            // Error title
                             Text(errorInfo.title)
                                 .foregroundColor(.white)
                                 .font(.title2)
                                 .fontWeight(.semibold)
                                 .multilineTextAlignment(.center)
                             
-                            // 错误描述
+                            // Error description
                             Text(errorInfo.userMessage)
                                 .foregroundColor(.white.opacity(0.9))
                                 .font(.body)
@@ -415,7 +415,7 @@ struct CameraView: View {
         .statusBarHidden()
         .onAppear {
             setupCamera()
-            updateDeviceOrientation() // 初始化方向状态
+            updateDeviceOrientation() // Initialize orientation state
         }
         .onDisappear {
             hideControlsTimer?.invalidate()
@@ -424,52 +424,68 @@ struct CameraView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             updateDeviceOrientation()
         }
-        // 移除设置页面
+        // Remove settings page
     }
     
-    // MARK: - 顶部控制栏
+    // MARK: - Top control bar (Xiaomi MIUI: Flash | Mode pills | Settings)
     
     private var topControlBar: some View {
-        HStack {
-            // 连续变焦控制切换按钮（左上角）
-            Button(action: toggleZoomSlider) {
-                Image(systemName: showingZoomSlider ? "hand.tap.fill" : "hand.point.up.left.fill")
-                    .foregroundColor(showingZoomSlider ? .blue : .white)
-                    .font(.title2)
-                    .padding(10)
-                    .background(Color.black.opacity(0.5))
-                    .clipShape(Circle())
+        HStack(spacing: 0) {
+            // Flash toggle (top-left)
+            Button(action: toggleFlash) {
+                Image(systemName: cameraService.isFlashEnabled ? "bolt.fill" : "bolt.slash.fill")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(cameraService.isFlashEnabled ? Color(hex: "FFFFCE16") : .white)
+                    .frame(width: 56, height: 56)
+                    .contentShape(Rectangle())
             }
-            .disabled(isCapturing)
             
             Spacer()
             
-            // RAW模式固定显示
-            Text("RAW照片")
-                .foregroundColor(.white)
-                .font(.headline)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.black.opacity(0.5))
-                .cornerRadius(20)
+            // Mode pills: PHOTO / VIDEO (top center)
+            HStack(spacing: 0) {
+                ModePill(
+                    title: "PHOTO",
+                    isSelected: !viewModel.isVideoMode
+                ) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        viewModel.isVideoMode = false
+                    }
+                }
+                ModePill(
+                    title: "VIDEO",
+                    isSelected: viewModel.isVideoMode
+                ) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        viewModel.isVideoMode = true
+                    }
+                }
+            }
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.12))
+                    .overlay(
+                        Capsule().stroke(Color.white.opacity(0.24), lineWidth: 1)
+                    )
+            )
+            .frame(height: 30)
             
             Spacer()
             
-            // 切换相机按钮（右上角）
-            Button(action: switchCamera) {
-                Image(systemName: "camera.rotate.fill")
+            // Settings (top-right) - ellipsis like Xiaomi
+            Button(action: { viewModel.showSettings = true }) {
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 22, weight: .medium))
                     .foregroundColor(.white)
-                    .font(.title2)
-                    .padding(10)
-                    .background(Color.black.opacity(0.5))
-                    .clipShape(Circle())
+                    .frame(width: 56, height: 56)
+                    .contentShape(Rectangle())
             }
-            .disabled(isCapturing)
         }
-        .background(Color.clear) // 透明背景
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
     }
     
-    // MARK: - 底部控制栏
+    // MARK: - Bottom control bar
     
     private var bottomControlBar: some View {
         HStack(spacing: 30) {
@@ -493,7 +509,7 @@ struct CameraView: View {
                         .frame(width: 90, height: 90)
                     
                     Circle()
-                        .fill(isCapturing ? Color.gray : Color.white)
+                        .fill(isCapturing ? Color.gray : Color(hex: "FFFFCE16"))
                         .frame(width: 70, height: 70)
                 }
             }
@@ -503,7 +519,7 @@ struct CameraView: View {
             
             Spacer()
             
-            // 闪光灯按钮
+            // Flash button
             Button(action: toggleFlash) {
                 Image(systemName: cameraService.isFlashEnabled ? "bolt.fill" : "bolt.slash.fill")
                     .foregroundColor(cameraService.isFlashEnabled ? .yellow : .white)
@@ -517,7 +533,7 @@ struct CameraView: View {
             
             Spacer()
             
-            // 样式选择按钮（Xiaomi风格，右下角）
+            // Style selector button (Xiaomi style, bottom-right)
             Button(action: { showingStylePicker = true }) {
                 ZStack {
                     Circle()
@@ -537,10 +553,10 @@ struct CameraView: View {
                 StylePickerView(selectedStyle: $selectedStyle)
             }
         }
-        .background(Color.clear) // 透明背景
+        .background(Color.clear) // Transparent background
     }
     
-    // MARK: - 相机控制方法
+    // MARK: - Camera control methods
     
     private func setupCamera() {
         Task {
@@ -548,7 +564,7 @@ struct CameraView: View {
                 try await cameraService.configureSession()
                 await cameraService.startSession()
                 
-                // 延迟显示控制界面，确保相机启动完成
+                // Delay showing control UI, ensure camera startup completes
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     resetHideControlsTimer()
                 }
@@ -568,7 +584,7 @@ struct CameraView: View {
         guard !isCapturing else { return }
         guard !isProcessingRAW else { return }
         guard !photoSaveService.isSaving else {
-            // 如果正在保存照片，显示提示
+            // If saving photo, show prompt
             Logger.shared.warning(module: .camera, operation: "CapturePhoto", details: "Previous photo still saving")
             return
         }
@@ -579,7 +595,7 @@ struct CameraView: View {
         
         Task {
             do {
-                // 步骤1：使用变焦重置RAW拍摄（避免Apple约束）
+                // Step 1: Use zoom-reset RAW capture (avoid Apple constraint)
                 Logger.shared.info(
                     module: .camera,
                     operation: "RAWCaptureStart",
@@ -594,15 +610,15 @@ struct CameraView: View {
                     details: "RAW photo captured: \(result.formattedFileSize), starting processing"
                 )
                 
-                // 步骤2：检验RAW数据
+                // Step 2: Verify RAW data
                 guard let rawData = result.rawPhotoData else {
-                    throw CameraService.CameraError.captureError("没有RAW数据")
+                    throw CameraService.CameraError.captureError("No RAW data")
                 }
                 
-                // 步骤3：RAW处理 - 生成裁剪的JPEG（只有在用户变焦时才处理）
+                // Step 3: RAW processing - generate cropped JPEG (only process when user zooms)
                 var croppedJPEGData: Data?
                 
-                // 在主线程更新UI状态
+                // Update UI state on main thread
                 await MainActor.run {
                     withAnimation(.easeInOut(duration: 0.1)) {
                         isCapturing = false
@@ -636,18 +652,18 @@ struct CameraView: View {
                     )
                 }
                 
-                // 在主线程停止RAW处理状态
+                // Stop RAW processing status on main thread
                 await MainActor.run {
                     withAnimation(.easeInOut(duration: 0.1)) {
                         isProcessingRAW = false
                     }
                 }
                 
-                // 步骤4：保存照片到相册
+                // Step 4: Save photo to album
                 let assetID: String
                 
                 if let jpegData = croppedJPEGData {
-                    // 保存双照片：原始RAW + 裁剪JPEG
+                    // Save dual photos: Original RAW + Cropped JPEG
                     assetID = try await photoSaveService.saveDualPhotos(
                         originalRAW: rawData, 
                         croppedJPEG: jpegData, 
@@ -660,7 +676,7 @@ struct CameraView: View {
                         details: "Saved dual photos: original RAW + cropped JPEG, Asset ID: \(assetID)"
                     )
                 } else {
-                    // 只保存原始RAW
+                    // Only save original RAW
                     assetID = try await photoSaveService.saveRAWPhoto(
                         rawData: rawData, 
                         metadata: result.metadata
@@ -673,11 +689,11 @@ struct CameraView: View {
                     )
                 }
                 
-                // 步骤5：在主线程更新UI
+                // Step 5: Update UI on main thread
                 await MainActor.run {
                     showCaptureAndSaveSuccess(result: result, assetID: assetID)
                     
-                    // 确保所有状态都已重置
+                    // Ensure all states have been reset
                     withAnimation(.easeInOut(duration: 0.1)) {
                         isCapturing = false
                         isProcessingRAW = false
@@ -692,7 +708,7 @@ struct CameraView: View {
                     }
                 }
                 
-                // 增强的错误处理（拍摄、处理或保存）
+                // Enhanced error handling (capture, process, or save)
                 let errorInfo = analyzeError(error, userZoom: currentZoomFactor)
                 
                 errorHandler.handleError(
@@ -715,7 +731,7 @@ struct CameraView: View {
                     details: "RAW capture failed: \(errorInfo.userMessage) (Stage: \(errorInfo.stage), Type: \(errorInfo.type))"
                 )
                 
-                // 显示用户友好的错误信息
+                // Display user-friendly error feedback
                 await MainActor.run {
                     showEnhancedErrorFeedback(errorInfo)
                 }
@@ -769,57 +785,57 @@ struct CameraView: View {
         }
     }
     
-    /// 处理预览区域内的点击事件
+    /// Handle tap events in preview area
     /// - Parameters:
-    ///   - location: 点击位置（相对于预览容器）
-    ///   - containerSize: 整个容器尺寸
+    ///   - location: Tap location (relative to preview container)
+    ///   - containerSize: Entire container size
     private func handleTapInPreview(at location: CGPoint, containerSize: CGSize) {
         let previewSize = getPreviewSize(for: containerSize)
         
-        // 计算预览区域在容器中的位置（居中）
+        // Calculate preview area position in container (centered)
         let previewOriginX = (containerSize.width - previewSize.width) / 2
         let previewOriginY = (containerSize.height - previewSize.height) / 2
         
-        // 检查点击是否在预览区域内
+        // Check if tap is within preview area
         let adjustedLocation = CGPoint(
             x: location.x - previewOriginX,
             y: location.y - previewOriginY
         )
         
-        // 验证点击是否在预览区域边界内
+        // Validate tap is within preview area bounds
         guard adjustedLocation.x >= 0 && adjustedLocation.x <= previewSize.width &&
               adjustedLocation.y >= 0 && adjustedLocation.y <= previewSize.height else {
-            return // 点击在预览区域外，忽略
+            return // Tap is outside preview area, ignore
         }
         
-        // 转换到相机设备坐标系 (0.0-1.0)
+        // Convert to camera device coordinate system (0.0-1.0)
         let devicePoint = CGPoint(
             x: adjustedLocation.x / previewSize.width,
             y: adjustedLocation.y / previewSize.height
         )
         
-        // 只设置对焦点，保持全局测光模式
+        // Only set focus point, keep global metering mode
         Task {
             do {
                 try await cameraService.setFocusPoint(devicePoint)
-                // 注释掉曝光点设置以保持全局测光
+                // Commented out exposure point setting to keep global metering
                 // try await cameraService.setExposurePoint(devicePoint)
                 
                 DispatchQueue.main.async {
-                    // 指示器位置使用原始点击位置（相对于整个容器）
+                    // Indicator position uses original tap position (relative to entire container)
                     self.focusPoint = location
-                    // 不设置曝光点UI，因为使用全局测光
+                    // Do not set exposure point UI, using global metering
                     // self.exposurePoint = location
                     self.showingFocusIndicator = true
-                    // 不显示曝光指示器，因为使用全局测光
+                    // Do not show exposure indicator, using global metering
                     // self.showingExposureIndicator = true
                 }
             } catch {
-                // 忽略对焦错误（可能是不支持的设备）
+                // Ignore focus error (may be unsupported device)
                 Logger.shared.warning(
                     module: .camera,
                     operation: "HandleTapFocus",
-                    details: "Focus setting failed (全局测光模式): \(error.localizedDescription)"
+                    details: "Focus setting failed (global metering mode): \(error.localizedDescription)"
                 )
             }
         }
@@ -828,7 +844,7 @@ struct CameraView: View {
     }
     
     private func handleTap(at location: CGPoint, in size: CGSize) {
-        // 旧版本兼容性方法，保留以防其他地方调用
+        // Legacy compatibility method, kept in case called from elsewhere
         let devicePoint = CGPoint(
             x: location.x / size.width,
             y: location.y / size.height
@@ -837,23 +853,23 @@ struct CameraView: View {
         Task {
             do {
                 try await cameraService.setFocusPoint(devicePoint)
-                // 注释掉曝光点设置以保持全局测光
+                // Commented out exposure point setting to keep global metering
                 // try await cameraService.setExposurePoint(devicePoint)
                 
                 DispatchQueue.main.async {
                     focusPoint = location
-                    // 不设置曝光点UI，因为使用全局测光
+                    // Do not set exposure point UI, using global metering
                     // exposurePoint = location
                     showingFocusIndicator = true
-                    // 不显示曝光指示器，因为使用全局测光
+                    // Do not show exposure indicator, using global metering
                     // showingExposureIndicator = true
                 }
             } catch {
-                // 忽略对焦错误（全局测光模式）
+                // Ignore focus error (global metering mode)
                 Logger.shared.warning(
                     module: .camera,
                     operation: "HandleDoubleTapFocus",
-                    details: "Focus setting failed (全局测光模式): \(error.localizedDescription)"
+                    details: "Focus setting failed (global metering mode): \(error.localizedDescription)"
                 )
             }
         }
@@ -861,16 +877,16 @@ struct CameraView: View {
         resetHideControlsTimer()
     }
     
-    /// 计算预览容器尺寸
-    /// - Parameter containerSize: 容器尺寸
-    /// - Returns: 预览区域尺寸
+    /// Calculate preview container size
+    /// - Parameter containerSize: Container size
+    /// - Returns: Preview area size
     private func getPreviewSize(for containerSize: CGSize) -> CGSize {
         let aspectRatio = getCurrentAspectRatio()
         
         let previewWidth = containerSize.width
         let previewHeight = previewWidth / aspectRatio
         
-        // 如果高度超出容器，按高度限制
+        // If height exceeds container, limit by height
         if previewHeight > containerSize.height {
             let adjustedHeight = containerSize.height
             let adjustedWidth = adjustedHeight * aspectRatio
@@ -880,31 +896,31 @@ struct CameraView: View {
         return CGSize(width: previewWidth, height: previewHeight)
     }
     
-    /// 获取当前设备方向对应的预览比例
-    /// - Returns: 竖屏3:4，横屏4:3
+    /// Get preview ratio corresponding to current device orientation
+    /// - Returns: Portrait 3:4, landscape 4:3
     private func getCurrentAspectRatio() -> CGFloat {
         return isLandscape ? (4.0 / 3.0) : (3.0 / 4.0)
     }
     
-    /// 更新设备方向状态
+    /// Update device orientation state
     private func updateDeviceOrientation() {
         let newOrientation = UIDevice.current.orientation
         let wasLandscape = isLandscape
         
-        // 更新方向状态
+        // Update orientation state
         switch newOrientation {
         case .landscapeLeft, .landscapeRight:
             isLandscape = true
         case .portrait, .portraitUpsideDown:
             isLandscape = false
         default:
-            // 保持当前状态不变
+            // Keep current state unchanged
             return
         }
         
         deviceOrientation = newOrientation
         
-        // 如果方向发生变化，记录日志
+        // If orientation changes, log it
         if wasLandscape != isLandscape {
             Logger.shared.info(
                 module: .camera,
@@ -914,37 +930,37 @@ struct CameraView: View {
         }
     }
     
-    /// 处理变焦手势变化 - 使用真实硬件变焦预览
+    /// Handle zoom gesture change - use real hardware zoom preview
     private func handleZoomGesture(_ value: CGFloat) {
-        // 计算增量变化（delta-based scaling）
+        // Calculate incremental change (delta-based scaling)
         let delta = value / lastScaleValue
         
-        // 应用阻尼系数，减少敏感度
+        // Apply damping factor to reduce sensitivity
         let dampingFactor: CGFloat = 0.3
         let adjustedDelta = 1.0 + (delta - 1.0) * dampingFactor
         
-        // 计算新的变焦倍数
+        // Calculate new zoom multiplier
         let newZoomFactor = currentZoomFactor * adjustedDelta
         
-        // 约束到相机支持的范围
+        // Constrain to camera supported range
         let minZoom: CGFloat = 0.5
-        let maxZoom = min(10.0, cameraService.maxZoomFactor) // 使用相机实际支持的最大变焦
+        let maxZoom = min(10.0, cameraService.maxZoomFactor) // Use camera's actual max zoom
         let clampedZoomFactor = max(minZoom, min(maxZoom, newZoomFactor))
         
-        // 更新当前变焦倍数
+        // Update current zoom multiplier
         currentZoomFactor = clampedZoomFactor
         lastScaleValue = value
         
-        // 立即应用真实硬件变焦到相机（这会让预览层自动显示变焦效果）
+        // Immediately apply real hardware zoom to camera (this lets preview layer show zoom effect)
         Task {
             do {
                 try await cameraService.setZoomFactor(clampedZoomFactor)
                 
-                // 计算拍摄时需要的裁剪区域（用于RAW处理）
+                // Calculate crop area needed for capture (for RAW processing)
                 await MainActor.run {
                     targetCropRect = rawProcessor.calculateCropRect(
                         for: clampedZoomFactor,
-                        imageSize: CGSize(width: 4032, height: 3024) // iPhone 13 mini 主摄分辨率
+                        imageSize: CGSize(width: CGFloat(cameraService.activeSensorResolution.width), height: CGFloat(cameraService.activeSensorResolution.height)) // Dynamic sensor resolution
                     )
                 }
                 
@@ -956,47 +972,47 @@ struct CameraView: View {
                 )
             }
         }
-        
-        // 显示变焦指示器
+
+        // Show zoom indicator
         withAnimation(.easeOut(duration: 0.1)) {
             showingZoomIndicator = true
         }
-        
+
         Logger.shared.info(
             module: .camera,
             operation: "RealZoomGesture",
             details: "Applied real zoom: \(String(format: "%.2f", clampedZoomFactor))x, crop rect: \(targetCropRect)"
         )
-        
+
         resetHideControlsTimer()
     }
-    
-    /// 处理变焦手势结束
+
+    /// Handle zoom gesture end
     private func handleZoomGestureEnded(_ value: CGFloat) {
-        // 重置手势状态
+        // Reset gesture state
         lastScaleValue = 1.0
-        
-        // 延迟隐藏变焦指示器
+
+        // Delay hiding zoom indicator
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             withAnimation(.easeOut(duration: 0.3)) {
                 self.showingZoomIndicator = false
             }
         }
-        
+
         Logger.shared.info(
             module: .camera,
             operation: "RealZoomGestureEnd",
             details: "Final real zoom factor: \(String(format: "%.2f", currentZoomFactor))x"
         )
     }
-    
-    /// 重置变焦到1.0x
+
+    /// Reset zoom to 1.0x
     private func resetZoom() {
         currentZoomFactor = 1.0
         lastScaleValue = 1.0
         targetCropRect = CGRect(x: 0, y: 0, width: 1, height: 1)
-        
-        // 重置硬件变焦
+
+        // Reset hardware zoom
         Task {
             do {
                 try await cameraService.setZoomFactor(1.0)
@@ -1020,24 +1036,24 @@ struct CameraView: View {
         )
     }
     
-    // MARK: - 滑块变焦控制
+    // MARK: - Slider zoom control
     
-    /// 处理滑块变焦变化
-    /// - Parameter newZoom: 新的变焦倍数
+    /// Handle slider zoom change
+    /// - Parameter newZoom: New zoom multiplier
     private func handleSliderZoomChange(_ newZoom: CGFloat) {
-        // 更新变焦倍数
+        // Update zoom multiplier
         currentZoomFactor = newZoom
         
-        // 立即应用真实硬件变焦
+        // Immediately apply real hardware zoom
         Task {
             do {
                 try await cameraService.setZoomFactor(newZoom)
                 
-                // 计算拍摄时需要的裁剪区域（用于RAW处理）
+                // Calculate crop area needed for capture (for RAW processing)
                 await MainActor.run {
                     targetCropRect = rawProcessor.calculateCropRect(
                         for: newZoom,
-                        imageSize: CGSize(width: 4032, height: 3024) // iPhone 13 mini 主摄分辨率
+                        imageSize: CGSize(width: CGFloat(cameraService.activeSensorResolution.width), height: CGFloat(cameraService.activeSensorResolution.height)) // Dynamic sensor resolution
                     )
                 }
                 
@@ -1056,26 +1072,26 @@ struct CameraView: View {
             details: "Applied slider zoom: \(String(format: "%.2f", newZoom))x, crop rect: \(targetCropRect)"
         )
         
-        // 重置控制界面隐藏计时器
+        // Reset control UI hide timer
         resetHideControlsTimer()
     }
-    
-    /// 处理连续变焦变化（iPhone 16风格）
-    /// - Parameter newZoom: 新的变焦倍数
+
+    /// Handle continuous zoom change (iPhone 16 style)
+    /// - Parameter newZoom: New zoom multiplier
     private func handleContinuousZoomChange(_ newZoom: CGFloat) {
-        // 更新变焦倍数
+        // Update zoom multiplier
         currentZoomFactor = newZoom
         
-        // 立即应用真实硬件变焦
+        // Immediately apply real hardware zoom
         Task {
             do {
                 try await cameraService.setZoomFactor(newZoom)
                 
-                // 计算拍摄时需要的裁剪区域（用于RAW处理）
+                // Calculate crop area needed for capture (for RAW processing)
                 await MainActor.run {
                     targetCropRect = rawProcessor.calculateCropRect(
                         for: newZoom,
-                        imageSize: CGSize(width: 4032, height: 3024) // iPhone 13 mini 主摄分辨率
+                        imageSize: CGSize(width: CGFloat(cameraService.activeSensorResolution.width), height: CGFloat(cameraService.activeSensorResolution.height)) // Dynamic sensor resolution
                     )
                 }
                 
@@ -1094,17 +1110,17 @@ struct CameraView: View {
             details: "Applied continuous zoom: \(String(format: "%.2f", newZoom))x"
         )
         
-        // 重置控制界面隐藏计时器
+        // Reset control UI hide timer
         resetHideControlsTimer()
     }
     
-    /// 切换变焦滑块显示状态
+    /// Toggle zoom slider display state
     private func toggleZoomSlider() {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             showingZoomSlider.toggle()
         }
         
-        // 如果显示滑块，隐藏变焦指示器避免重复
+        // If showing slider, hide zoom indicator to avoid duplication
         if showingZoomSlider {
             withAnimation(.easeOut(duration: 0.2)) {
                 showingZoomIndicator = false
@@ -1121,9 +1137,9 @@ struct CameraView: View {
     }
     
     private func showCaptureAndSaveSuccess(result: CapturedPhotoResult, assetID: String) {
-        // 成功反馈 - 短暂的闪屏效果
+        // Success feedback - brief flash effect
         withAnimation(.easeIn(duration: 0.1)) {
-            // 可以添加成功反馈UI
+            // Can add success feedback UI
         }
         
         Logger.shared.info(
@@ -1133,7 +1149,7 @@ struct CameraView: View {
         )
     }
     
-    // MARK: - 控制界面显示/隐藏
+    // MARK: - Control UI show/hide
     
     private func resetHideControlsTimer() {
         hideControlsTimer?.invalidate()
@@ -1153,9 +1169,9 @@ struct CameraView: View {
         }
     }
     
-    // MARK: - 增强的错误处理系统
+    // MARK: - Enhanced error handling system
     
-    /// 错误信息结构体
+    /// Error information structure
     struct CaptureErrorInfo {
         let title: String
         let userMessage: String
@@ -1168,20 +1184,20 @@ struct CameraView: View {
         let iconColor: Color
     }
     
-    /// 分析错误并生成用户友好的错误信息
+    /// Analyze error and generate user-friendly error info
     /// - Parameters:
-    ///   - error: 原始错误
-    ///   - userZoom: 当前用户变焦倍数
-    /// - Returns: 结构化的错误信息
+    ///   - error: Original error
+    ///   - userZoom: Current user zoom multiplier
+    /// - Returns: Structured error info
     private func analyzeError(_ error: Error, userZoom: CGFloat) -> CaptureErrorInfo {
         
-        // 1. RAW处理错误
+        // 1. RAW processing error
         if let rawError = error as? RAWProcessorError {
             switch rawError {
             case .invalidRAWData:
                 return CaptureErrorInfo(
-                    title: "RAW数据处理失败",
-                    userMessage: "相机捕获的RAW数据无效，请检查设备状态后重试",
+                    title: "RAW data processing failed",
+                    userMessage: "RAW data captured by camera is invalid, please check device status and retry",
                     stage: "rawProcessing",
                     type: "invalidData",
                     category: .camera,
@@ -1192,10 +1208,10 @@ struct CameraView: View {
                 )
             case .processingFailed(let message):
                 return CaptureErrorInfo(
-                    title: "RAW处理失败",
+                    title: "RAW processing failed",
                     userMessage: userZoom > 1.0 ? 
-                        "无法创建\(String(format: "%.1f", userZoom))x变焦的JPEG图片，请降低变焦倍数后重试" :
-                        "RAW文件处理过程中发生错误：\(message)",
+                        "Unable to create \(String(format: "%.1f", userZoom))x zoom JPEG image, please reduce zoom multiplier and retry" :
+                        "Error occurred during RAW file processing: \(message)",
                     stage: "rawProcessing",
                     type: "processingFailed",
                     category: .camera,
@@ -1206,8 +1222,8 @@ struct CameraView: View {
                 )
             case .unsupportedFormat:
                 return CaptureErrorInfo(
-                    title: "格式不支持",
-                    userMessage: "当前设备或iOS版本不支持此RAW格式，请联系开发者",
+                    title: "Format not supported",
+                    userMessage: "Current device or iOS version does not support this RAW format, please contact developer",
                     stage: "rawProcessing",
                     type: "unsupportedFormat",
                     category: .camera,
@@ -1219,13 +1235,13 @@ struct CameraView: View {
             }
         }
         
-        // 2. 相册保存错误
+        // 2. Photo save error
         if let saveError = photoSaveService.lastError {
             switch saveError {
             case .permissionDenied:
                 return CaptureErrorInfo(
-                    title: "相册权限被拒绝",
-                    userMessage: "请前往设置 > 隐私与安全性 > 照片，为JustRaw开启相册访问权限",
+                    title: "Album permission denied",
+                    userMessage: "Please go to Settings > Privacy & Security > Photos, enable album access permission for JustRaw",
                     stage: "save",
                     type: "permissionDenied",
                     category: .permissions,
@@ -1236,8 +1252,8 @@ struct CameraView: View {
                 )
             case .invalidData:
                 return CaptureErrorInfo(
-                    title: "照片数据无效",
-                    userMessage: "生成的照片数据损坏，请重新拍摄",
+                    title: "Photo data invalid",
+                    userMessage: "Generated photo data is corrupted, please retake photo",
                     stage: "save",
                     type: "invalidData",
                     category: .fileSystem,
@@ -1248,8 +1264,8 @@ struct CameraView: View {
                 )
             case .fileCreationFailed(let message):
                 return CaptureErrorInfo(
-                    title: "文件创建失败",
-                    userMessage: "无法创建临时文件，可能是存储空间不足：\(message)",
+                    title: "File creation failed",
+                    userMessage: "Unable to create temporary file, may be insufficient storage space: \(message)",
                     stage: "save",
                     type: "fileCreationFailed",
                     category: .fileSystem,
@@ -1260,8 +1276,8 @@ struct CameraView: View {
                 )
             case .photoLibraryError(let message):
                 return CaptureErrorInfo(
-                    title: "相册保存失败",
-                    userMessage: "无法保存到相册，请检查存储空间：\(message)",
+                    title: "Album save failed",
+                    userMessage: "Unable to save to album, please check storage space: \(message)",
                     stage: "save",
                     type: "photoLibraryError",
                     category: .fileSystem,
@@ -1272,8 +1288,8 @@ struct CameraView: View {
                 )
             case .tempDirectoryError:
                 return CaptureErrorInfo(
-                    title: "临时目录错误",
-                    userMessage: "无法访问临时目录，请重启应用",
+                    title: "Temp directory error",
+                    userMessage: "Unable to access temp directory, please restart app",
                     stage: "save",
                     type: "tempDirectoryError",
                     category: .fileSystem,
@@ -1285,13 +1301,13 @@ struct CameraView: View {
             }
         }
         
-        // 3. 相机捕获错误
+        // 3. Camera capture error
         if let cameraError = error as? CameraService.CameraError {
             switch cameraError {
             case .configurationFailed(let message):
                 return CaptureErrorInfo(
-                    title: "相机配置失败",
-                    userMessage: "相机初始化失败：\(message)",
+                    title: "Camera configuration failed",
+                    userMessage: "Camera initialization failed: \(message)",
                     stage: "capture",
                     type: "configurationFailed",
                     category: .camera,
@@ -1302,8 +1318,8 @@ struct CameraView: View {
                 )
             case .deviceNotFound:
                 return CaptureErrorInfo(
-                    title: "相机设备未找到",
-                    userMessage: "无法访问相机硬件，请检查设备权限",
+                    title: "Camera device not found",
+                    userMessage: "Unable to access camera hardware, please check device permissions",
                     stage: "capture",
                     type: "deviceNotFound",
                     category: .camera,
@@ -1314,8 +1330,8 @@ struct CameraView: View {
                 )
             case .sessionNotRunning:
                 return CaptureErrorInfo(
-                    title: "相机会话未运行",
-                    userMessage: "相机会话异常停止，请重启应用",
+                    title: "Camera session not running",
+                    userMessage: "Camera session unexpectedly stopped, please restart app",
                     stage: "capture",
                     type: "sessionNotRunning",
                     category: .camera,
@@ -1326,8 +1342,8 @@ struct CameraView: View {
                 )
             case .captureError(let message):
                 return CaptureErrorInfo(
-                    title: "拍摄失败",
-                    userMessage: "无法捕获照片：\(message)",
+                    title: "Capture failed",
+                    userMessage: "Unable to capture photo: \(message)",
                     stage: "capture",
                     type: "captureError",
                     category: .camera,
@@ -1338,8 +1354,8 @@ struct CameraView: View {
                 )
             case .permissionDenied:
                 return CaptureErrorInfo(
-                    title: "相机权限被拒绝",
-                    userMessage: "请前往设置 > 隐私与安全性 > 相机，为JustRaw开启相机权限",
+                    title: "Camera permission denied",
+                    userMessage: "Please go to Settings > Privacy & Security > Camera, enable camera permission for JustRaw",
                     stage: "capture",
                     type: "permissionDenied",
                     category: .permissions,
@@ -1350,8 +1366,8 @@ struct CameraView: View {
                 )
             case .rawNotSupported:
                 return CaptureErrorInfo(
-                    title: "RAW格式不支持",
-                    userMessage: "当前设备不支持RAW照片拍摄",
+                    title: "RAW format not supported",
+                    userMessage: "Current device does not support RAW photo capture",
                     stage: "capture",
                     type: "rawNotSupported",
                     category: .camera,
@@ -1362,8 +1378,8 @@ struct CameraView: View {
                 )
             case .deviceChangeFailed(let message):
                 return CaptureErrorInfo(
-                    title: "切换相机失败",
-                    userMessage: "无法切换到指定相机：\(message)",
+                    title: "Camera switch failed",
+                    userMessage: "Unable to switch to specified camera: \(message)",
                     stage: "capture",
                     type: "deviceChangeFailed",
                     category: .camera,
@@ -1375,10 +1391,10 @@ struct CameraView: View {
             }
         }
         
-        // 4. 默认通用错误
+        // 4. Default general error
         return CaptureErrorInfo(
-            title: "拍摄过程发生错误",
-            userMessage: "发生未知错误：\(error.localizedDescription)，请重试",
+            title: "Error occurred during capture",
+            userMessage: "Unknown error occurred: \(error.localizedDescription), please retry",
             stage: "unknown",
             type: "unknown",
             category: .camera,
@@ -1389,8 +1405,8 @@ struct CameraView: View {
         )
     }
     
-    /// 显示增强的错误反馈
-    /// - Parameter errorInfo: 错误信息
+    /// Show enhanced error feedback
+    /// - Parameter errorInfo: Error info
     private func showEnhancedErrorFeedback(_ errorInfo: CaptureErrorInfo) {
         currentErrorInfo = errorInfo
         
@@ -1398,7 +1414,7 @@ struct CameraView: View {
             showingEnhancedError = true
         }
         
-        // 对于非关键错误，5秒后自动隐藏
+        // For non-critical errors, auto-hide after 5 seconds
         if errorInfo.severity != .critical {
             DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
                 if showingEnhancedError && currentErrorInfo?.type == errorInfo.type {
@@ -1411,7 +1427,7 @@ struct CameraView: View {
         }
     }
     
-    // MARK: - 设备运动监测已移除
+    // MARK: - Device motion detection removed
     
 }
 
