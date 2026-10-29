@@ -12,43 +12,39 @@
 		80000005 /* CameraViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000006 /* CameraViewRepresentable.swift */; };
 		80000007 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000008 /* CameraPreviewView.swift */; };
 		80000009 /* CameraSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000A /* CameraSettingsView.swift */; };
-		8000000B /* ZoomSliderControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000C /* ZoomSliderControl.swift */; };
-		8000000D /* StylePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000E /* StylePickerView.swift */; };
-		8000000F /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000010 /* Logger.swift */; };
+		8000000A /* ZoomSliderControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000A /* ZoomSliderControl.swift */; };
+		8000000B /* StylePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000C /* StylePickerView.swift */; };
+		8000000D /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000010 /* Logger.swift */; };
 		80000011 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000012 /* CameraService.swift */; };
 		80000013 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000014 /* PermissionManager.swift */; };
 		80000015 /* PhotoSaveService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000016 /* PhotoSaveService.swift */; };
 		80000017 /* RAWProcessorService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000018 /* RAWProcessorService.swift */; };
 		80000019 /* CameraCoreBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000001A /* CameraCoreBridge.swift */; };
-		8000001B /* AppStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000001C /* AppStateManager.swift */; };
+		8000001B /* AppStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000001A /* AppStateManager.swift */; };
 		8000001D /* LaunchJustRawIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000001E /* LaunchJustRawIntent.swift */; };
 		8000001F /* libcamera_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 80000020 /* libcamera_core.a */; };
-		80000021 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 80000022 /* Info.plist */; };
-		80000023 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 80000024 /* Assets.xcassets */; };
+		80000021 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 80000020 /* Info.plist */; };
+		80000023 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 80000022 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		80000002 /* JustRawApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JustRawApp.swift; sourceTree = "<group>"; };
-		80000004 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
-		80000006 /* CameraViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewRepresentable.swift; sourceTree = "<group>"; };
-		80000008 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
-		8000000A /* CameraSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSettingsView.swift; sourceTree = "<group>"; };
-		8000000C /* ZoomSliderControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomSliderControl.swift; sourceTree = "<group>"; };
-		8000000E /* StylePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StylePickerView.swift; sourceTree = "<group>"; };
-		80000010 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
-		80000012 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
-		80000014 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManager.swift; sourceTree = "<group>"; };
-		80000016 /* PhotoSaveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSaveService.swift; sourceTree = "<group>"; };
-		80000018 /* RAWProcessorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAWProcessorService.swift; sourceTree = "<group>"; };
-		8000001A /* CameraCoreBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraCoreBridge.swift; sourceTree = "<group>"; };
-		8000001C /* AppStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStateManager.swift; sourceTree = "<group>"; };
-		8000001E /* LaunchJustRawIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchJustRawIntent.swift; sourceTree = "<group>"; };
+		80000002 /* JustRawApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/JustRawApp.swift; sourceTree = "<group>"; };
+		80000004 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/CameraView.swift; sourceTree = "<group>"; };
+		80000006 /* CameraViewRepresentable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/CameraViewRepresentable.swift; sourceTree = "<group>"; };
+		80000008 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/CameraPreviewView.swift; sourceTree = "<group>"; };
+		8000000A /* CameraSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/CameraSettingsView.swift; sourceTree = "<group>"; };
+		8000000C /* ZoomSliderControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/ZoomSliderControl.swift; sourceTree = "<group>"; };
+		8000000E /* StylePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/StylePickerView.swift; sourceTree = "<group>"; };
+		80000010 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/Utils/Logger.swift; sourceTree = "<group>"; };
+		80000012 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/Services/CameraService.swift; sourceTree = "<group>"; };
+		80000014 /* PermissionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/Services/PermissionManager.swift; sourceTree = "<group>"; };
+		80000016 /* PhotoSaveService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/Services/PhotoSaveService.swift; sourceTree = "<group>"; };
+		80000018 /* RAWProcessorService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/Services/RAWProcessorService.swift; sourceTree = "<group>"; };
+		8000001A /* CameraCoreBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/Services/CameraCoreBridge.swift; sourceTree = "<group>"; };
+		8000001E /* LaunchJustRawIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraApp/Intents/LaunchJustRawIntent.swift; sourceTree = "<group>"; };
 		80000020 /* libcamera_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = ../rust-libs/libcamera_core.a; sourceTree = "<group>"; };
-		80000022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		80000024 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		80000022 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = CameraApp/Info.plist; sourceTree = "<group>"; };
+		80000024 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = CameraApp/Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,8 +62,8 @@
 		80000028 = {
 			isa = PBXGroup;
 			children = (
-				8000002A /* JustRaw */,
-				8000002B /* Products */,
+				80000025 /* JustRaw */,
+				80000026 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
@@ -88,7 +84,7 @@
 				80000018 /* RAWProcessorService.swift */,
 				8000001A /* CameraCoreBridge.swift */,
 				8000001C /* AppStateManager.swift */,
-				8000001E /* libcamera_core.a */,
+				80000020 /* libcamera_core.a */,
 				80000020 /* Info.plist */,
 				80000022 /* Assets.xcassets */,
 			);
@@ -163,8 +159,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				80000020 /* Info.plist in Resources */,
-				80000022 /* Assets.xcassets in Resources */,
+				80000021 /* Info.plist in Resources */,
+				80000023 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -188,8 +184,8 @@
 				80000015 /* PhotoSaveService.swift in Sources */,
 				80000017 /* RAWProcessorService.swift in Sources */,
 				80000019 /* CameraCoreBridge.swift in Sources */,
-				8000001D /* AppStateManager.swift in Sources */,
-				8000001F /* LaunchJustRawIntent.swift in Sources */,
+				8000001B /* AppStateManager.swift in Sources */,
+				8000001D /* LaunchJustRawIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -249,9 +245,6 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/JustRaw/rust-core/src",
-				);
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/JustRaw/rust-libs",
@@ -318,9 +311,6 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/JustRaw/rust-core/src",
-				);
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/JustRaw/rust-libs",
@@ -328,11 +318,12 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SDKROOT = iphoneos;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"-lcamera_core",
 					"$(inherited)",
 				);
+				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -353,7 +344,7 @@
 				DEVELOPMENT_TEAM = 6GV43A5U4N;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = JustRaw/Info.plist;
+				INFOPLIST_FILE = CameraApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -408,11 +399,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		80000036 /* Build configuration list for PBXNativeTarget "JustRaw" */ = {
+		8000002E /* Build configuration list for PBXNativeTarget "JustRaw" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				80000037 /* Debug */,
-				80000038 /* Release */,
+				80000032 /* Debug */,
+				80000033 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -422,5 +413,3 @@
 /* Begin XCVersionGroup section */
 /* End XCVersionGroup section */
 };
-
-/* End PBXProject section */
