@@ -2,7 +2,7 @@
 //  CameraView.swift
 //  CameraApp
 //
-//  Camera UI ported from Xiaomi MIUI Camera APK.
+//  Camera UI ported directly from Xiaomi MIUI Camera APK.
 //
 
 import SwiftUI
@@ -16,6 +16,9 @@ struct CameraView: View {
     @EnvironmentObject var permissionManager: PermissionManager
     @EnvironmentObject var errorHandler: ErrorHandler
     @StateObject private var photoSaveService = PhotoSaveService.shared
+    
+    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.openURL) var openURL
     
     // UI state
     @State private var showingControls = true
@@ -39,16 +42,16 @@ struct CameraView: View {
     @State private var showingZoomSlider = true
     @State private var targetCropRect: CGRect = CGRect(x: 0, y: 0, width: 1, height: 1)
     
-    // Raw processing
+    // Raw processing service
     @StateObject private var rawProcessor = RAWProcessorService.shared
     
-    // Error feedback
+    // Error feedback state
     @State private var showingEnhancedError = false
     @State private var currentErrorInfo: CaptureErrorInfo?
     
     var body: some View {
         ZStack {
-            // Camera preview
+            // ── Camera preview (full bleed, black background) ──
             CameraViewRepresentable(
                 cameraService: cameraService,
                 onPhotoCaptured: { image in
@@ -63,10 +66,10 @@ struct CameraView: View {
             .ignoresSafeArea()
             .background(Color.black)
             
-            // Top bar
+            // ── Top bar: Flash | Mode pills | Settings ──
             VStack {
                 HStack(spacing: 0) {
-                    // Flash toggle
+                    // Flash toggle (top-left)
                     Button(action: cameraService.toggleFlash) {
                         Image(systemName: cameraService.flashMode.icon)
                             .font(.system(size: 22, weight: .medium))
@@ -77,7 +80,7 @@ struct CameraView: View {
                     
                     Spacer()
                     
-                    // Mode pills
+                    // Mode pills: PHOTO / VIDEO (top center)
                     HStack(spacing: 0) {
                         ModePill(
                             title: "PHOTO",
@@ -95,13 +98,15 @@ struct CameraView: View {
                     .background(
                         Capsule()
                             .fill(Color.white.opacity(0.12))
-                            .overlay(Capsule().stroke(Color.white.opacity(0.24), lineWidth: 1))
+                            .overlay(
+                                Capsule().stroke(Color.white.opacity(0.24), lineWidth: 1)
+                            )
                     )
                     .frame(height: 30)
                     
                     Spacer()
                     
-                    // Settings
+                    // Settings (top-right)
                     Button(action: { cameraService.showSettings = true }) {
                         Image(systemName: "ellipsis.circle")
                             .font(.system(size: 22, weight: .medium))
@@ -115,9 +120,9 @@ struct CameraView: View {
                 
                 Spacer()
                 
-                // Bottom bar
+                // ── Bottom bar: Gallery | Shutter | Style ──
                 HStack(spacing: 0) {
-                    // Gallery
+                    // Gallery shortcut (bottom-left)
                     Button(action: openPhotosApp) {
                         ZStack {
                             Circle()
@@ -132,11 +137,13 @@ struct CameraView: View {
                     
                     Spacer()
                     
-                    // Shutter button
+                    // ── Shutter button (center, amber #FFFFCE16) ──
                     ZStack {
+                        // Outer dark ring
                         Circle()
                             .stroke(Color.white.opacity(0.25), lineWidth: 3)
                             .frame(width: 93, height: 93)
+                        // Inner amber button
                         Circle()
                             .fill(cameraService.isVideoMode && cameraService.isRecording ? Color.red : Color(hex: "FFFFCE16"))
                             .frame(width: 80, height: 80)
@@ -164,7 +171,7 @@ struct CameraView: View {
                     
                     Spacer()
                     
-                    // Styles
+                    // Styles / Profiles (bottom-right)
                     Button(action: { cameraService.showStylePicker = true }) {
                         ZStack {
                             Circle()
@@ -190,7 +197,7 @@ struct CameraView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             
-            // Lens pills (vertical left)
+            // ── Lens pills (vertical stack on LEFT side) ──
             HStack(spacing: 0) {
                 VStack(spacing: 12) {
                     LensPill(
@@ -219,7 +226,7 @@ struct CameraView: View {
             }
             .padding(.leading, 22)
             
-            // Recording indicator
+            // ── Recording indicator (top right) ──
             if cameraService.isVideoMode && cameraService.isRecording {
                 VStack {
                     HStack {
@@ -247,7 +254,7 @@ struct CameraView: View {
                 .ignoresSafeArea()
             }
             
-            // Loading overlay
+            // ── Loading overlay ──
             if cameraService.isProcessing {
                 ZStack {
                     Color.black.opacity(0.6).ignoresSafeArea()
@@ -257,7 +264,7 @@ struct CameraView: View {
                 }
             }
             
-            // Style Applied badge
+            // ── Style Applied badge (top-right, Xiaomi style) ──
             if cameraService.selectedStyle != .natural {
                 VStack {
                     HStack {
@@ -296,7 +303,7 @@ struct CameraView: View {
         }
     }
     
-    // MARK: - Camera control
+    // MARK: - Camera control methods
     
     private func setupCamera() {
         Task {
@@ -317,7 +324,10 @@ struct CameraView: View {
     private func capturePhoto() {
         guard !isCapturing else { return }
         guard !isProcessingRAW else { return }
-        guard !photoSaveService.isSaving else { return }
+        guard !photoSaveService.isSaving else {
+            Logger.shared.warning(module: .camera, operation: "CapturePhoto", details: "Previous photo still saving")
+            return
+        }
         
         withAnimation(.easeInOut(duration: 0.1)) {
             isCapturing = true
@@ -325,7 +335,7 @@ struct CameraView: View {
         
         Task {
             do {
-                let result = try await cameraService.capturePhoto()
+                let result = try await cameraService.captureRAWWithZoomReset(originalZoomFactor: currentZoomFactor)
                 
                 guard let rawData = result.rawPhotoData else {
                     throw CameraService.CameraError.captureError("No RAW data")
@@ -392,7 +402,7 @@ struct CameraView: View {
                     error,
                     category: errorInfo.category,
                     severity: errorInfo.severity,
-                    context: ["action": "capturePhoto"]
+                    context: ["action": "captureRAWAndProcess"]
                 )
                 
                 await MainActor.run {
@@ -447,7 +457,7 @@ struct CameraView: View {
             case .invalidRAWData:
                 return CaptureErrorInfo(
                     title: "RAW data processing failed",
-                    userMessage: "RAW data captured by camera is invalid",
+                    userMessage: "RAW data captured by camera is invalid, please check device status and retry",
                     stage: "rawProcessing",
                     type: "invalidData",
                     category: .camera,
@@ -459,7 +469,7 @@ struct CameraView: View {
             case .processingFailed(let message):
                 return CaptureErrorInfo(
                     title: "RAW processing failed",
-                    userMessage: message,
+                    userMessage: "Error occurred during RAW file processing: \(message)",
                     stage: "rawProcessing",
                     type: "processingFailed",
                     category: .camera,
@@ -471,7 +481,7 @@ struct CameraView: View {
             case .unsupportedFormat:
                 return CaptureErrorInfo(
                     title: "Format not supported",
-                    userMessage: "RAW format not supported on this device",
+                    userMessage: "Current device or iOS version does not support this RAW format, please contact developer",
                     stage: "rawProcessing",
                     type: "unsupportedFormat",
                     category: .camera,
@@ -488,7 +498,7 @@ struct CameraView: View {
             case .permissionDenied:
                 return CaptureErrorInfo(
                     title: "Album permission denied",
-                    userMessage: "Please enable photo library access in Settings",
+                    userMessage: "Please go to Settings > Privacy & Security > Photos, enable album access for CameraApp",
                     stage: "save",
                     type: "permissionDenied",
                     category: .permissions,
@@ -497,17 +507,53 @@ struct CameraView: View {
                     iconName: "lock.fill",
                     iconColor: .red
                 )
-            default:
+            case .invalidData:
                 return CaptureErrorInfo(
-                    title: "Save failed",
-                    userMessage: saveError.localizedDescription,
+                    title: "Photo data invalid",
+                    userMessage: "Generated photo data is corrupted, please retake photo",
                     stage: "save",
-                    type: "saveError",
+                    type: "invalidData",
                     category: .fileSystem,
                     severity: .high,
                     canRetry: true,
-                    iconName: "exclamationmark.circle.fill",
+                    iconName: "doc.badge.exclamationmark",
                     iconColor: .orange
+                )
+            case .fileCreationFailed(let message):
+                return CaptureErrorInfo(
+                    title: "File creation failed",
+                    userMessage: "Unable to create temporary file, may be insufficient storage space: \(message)",
+                    stage: "save",
+                    type: "fileCreationFailed",
+                    category: .fileSystem,
+                    severity: .high,
+                    canRetry: true,
+                    iconName: "externaldrive.badge.exclamationmark",
+                    iconColor: .orange
+                )
+            case .photoLibraryError(let message):
+                return CaptureErrorInfo(
+                    title: "Album save failed",
+                    userMessage: "Unable to save to album, please check storage space: \(message)",
+                    stage: "save",
+                    type: "photoLibraryError",
+                    category: .fileSystem,
+                    severity: .high,
+                    canRetry: true,
+                    iconName: "photo.badge.exclamationmark",
+                    iconColor: .orange
+                )
+            case .tempDirectoryError:
+                return CaptureErrorInfo(
+                    title: "Temp directory error",
+                    userMessage: "Unable to access temp directory, please restart app",
+                    stage: "save",
+                    type: "tempDirectoryError",
+                    category: .fileSystem,
+                    severity: .high,
+                    canRetry: false,
+                    iconName: "folder.badge.exclamationmark",
+                    iconColor: .red
                 )
             }
         }
@@ -517,7 +563,7 @@ struct CameraView: View {
             case .configurationFailed(let message):
                 return CaptureErrorInfo(
                     title: "Camera configuration failed",
-                    userMessage: message,
+                    userMessage: "Camera initialization failed: \(message)",
                     stage: "capture",
                     type: "configurationFailed",
                     category: .camera,
@@ -528,8 +574,8 @@ struct CameraView: View {
                 )
             case .deviceNotFound:
                 return CaptureErrorInfo(
-                    title: "Camera not available",
-                    userMessage: "Camera hardware not available",
+                    title: "Camera device not found",
+                    userMessage: "Unable to access camera hardware, please check device permissions",
                     stage: "capture",
                     type: "deviceNotFound",
                     category: .camera,
@@ -540,8 +586,8 @@ struct CameraView: View {
                 )
             case .sessionNotRunning:
                 return CaptureErrorInfo(
-                    title: "Camera session stopped",
-                    userMessage: "Please restart the app",
+                    title: "Camera session not running",
+                    userMessage: "Camera session unexpectedly stopped, please restart app",
                     stage: "capture",
                     type: "sessionNotRunning",
                     category: .camera,
@@ -553,7 +599,7 @@ struct CameraView: View {
             case .captureError(let message):
                 return CaptureErrorInfo(
                     title: "Capture failed",
-                    userMessage: message,
+                    userMessage: "Unable to capture photo: \(message)",
                     stage: "capture",
                     type: "captureError",
                     category: .camera,
@@ -565,7 +611,7 @@ struct CameraView: View {
             case .permissionDenied:
                 return CaptureErrorInfo(
                     title: "Camera permission denied",
-                    userMessage: "Please enable camera access in Settings",
+                    userMessage: "Please enable camera permission in Settings",
                     stage: "capture",
                     type: "permissionDenied",
                     category: .permissions,
@@ -576,8 +622,8 @@ struct CameraView: View {
                 )
             case .rawNotSupported:
                 return CaptureErrorInfo(
-                    title: "RAW not supported",
-                    userMessage: "RAW capture not supported on this device",
+                    title: "RAW format not supported",
+                    userMessage: "Current device does not support RAW photo capture",
                     stage: "capture",
                     type: "rawNotSupported",
                     category: .camera,
@@ -589,7 +635,7 @@ struct CameraView: View {
             case .deviceChangeFailed(let message):
                 return CaptureErrorInfo(
                     title: "Camera switch failed",
-                    userMessage: message,
+                    userMessage: "Unable to switch camera: \(message)",
                     stage: "capture",
                     type: "deviceChangeFailed",
                     category: .camera,
@@ -602,8 +648,8 @@ struct CameraView: View {
         }
         
         return CaptureErrorInfo(
-            title: "Camera error",
-            userMessage: error.localizedDescription,
+            title: "Capture error",
+            userMessage: "Unknown error: \(error.localizedDescription), please retry",
             stage: "unknown",
             type: "unknown",
             category: .camera,
@@ -635,7 +681,7 @@ struct CameraView: View {
         Logger.shared.info(
             module: .camera,
             operation: "CaptureAndSaveSuccess",
-            details: "Photo captured and saved: \(result.formattedFileSize), Asset ID: \(assetID)"
+            details: "RAW photo captured and saved: \(result.formattedFileSize), Asset ID: \(assetID)"
         )
         
         withAnimation(.easeInOut(duration: 0.1)) {
@@ -645,7 +691,7 @@ struct CameraView: View {
     }
 }
 
-// MARK: - Mode pill
+// MARK: - Mode pill (Xiaomi MIUI: selected = amber fill + dark text)
 
 struct ModePill: View {
     let title: String
@@ -671,7 +717,7 @@ struct ModePill: View {
     }
 }
 
-// MARK: - Lens pill
+// MARK: - Lens pill (vertical left side, Xiaomi style)
 
 struct LensPill: View {
     let title: String
