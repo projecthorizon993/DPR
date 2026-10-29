@@ -34,7 +34,7 @@ jobs:
 
       - name: Build iOS app with xcodebuild
         run: |
-          xcodebuild -project ios-app/JustRaw.xcodeproj \
+          xcodebuild -project ios-app/CameraApp.xcodeproj \
             -scheme JustRaw \
             -configuration Release \
             -sdk iphoneos \
