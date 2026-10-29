@@ -1,0 +1,4 @@
+*.pbxproj text eol=lf
+*.pbxproj -text
+*.xcassets -text
+*.plist text eol=lf

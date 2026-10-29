@@ -32,6 +32,10 @@ jobs:
           mkdir -p ../rust-libs
           cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
+      - name: Convert project.pbxproj to XML plist
+        run: |
+          plutil -convert xml1 ios-app/JustRaw.xcodeproj/project.pbxproj
+
       - name: Build iOS app with xcodebuild
         run: |
           xcodebuild -project ios-app/JustRaw.xcodeproj \
