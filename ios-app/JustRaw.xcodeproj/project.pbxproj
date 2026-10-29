@@ -12,7 +12,7 @@
 		80000005 /* CameraViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000006 /* CameraViewRepresentable.swift */; };
 		80000007 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000008 /* CameraPreviewView.swift */; };
 		80000009 /* CameraSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000A /* CameraSettingsView.swift */; };
-		8000000B /* ZoomSliderControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000A /* ZoomSliderControl.swift */; };
+		8000000A /* ZoomSliderControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000A /* ZoomSliderControl.swift */; };
 		8000000B /* StylePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000000E /* StylePickerView.swift */; };
 		8000000F /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000010 /* Logger.swift */; };
 		80000011 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000012 /* CameraService.swift */; };
@@ -169,8 +169,8 @@
 				80000005 /* CameraViewRepresentable.swift in Sources */,
 				80000007 /* CameraPreviewView.swift in Sources */,
 				80000009 /* CameraSettingsView.swift in Sources */,
-				8000000B /* ZoomSliderControl.swift in Sources */,
-				8000000D /* StylePickerView.swift in Sources */,
+				8000000A /* ZoomSliderControl.swift in Sources */,
+				8000000C /* StylePickerView.swift in Sources */,
 				8000000F /* Logger.swift in Sources */,
 				80000011 /* CameraService.swift in Sources */,
 				80000013 /* PermissionManager.swift in Sources */,
