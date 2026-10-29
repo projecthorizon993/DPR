@@ -34,15 +34,15 @@ jobs:
           mkdir -p ../rust-libs
           cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
-      - name: List iOS app directory
+      - name: Generate Xcode project from Swift Package Manager
         run: |
-          ls -la ios-app/
-          ls -la ios-app/CameraApp.xcodeproj/
+          cd ios-app
+          swift package generate-xcodeproj
 
       - name: Build iOS app with xcodebuild
         run: |
           xcodebuild -project ios-app/CameraApp.xcodeproj \
-            -scheme JustRaw \
+            -scheme CameraApp \
             -configuration Release \
             -sdk iphoneos \
             -archivePath ./build/JustRaw.xcarchive \

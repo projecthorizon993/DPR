@@ -12,8 +12,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "CameraApp",
-            path: "CameraApp",
-            exclude: ["Info.plist"],
+            path: ".",
+            exclude: ["Package.swift", "Package.resolved"],
             linkerSettings: [
                 .linkedLibrary("camera_core", .when(platforms: [.iOS]))
             ]
