@@ -62,7 +62,7 @@ struct CameraView: View {
         ZStack {
             // ── Camera preview (full bleed, black background) ──
             CameraViewRepresentable(
-                viewModel: cameraService,
+                cameraService: cameraService,
                 onPhotoCaptured: { image in
                     Task {
                         await processCapturedImage(image)
@@ -369,30 +369,12 @@ struct CameraView: View {
         
         Task {
             do {
-                // Step 1: Use zoom-reset RAW capture (avoid Apple constraint)
-                Logger.shared.info(
-                    module: .camera,
-                    operation: "RAWCaptureStart",
-                    details: "Starting RAW capture with current zoom: \(String(format: "%.2f", currentZoomFactor))x, crop rect: \(targetCropRect)"
-                )
-                
                 let result = try await cameraService.captureRAWWithZoomReset(originalZoomFactor: currentZoomFactor)
                 
-                Logger.shared.info(
-                    module: .camera,
-                    operation: "RAWCaptureComplete",
-                    details: "RAW photo captured: \(result.formattedFileSize), starting processing"
-                )
-                
-                // Step 2: Verify RAW data
                 guard let rawData = result.rawPhotoData else {
                     throw CameraService.CameraError.captureError("No RAW data")
                 }
                 
-                // Step 3: RAW processing - generate cropped JPEG (only process when user zooms)
-                var croppedJPEGData: Data?
-                
-                // Update UI state on main thread
                 await MainActor.run {
                     withAnimation(.easeInOut(duration: 0.1)) {
                         isCapturing = false
@@ -400,74 +382,40 @@ struct CameraView: View {
                     }
                 }
                 
+                var croppedJPEGData: Data?
+                
                 if currentZoomFactor > 1.0 {
-                    Logger.shared.info(
-                        module: .camera,
-                        operation: "RAWProcessStart",
-                        details: "Processing RAW for zoom \(String(format: "%.2f", currentZoomFactor))x with crop rect: \(targetCropRect)"
-                    )
-                    
                     croppedJPEGData = try await rawProcessor.processRAWToJPEG(
                         rawData,
                         cropRect: targetCropRect,
                         style: cameraService.selectedStyle
                     )
-                    
-                    Logger.shared.info(
-                        module: .camera,
-                        operation: "RAWProcessComplete",
-                        details: "RAW processing completed, JPEG size: \(croppedJPEGData?.count ?? 0 / 1024)KB"
-                    )
-                } else {
-                    Logger.shared.info(
-                        module: .camera,
-                        operation: "RAWProcessSkip",
-                        details: "No zoom applied, skipping RAW processing"
-                    )
                 }
                 
-                // Stop RAW processing status on main thread
                 await MainActor.run {
                     withAnimation(.easeInOut(duration: 0.1)) {
                         isProcessingRAW = false
                     }
                 }
                 
-                // Step 4: Save photo to album
                 let assetID: String
                 
                 if let jpegData = croppedJPEGData {
-                    // Save dual photos: Original RAW + Cropped JPEG
                     assetID = try await photoSaveService.saveDualPhotos(
                         originalRAW: rawData,
                         croppedJPEG: jpegData,
                         metadata: result.metadata
                     )
-                    
-                    Logger.shared.info(
-                        module: .camera,
-                        operation: "DualPhotosSaved",
-                        details: "Saved dual photos: original RAW + cropped JPEG, Asset ID: \(assetID)"
-                    )
                 } else {
-                    // Only save original RAW
                     assetID = try await photoSaveService.saveRAWPhoto(
                         rawData: rawData,
                         metadata: result.metadata
                     )
-                    
-                    Logger.shared.info(
-                        module: .camera,
-                        operation: "RAWPhotoSaved",
-                        details: "Saved original RAW only, Asset ID: \(assetID)"
-                    )
                 }
                 
-                // Step 5: Update UI on main thread
                 await MainActor.run {
                     showCaptureAndSaveSuccess(result: result, assetID: assetID)
                     
-                    // Ensure all states have been reset
                     withAnimation(.easeInOut(duration: 0.1)) {
                         isCapturing = false
                         isProcessingRAW = false
@@ -482,7 +430,6 @@ struct CameraView: View {
                     }
                 }
                 
-                // Enhanced error handling (capture, process, or save)
                 let errorInfo = analyzeError(error, userZoom: currentZoomFactor)
                 
                 errorHandler.handleError(
@@ -505,7 +452,6 @@ struct CameraView: View {
                     details: "RAW capture failed: \(errorInfo.userMessage) (Stage: \(errorInfo.stage), Type: \(errorInfo.type))"
                 )
                 
-                // Display user-friendly error feedback
                 await MainActor.run {
                     showEnhancedErrorFeedback(errorInfo)
                 }
@@ -514,7 +460,6 @@ struct CameraView: View {
     }
     
     private func processCapturedImage(_ image: UIImage) {
-        // Handle captured image from CameraViewRepresentable
         Task {
             await capturePhoto()
         }
@@ -554,8 +499,6 @@ struct CameraView: View {
     }
     
     private func analyzeError(_ error: Error, userZoom: CGFloat) -> CaptureErrorInfo {
-        
-        // 1. RAW processing error
         if let rawError = error as? RAWProcessorError {
             switch rawError {
             case .invalidRAWData:
@@ -597,7 +540,6 @@ struct CameraView: View {
             }
         }
         
-        // 2. Photo save error
         if let saveError = photoSaveService.lastError {
             switch saveError {
             case .permissionDenied:
@@ -663,7 +605,6 @@ struct CameraView: View {
             }
         }
         
-        // 3. Camera capture error
         if let cameraError = error as? CameraService.CameraError {
             switch cameraError {
             case .configurationFailed(let message):
@@ -753,7 +694,6 @@ struct CameraView: View {
             }
         }
         
-        // 4. Default general error
         return CaptureErrorInfo(
             title: "Capture error",
             userMessage: "Unknown error: \(error.localizedDescription), please retry",
