@@ -27,13 +27,13 @@ jobs:
 
       - name: Build Rust camera_core library
         run: |
-          cd JustRaw/rust-core
+          cd rust-core
           cargo build --release --target aarch64-apple-ios
-          cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
+          cp target/aarch64-apple-ios/release/libcamera_core.a rust-libs/
 
       - name: Build iOS app with xcodebuild
         run: |
-          xcodebuild -project JustRaw.xcodeproj \
+          xcodebuild -project ios-app/JustRaw.xcodeproj \
             -scheme JustRaw \
             -configuration Release \
             -sdk iphoneos \
