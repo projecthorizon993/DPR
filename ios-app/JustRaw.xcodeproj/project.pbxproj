@@ -4,6 +4,7 @@
 	classes = {
 	};
 	objectVersion = 77;
+	rootObject = 8000002F /* PBXProject */;
 	objects = {
 
 /* Begin PBXBuildFile section */
