@@ -32,6 +32,11 @@ jobs:
           mkdir -p ../rust-libs
           cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
+      - name: List iOS app directory
+        run: |
+          ls -la ios-app/
+          ls -la ios-app/CameraApp.xcodeproj/
+
       - name: Build iOS app with xcodebuild
         run: |
           xcodebuild -project ios-app/CameraApp.xcodeproj \
