@@ -42,6 +42,7 @@ final class Logger {
         self.log(level: .INFO, message: "CameraApp launched", file: "main", function: "init", line: 0)
     }
 
+    /// Log a message with details
     func log(level: LogLevel, message: String, file: String = #file, function: String = #function, line: Int = #line) {
         let timestamp = dateFormatter.string(from: Date())
         let fileName = (file as NSString).lastPathComponent
@@ -64,12 +65,12 @@ final class Logger {
     
     // MARK: - Convenience logging methods
     
-    func logInfo(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
-        log(level: .INFO, message: message, file: file, function: function, line: line)
-    }
-    
     func logDebug(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         log(level: .DEBUG, message: message, file: file, function: function, line: line)
+    }
+    
+    func logInfo(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        log(level: .INFO, message: message, file: file, function: function, line: line)
     }
     
     func logWarn(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
@@ -82,6 +83,24 @@ final class Logger {
     
     func logFatal(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         log(level: .FATAL, message: message, file: file, function: function, line: line)
+    }
+    
+    // Additional convenience aliases
+    
+    func info(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        logInfo(message, file: file, function: function, line: line)
+    }
+    
+    func debug(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        logDebug(message, file: file, function: function, line: line)
+    }
+    
+    func warn(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        logWarn(message, file: file, function: function, line: line)
+    }
+    
+    func error(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+        logError(message, file: file, function: function, line: line)
     }
     
     // MARK: - Camera-specific logging methods
