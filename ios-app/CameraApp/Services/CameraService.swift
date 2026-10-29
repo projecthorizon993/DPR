@@ -86,6 +86,21 @@ final class CameraService: NSObject, ObservableObject {
     /// 设置页面是否显示
     @Published var showSettings = false
     
+    /// 显示风格选择器
+    @Published var showStylePicker = false
+    
+    /// 显示相册
+    @Published var showGallery = false
+    
+    /// 显示审查页面
+    @Published var showReview = false
+    
+    /// 审查图像
+    @Published var reviewImage: UIImage?
+    
+    /// 审查视频URL
+    @Published var reviewVideoURL: URL?
+    
     /// 当前相机位置
     @Published var currentCameraPosition: AVCaptureDevice.Position = .back
     
