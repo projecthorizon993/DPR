@@ -137,6 +137,24 @@ final class Logger {
         logInfo("Camera switched to \(position)", file: "CameraService", function: "switchCamera", line: 0)
     }
     
+    // MARK: - App lifecycle logging
+    
+    func logAppLaunch() {
+        logInfo("App launched", file: "CameraApp", function: "init", line: 0)
+    }
+    
+    func logAppForeground() {
+        logInfo("App foregrounded", file: "CameraApp", function: "applicationDidBecomeActive", line: 0)
+    }
+    
+    func logAppBackground() {
+        logInfo("App backgrounded", file: "CameraApp", function: "applicationDidEnterBackground", line: 0)
+    }
+    
+    func logAppTerminate() {
+        logInfo("App terminated", file: "CameraApp", function: "applicationWillTerminate", line: 0)
+    }
+    
     // MARK: - Photo save logging
     
     func logPhotoSave(start: Bool, imageCount: Int = 1) {
