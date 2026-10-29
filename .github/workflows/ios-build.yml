@@ -34,21 +34,51 @@ jobs:
           mkdir -p ../rust-libs
           cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
-      - name: Build Swift package for iOS
+      - name: Build iOS app with xcodebuild
         run: |
-          cd ios-app
-          swift build --target aarch64-apple-ios \
-            -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphoneos --show-sdk-path)" \
-            -Xswiftc -target -Xswiftc aarch64-apple-ios \
-            -Xlinker -L../rust-libs -Xlinker -lcamera_core
+          export DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer
+          xcrun xcodebuild -project ios-app/CameraApp.xcodeproj \
+            -scheme JustRaw \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath ./build/JustRaw.xcarchive \
+            DEVELOPMENT_TEAM="" \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE="" \
+            archive
 
-      - name: Export IPA
+      - name: Export unsigned IPA
         run: |
-          echo "Build complete"
+          mkdir -p ./build/export
+          cat > ./build/export-options.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>teamID</key>
+              <string></string>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath ./build/JustRaw.xcarchive \
+            -exportPath ./build/export \
+            -exportOptionsPlist ./build/export-options.plist
 
-      - name: Upload build artifact
+      - name: Rename and move IPA
+        run: |
+          cp ./build/export/JustRaw.ipa ./CameraApp-unsigned.ipa
+
+      - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: camera-app-build
-          path: ios-app/.build/
+          name: camera-app-unsigned-ipa
+          path: ./CameraApp-unsigned.ipa
           retention-days: 7
