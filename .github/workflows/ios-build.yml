@@ -37,7 +37,7 @@ jobs:
       - name: Build iOS app with xcodebuild
         run: |
           export DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer
-          xcrun xcodebuild -project ios-app/CameraApp.xcodeproj \
+          xcrun xcodebuild -workspace ios-app/CameraApp.xcodeproj/project.xcworkspace \
             -scheme JustRaw \
             -configuration Release \
             -sdk iphoneos \
