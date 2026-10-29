@@ -25,7 +25,7 @@
 		8000001D /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8000001E /* GalleryView.swift */; };
 		8000001F /* ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000020 /* ReviewView.swift */; };
 		80000021 /* LaunchJustRawIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000022 /* LaunchJustRawIntent.swift */; };
-		80000023 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000024 /* Color+Hex.swift */; };
+		80000023 /* ColorHex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000024 /* ColorHex.swift */; };
 		80000025 /* PerformanceMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80000026 /* PerformanceMonitor.swift */; };
 		80000027 /* libcamera_core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 80000028 /* libcamera_core.a */; };
 		80000029 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 8000002A /* Info.plist */; };
@@ -50,7 +50,7 @@
 		8000001E /* GalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
 		80000020 /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
 		80000022 /* LaunchJustRawIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchJustRawIntent.swift; sourceTree = "<group>"; };
-		80000024 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		80000024 /* ColorHex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorHex.swift; sourceTree = "<group>"; };
 		80000026 /* PerformanceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceMonitor.swift; sourceTree = "<group>"; };
 		80000028 /* libcamera_core.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = ../rust-libs/libcamera_core.a; sourceTree = "<group>"; };
 		8000002A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -89,7 +89,7 @@
 				8000001E /* GalleryView.swift */,
 				80000020 /* ReviewView.swift */,
 				80000022 /* LaunchJustRawIntent.swift */,
-				80000024 /* Color+Hex.swift */,
+				80000024 /* ColorHex.swift */,
 				80000026 /* PerformanceMonitor.swift */,
 				80000028 /* libcamera_core.a */,
 				8000002A /* Info.plist */,
@@ -195,7 +195,7 @@
 				8000001D /* GalleryView.swift in Sources */,
 				8000001F /* ReviewView.swift in Sources */,
 				80000021 /* LaunchJustRawIntent.swift in Sources */,
-				80000023 /* Color+Hex.swift in Sources */,
+				80000023 /* ColorHex.swift in Sources */,
 				80000025 /* PerformanceMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
