@@ -962,12 +962,12 @@ struct CameraResult {
     var code: UInt32
 }
 
-/// Watermark brand applied per style.
+/// Watermark brand applied per style, matching per-OEM naming from decompiled APKs.
 enum WatermarkBrand: CaseIterable, Codable {
     case none
-    case zeiss    // Vivo
-    case leica    // Xiaomi
-    case hasselblad // Oppo
+    case zeiss        // Vivo — "ZEISS Natural", "zeiss_nature", "zeiss_vivo_logo"
+    case leica        // Xiaomi — "LEICA", "watermark_leica_100th", "authentic"
+    case hasselblad   // Oppo — "hasselblad_logo", "Hasselblad World"
 
     var title: String {
         switch self {
@@ -978,16 +978,26 @@ enum WatermarkBrand: CaseIterable, Codable {
         }
     }
 
+    /// Brand-specific watermark variant name from the decompiled OEM APKs.
+    var variantName: String {
+        switch self {
+        case .none: return ""
+        case .zeiss: return "ZEISS Natural"
+        case .leica: return "LEICA 100th"
+        case .hasselblad: return "Hasselblad World"
+        }
+    }
+
     var accentColor: Color {
         switch self {
         case .none: return Color.clear
         case .zeiss: return Color.white
-        case .leica: return Color(red: 0.9, green: 0.1, blue: 0.1)   // Leica red
+        case .leica: return Color(red: 0.9, green: 0.1, blue: 0.1)   // leica_red (0x7f0601c0)
         case .hasselblad: return Color(red: 0.2, green: 0.4, blue: 0.2) // Hasselblad green
         }
     }
 
-    /// The text to render in the watermark.
+    /// The text/logo rendered in the watermark.
     var label: String {
         switch self {
         case .none: return ""
@@ -1032,13 +1042,13 @@ enum CameraStyle: Int32, CaseIterable, Codable {
         }
     }
 
-    /// The watermark brand associated with this style.
+    /// The watermark brand associated with this style, matched to OEM naming.
     var watermarkBrand: WatermarkBrand {
         switch self {
         case .natural: return .none
-        case .xiaomi: return .leica       // Xiaomi -> Leica
-        case .oppo: return .hasselblad    // Oppo -> Hasselblad
-        case .vivo: return .zeiss         // Vivo -> Zeiss
+        case .xiaomi: return .leica       // Xiaomi -> LEICA / watermark_leica_100th
+        case .oppo: return .hasselblad    // Oppo -> hasselblad_logo / Hasselblad World
+        case .vivo: return .zeiss         // Vivo -> ZEISS Natural / zeiss_nature
         }
     }
 }
