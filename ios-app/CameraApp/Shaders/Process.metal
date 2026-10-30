@@ -19,7 +19,7 @@ struct ProcessParams {
     float pad2;
 };
 
-// 3D LUT node: RGB offset in 0..255.
+// 3D LUT node: RGB offset in 0..255 (16-byte aligned).
 struct LutNode {
     float r, g, b;
     float pad;
@@ -32,8 +32,9 @@ kernel void process_frame(
     device const LutNode*           lutGrid    [[ buffer(1) ]],
     uint2                           gid        [[ thread_position_in_grid ]])
 {
-    const uint2 dim = outTexture.get_dimensions();
-    if (gid.x >= dim.x || gid.y >= dim.y) {
+    const uint w = outTexture.get_width();
+    const uint h = outTexture.get_height();
+    if (gid.x >= w || gid.y >= h) {
         return;
     }
 
@@ -57,21 +58,26 @@ kernel void process_frame(
     int3   r1 = int3(clamp(r0 + 1, 0, LUT_DIM - 1));
     float3 fr = rf - float3(r0);
 
-    // Node index: z * DIM * DIM + y * DIM + x.
-    auto nodeIdx = [&](int x, int y, int z) -> int {
-        return z * LUT_DIM * LUT_DIM + y * LUT_DIM + x;
-    };
+    // Node index: z * DIM * DIM + y * DIM + x (inlined, no lambdas).
+    int i000 = r0.z * LUT_DIM * LUT_DIM + r0.y * LUT_DIM + r0.x;
+    int i100 = r0.z * LUT_DIM * LUT_DIM + r0.y * LUT_DIM + r1.x;
+    int i010 = r0.z * LUT_DIM * LUT_DIM + r1.y * LUT_DIM + r0.x;
+    int i110 = r0.z * LUT_DIM * LUT_DIM + r1.y * LUT_DIM + r1.x;
+    int i001 = r1.z * LUT_DIM * LUT_DIM + r0.y * LUT_DIM + r0.x;
+    int i101 = r1.z * LUT_DIM * LUT_DIM + r0.y * LUT_DIM + r1.x;
+    int i011 = r1.z * LUT_DIM * LUT_DIM + r1.y * LUT_DIM + r0.x;
+    int i111 = r1.z * LUT_DIM * LUT_DIM + r1.y * LUT_DIM + r1.x;
 
-    LutNode c000 = lutGrid[nodeIdx(r0.x, r0.y, r0.z)];
-    LutNode c100 = lutGrid[nodeIdx(r1.x, r0.y, r0.z)];
-    LutNode c010 = lutGrid[nodeIdx(r0.x, r1.y, r0.z)];
-    LutNode c110 = lutGrid[nodeIdx(r1.x, r1.y, r0.z)];
-    LutNode c001 = lutGrid[nodeIdx(r0.x, r0.y, r1.z)];
-    LutNode c101 = lutGrid[nodeIdx(r1.x, r0.y, r1.z)];
-    LutNode c011 = lutGrid[nodeIdx(r0.x, r1.y, r1.z)];
-    LutNode c111 = lutGrid[nodeIdx(r1.x, r1.y, r1.z)];
+    LutNode c000 = lutGrid[i000];
+    LutNode c100 = lutGrid[i100];
+    LutNode c010 = lutGrid[i010];
+    LutNode c110 = lutGrid[i110];
+    LutNode c001 = lutGrid[i001];
+    LutNode c101 = lutGrid[i101];
+    LutNode c011 = lutGrid[i011];
+    LutNode c111 = lutGrid[i111];
 
-    // Trilinear interpolation.
+    // Trilinear interpolation (inlined, no lambdas).
     float3 c00 = float3(c000.r, c000.g, c000.b) * (1.0 - fr.x) +
                  float3(c100.r, c100.g, c100.b) * fr.x;
     float3 c10 = float3(c010.r, c010.g, c010.b) * (1.0 - fr.x) +
