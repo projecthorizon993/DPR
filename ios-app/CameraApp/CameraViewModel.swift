@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import Photos
 
 /// Holds camera session state, style selection, capture flow, lens, flash,
 /// live frame processing, and video recording. From-scratch implementation.
@@ -15,6 +16,9 @@ final class CameraViewModel: NSObject, ObservableObject {
     @Published var lens: CameraLens = .wide
     @Published var flashMode: FlashMode = .off
     @Published var errorMessage: String?
+
+    @AppStorage("watermarkEnabled") var watermarkEnabled = true
+    @AppStorage("photoFormat") var photoFormat = "HEIF"
 
     private let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
@@ -239,6 +243,158 @@ final class CameraViewModel: NSObject, ObservableObject {
 
         guard let outCg = bitmapContext.makeImage() else { return nil }
         return UIImage(cgImage: outCg)
+    }
+
+    /// Save a styled photo to the photo library, optionally blending the watermark
+    /// and encoding in the selected format (HEIF or JPEG).
+    func savePhoto(_ image: UIImage) {
+        var finalImage = image
+
+        // Apply watermark if enabled.
+        if watermarkEnabled {
+            if let watermarked = applyWatermark(to: image) {
+                finalImage = watermarked
+            }
+        }
+
+        PHPhotoLibrary.requestAuthorization { status in
+            guard status == .authorized || status == .limited else { return }
+            PHPhotoLibrary.shared().performChanges({
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(
+                    with: .photo,
+                    data: self.imageData(for: finalImage),
+                    options: nil
+                )
+            }) { success, error in
+                if !success {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Save failed: \(error?.localizedDescription ?? "unknown")"
+                    }
+                }
+            }
+        }
+    }
+
+    /// Blend a "ZEISS" watermark onto the image using the Rust core, bottom-right.
+    private func applyWatermark(to image: UIImage) -> UIImage? {
+        guard let cgImage = image.cgImage else { return nil }
+        let width = cgImage.width
+        let height = cgImage.height
+        let bytesPerRow = width * 4
+        let byteCount = bytesPerRow * height
+
+        // Generate a simple "ZEISS" watermark RGBA8 buffer (1/4 width, 1/16 height).
+        let wmWidth = max(1, width / 4)
+        let wmHeight = max(1, height / 16)
+        guard let wmBytes = makeWatermarkBytes(width: wmWidth, height: wmHeight) else { return nil }
+
+        guard let data = CFDataCreateMutable(nil, byteCount) else { return nil }
+        CFDataSetLength(data, byteCount)
+        let mutablePtr: UnsafeMutablePointer<UInt8> = CFDataGetMutableBytePtr(data)
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard let bitmapContext = CGContext(
+            data: mutablePtr,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: colorSpace,
+            bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+        let offsetX: Int32 = Int32(width - wmWidth - 20) // 20px margin from right
+        let offsetY: Int32 = Int32(height - wmHeight - 20) // 20px margin from bottom
+
+        var result = camera_blend_watermark(
+            mutablePtr,
+            UInt32(width),
+            UInt32(height),
+            wmBytes,
+            UInt32(wmWidth),
+            UInt32(wmHeight),
+            offsetX,
+            offsetY,
+            0.6 // opacity
+        )
+
+        guard result.ok else {
+            errorMessage = "Watermark failed (code \(result.code))."
+            return nil
+        }
+
+        guard let outCg = bitmapContext.makeImage() else { return nil }
+        return UIImage(cgImage: outCg)
+    }
+
+    /// Generate a simple "ZEISS" text watermark as an RGBA8 buffer.
+    private func makeWatermarkBytes(width: Int, height: Int) -> [UInt8]? {
+        guard width > 0, height > 0 else { return nil }
+        let bytesPerRow = width * 4
+        let byteCount = bytesPerRow * height
+
+        guard let data = CFDataCreateMutable(nil, byteCount) else { return nil }
+        CFDataSetLength(data, byteCount)
+        let ptr: UnsafeMutablePointer<UInt8> = CFDataGetMutableBytePtr(data)
+
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard let context = CGContext(
+            data: ptr,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: colorSpace,
+            bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        context.setFillColor(red: 1, green: 1, blue: 1, alpha: 0)
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+
+        let text = "ZEISS" as NSString
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.boldSystemFont(ofSize: CGFloat(max(8, height / 2))),
+            .foregroundColor: UIColor.white
+        ]
+        let size = text.size(withAttributes: attributes)
+        let x = (CGFloat(width) - size.width) / 2
+        let y = (CGFloat(height) - size.height) / 2
+        text.draw(in: CGRect(x: x, y: y, width: size.width, height: size.height), withAttributes: attributes)
+
+        var bytes = [UInt8](repeating: 0, count: byteCount)
+        bytes.withUnsafeMutableBufferPointer { buf in
+            guard let base = buf.baseAddress else { return }
+            for i in 0..<byteCount {
+                bytes[i] = ptr[i]
+            }
+        }
+        return bytes
+    }
+
+    /// Return image data in the selected format (HEIF or JPEG).
+    private func imageData(for image: UIImage) -> Data {
+        if photoFormat == "JPEG" {
+            return image.jpegData(compressionQuality: 0.9) ?? image.pngData() ?? Data()
+        }
+        // HEIF via CGImageDestination.
+        guard let cgImage = image.cgImage,
+              let mutableData = CFDataCreateMutable(nil, 0),
+              let dest = CGImageDestinationCreateWithData(
+                  mutableData,
+                  AVFileType.heic as CFString,
+                  1,
+                  nil
+              ) else {
+            return image.jpegData(compressionQuality: 0.9) ?? Data()
+        }
+        CGImageDestinationAddImage(dest, cgImage, nil)
+        if CGImageDestinationFinalize(dest) {
+            return mutableData as Data
+        }
+        return image.jpegData(compressionQuality: 0.9) ?? Data()
     }
 }
 

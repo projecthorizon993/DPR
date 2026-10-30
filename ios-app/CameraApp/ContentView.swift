@@ -297,7 +297,7 @@ struct ContentView: View {
             ReviewView(image: image, onDismiss: {
                 viewModel.dismissReview()
             }, onSave: {
-                PhotoLibrary.save(image)
+                viewModel.savePhoto(image)
                 viewModel.dismissReview()
             })
             .transition(.move(edge: .bottom).combined(with: .opacity))
