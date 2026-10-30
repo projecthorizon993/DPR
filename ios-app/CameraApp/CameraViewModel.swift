@@ -1665,14 +1665,14 @@ func applyLensCorrection(bytes: inout [UInt8], width: Int, height: Int, bytesPer
             let chromaticB = correction.chromaticAberration.b
 
             // Sample R, G, B channels with chromatic aberration offset
-            let srcIndex = { (x: Int, y: Int, channel: Int) -> UInt8 in
+            // Helper to safely index into the RGBA8 byte buffer
+            func pixelAt(_ x: Int, _ y: Int, _ channel: Int) -> UInt8 {
                 let clampedX = max(0, min(x, width - 1))
                 let clampedY = max(0, min(y, height - 1))
                 return bytes[(clampedY * bytesPerRow + clampedX * 4) + channel]
             }
 
             // For chromatic aberration, slightly offset the sampling position per channel
-            let chromaticScale: Float = 0.98 // Sub-pixel shift factor
             let rx = min(max(Int(sxClamped * chromaticR), 0), width - 1)
             let ry = min(max(Int(syClamped * chromaticR), 0), height - 1)
             let gx = min(max(Int(sxClamped * chromaticG), 0), width - 1)
@@ -1680,9 +1680,9 @@ func applyLensCorrection(bytes: inout [UInt8], width: Int, height: Int, bytesPer
             let bx = min(max(Int(sxClamped * chromaticB), 0), width - 1)
             let by = min(max(Int(syClamped * chromaticB), 0), height - 1)
 
-            bytes[idx]     = srcIndex(rx, ry, 0)     // R
-            bytes[idx + 1] = srcIndex(gx, gy, 1)     // G
-            bytes[idx + 2] = srcIndex(bx, by, 2)     // B
+            bytes[idx]     = pixelAt(rx, ry, 0)     // R
+            bytes[idx + 1] = pixelAt(gx, gy, 1)     // G
+            bytes[idx + 2] = pixelAt(bx, by, 2)     // B
             bytes[idx + 3] = bytes[idx + 3]          // A unchanged
         }
     }
