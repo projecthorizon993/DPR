@@ -47,7 +47,7 @@ struct MetalPreviewView: UIViewRepresentable {
             let ciImage = CIImage(cgImage: image)
             let scaled = ciImage.transformed(by: CGAffineTransform(
                 scaleX: view.drawableSize.width / CGFloat(image.width),
-                scaleY: view.drawableSize.height / CGFloat(image.height)
+                y: view.drawableSize.height / CGFloat(image.height)
             ))
 
             ciContext.render(scaled, to: drawable.texture, commandBuffer: commandBuffer,

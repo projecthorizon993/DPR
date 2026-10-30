@@ -1,6 +1,8 @@
 import Foundation
 import Metal
+import simd
 import CoreImage
+import UIKit
 
 /// Metal-accelerated image processing pipeline.
 ///
