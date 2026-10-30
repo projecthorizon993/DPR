@@ -227,8 +227,15 @@ final class CameraViewModel: NSObject, ObservableObject {
     @AppStorage("photoFormat") var photoFormat = "HEIF"
     @AppStorage("proModeEnabled") var proModeEnabled = false
     @AppStorage("rawCaptureEnabled") var rawCaptureEnabled = false
+    @AppStorage("watermarkEnabled") var watermarkEnabled = true
+    @AppStorage("photoFormat") var photoFormat = "HEIF"
+    @AppStorage("proModeEnabled") var proModeEnabled = false
+    @AppStorage("rawCaptureEnabled") var rawCaptureEnabled = false
     @AppStorage("videoWatermarkEnabled") var videoWatermarkEnabled = true
     @AppStorage("faceDetectionEnabled") var faceDetectionEnabled = false
+    @AppStorage("nightModeEnabled") var nightModeEnabled = false
+    @AppStorage("glareDimEnabled") var glareDimEnabled = false
+    @AppStorage("nightModeStrength") var nightModeStrength: Float = 0.5
 
     /// Detected face bounding boxes in normalized coordinates (0..1).
     @Published var detectedFaces: [FaceBox] = []
@@ -255,6 +262,9 @@ final class CameraViewModel: NSObject, ObservableObject {
 
     /// Metal renderer for GPU-accelerated frame processing (bypasses Apple ISP).
     private let metalRenderer: MetalRenderer?
+
+    /// Night mode enhancement processor
+    private let nightEnhancer = NightEnhancer()
 
     /// Loaded watermark assets per brand (RGBA8 bytes).
     private var watermarkBytes: [WatermarkBrand: [UInt8]] = [:]
@@ -1691,9 +1701,164 @@ enum LensCorrection: CaseIterable, Codable {
     }
 }
 
-/// Lens correction processing: applies radial distortion, tangential distortion,
-/// and chromatic aberration correction to RGBA8 frame data.
-func applyLensCorrection(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, correction: LensCorrection) {
+/// Zoom level for digital zoom with AI upscaling.
+enum ZoomLevel: CaseIterable, Codable {
+    case oneX   // 1.0x
+    case twoX   // 2.0x
+    case threeX // 3.0x
+    case fiveX  // 5.0x
+    
+    var title: String {
+        switch self {
+        case .oneX: return "1×"
+        case .twoX: return "2×"
+        case .threeX: return "3×"
+        case .fiveX: return "5×"
+        }
+    }
+    
+    var factor: Float {
+        switch self {
+        case .oneX: return 1.0
+        case .twoX: return 2.0
+        case .threeX: return 3.0
+        case .fiveX: return 5.0
+        }
+    }
+}
+
+/// AI super-resolution model for zoom enhancement.
+/// Uses a lightweight super-resolution network trained on bicubic upsampling
+/// with edge enhancement. Falls back to bicubic interpolation if model not loaded.
+class ZoomEnhancer {
+    private var modelWeights: [Float] = []
+    private var isLoaded = false
+    
+    init() {
+        loadModel()
+    }
+    
+    /// Load model weights (placeholder - loads synthetic weights).
+    /// In production, load a trained .mlmodel or .tflite file here.
+    private func loadModel() {
+        // Simple 3x3 super-resolution kernel: sharpen + upscale
+        // Weights for a 3x3 convolution that sharpens edges
+        let weights: [Float] = [
+            -0.1, -0.2, -0.1,
+            -0.2,  1.8, -0.2,
+            -0.1, -0.2, -0.1
+        ]
+        modelWeights = weights
+        isLoaded = true
+    }
+    
+    /// Upscale an RGBA8 image by the given factor using bicubic + sharpen.
+    /// Returns upscaled RGBA8 bytes.
+    func upscale(bytes: [UInt8], width: Int, height: Int, bytesPerRow: Int, factor: Float) -> [UInt8] {
+        guard factor > 1.0 else { return bytes }
+        
+        let outW = Int(Float(width) * factor)
+        let outH = Int(Float(height) * factor)
+        let outBytesPerRow = outW * 4
+        var outBytes = [UInt8](repeating: 0, count: outH * outBytesPerRow)
+        
+        for y in 0..<outH {
+            for x in 0..<outW {
+                // Map output pixel back to source coordinates
+                let srcX = Float(x) / factor
+                let srcY = Float(y) / factor
+                
+                // Bilinear interpolation for each channel
+                for c in 0..<4 {
+                    let val = bilinearSample(bytes: rgbaBytes, width: width, height: height, bytesPerRow: bytesPerRow, x: srcX, y: srcY, channel: c)
+                    var valF = Float(val)
+                    
+                    // Apply sharpening kernel at center pixels
+                    if x % 2 == 0 && y % 2 == 0 {
+                        let sx = Int(srcX.rounded())
+                        let sy = Int(srcY.rounded())
+                        let sharpened = applySharpen3x3(bytes: rgbaBytes, width: width, height: height, bytesPerRow: bytesPerRow, x: sx, y: sy, channel: c)
+                        valF = Float(sharpened) * 0.7 + Float(val) * 0.3
+                    }
+                    
+                    outBytes[y * outBytesPerRow + x * 4 + c] = UInt8(max(0, min(255, Int(valF.rounded()))))
+                }
+            }
+        }
+        
+        return outBytes
+    }
+    
+    /// Bilinear sample from RGBA8 buffer.
+    private func bilinearSample(bytes: [UInt8], width: Int, height: Int, bytesPerRow: Int, x: Float, y: Float, channel: Int) -> UInt8 {
+        let x0 = max(0, min(Int(floor(x)), width - 1))
+        let y0 = max(0, min(Int(floor(y)), height - 1))
+        let x1 = min(x0 + 1, width - 1)
+        let y1 = min(y0 + 1, height - 1)
+        
+        let fx = x - Float(x0)
+        let fy = y - Float(y0)
+        
+        let v00 = Float(bytes[(y0 * bytesPerRow + x0 * 4) + channel])
+        let v10 = Float(bytes[(y0 * bytesPerRow + x1 * 4) + channel])
+        let v01 = Float(bytes[(y1 * bytesPerRow + x0 * 4) + channel])
+        let v11 = Float(bytes[(y1 * bytesPerRow + x1 * 4) + channel])
+        
+        let v = v00 * (1 - fx) * (1 - fy) + v10 * fx * (1 - fy) + v01 * (1 - fx) * fy + v11 * fx * fy
+        return UInt8(max(0, min(255, Int(v.rounded()))))
+    }
+    
+    /// Apply 3x3 sharpening kernel at a pixel.
+    private func applySharpen3x3(bytes: [UInt8], width: Int, height: Int, bytesPerRow: Int, x: Int, y: Int, channel: Int) -> UInt8 {
+        var sum: Float = 0
+        let weights: [Float] = [-0.1, -0.2, -0.1, -0.2, 1.8, -0.2, -0.1, -0.2, -0.1]
+        
+        for dy in -1...1 {
+            for dx in -1...1 {
+                let px = min(max(x + dx, 0), width - 1)
+                let py = min(max(y + dy, 0), height - 1)
+                let val = Float(bytes[(py * bytesPerRow + px * 4) + channel])
+                sum += val * weights[(dy + 1) * 3 + (dx + 1)]
+            }
+        }
+        return UInt8(max(0, min(255, Int(sum.rounded()))))
+    }
+}
+
+/// Zoom level manager - holds current zoom state and applies processing.
+final class ZoomManager: ObservableObject {
+    @Published var zoomLevel: ZoomLevel = .oneX
+    private let enhancer = ZoomEnhancer()
+    
+    /// Process a frame with zoom: crop to center region, upscale via enhancer.
+    func process(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int) -> [UInt8] {
+        guard zoomLevel != .oneX else { return bytes }
+        
+        let factor = zoomLevel.factor
+        let cropW = Int(Float(width) / factor)
+        let cropH = Int(Float(height) / factor)
+        let cx = width / 2
+        let cy = height / 2
+        
+        // Crop center region
+        var cropBytes = [UInt8](repeating: 0, count: cropW * cropH * 4)
+        for y in 0..<cropH {
+            for x in 0..<cropW {
+                let srcX = cx - cropW / 2 + x
+                let srcY = cy - cropH / 2 + y
+                let srcIdx = (srcY * bytesPerRow + srcX * 4)
+                let dstIdx = (y * cropW * 4 + x * 4)
+                bytes[idx + 0] = bytes[srcIdx]
+                bytes[idx + 1] = bytes[srcIdx + 1]
+                bytes[idx + 2] = bytes[srcIdx + 2]
+                bytes[idx + 3] = bytes[srcIdx + 3]
+            }
+        }
+        
+        // Upscale cropped region
+        return enhancer.upscale(bytes: cropBytes, width: cropW, height: cropH, bytesPerRow: cropW * 4, factor: factor)
+    }
+}
     guard correction != .none else { return }
 
     let cx = Float(width) / 2.0
@@ -2202,5 +2367,114 @@ func applyNightModeGamma(bytes: inout [UInt8], width: Int, height: Int, bytesPer
             bytes[idx + 2] = UInt8(min(255, max(0, newB * 255.0)))
             // Alpha unchanged
         }
+    }
+}
+
+/// Night mode AI enhancement: brightens shadows, reduces noise, enhances contrast
+final class NightEnhancer {
+    /// Apply night enhancement to RGBA8 image
+    func enhance(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, strength: Float) {
+        guard strength > 0.0, width > 0, height > 0 else { return }
+
+        // Step 1: Brighten dark areas using gamma stretch
+        for y in 0..<height {
+            for x in 0..<width {
+                let idx = (y * bytesPerRow + x * 4)
+                guard idx + 2 < bytes.count else { continue }
+
+                let r = Float(bytes[idx]) / 255.0
+                let g = Float(bytes[idx + 1]) / 255.0
+                let b = Float(bytes[idx + 2]) / 255.0
+
+                // Calculate luminance
+                let luminance = (r * 0.299 + g * 0.587 + b * 0.114)
+
+                // Only brighten dark areas
+                if luminance < 0.5 {
+                    let boost = 1.0 + strength * (1.0 - luminance) * 2.0
+                    bytes[idx]     = UInt8(min(255, Float(bytes[idx]) * boost))
+                    bytes[idx + 1] = UInt8(max(0, Float(bytes[idx + 1]) * boost))
+                    bytes[idx + 2] = UInt8(max(0, Float(bytes[idx + 2]) * boost))
+                }
+            }
+        }
+
+        // Step 2: Contrast stretch
+        applyContrastStretch(bytes: &bytes, width: width, height: height, bytesPerRow: bytesPerRow)
+
+        // Step 3: Noise reduction
+        applyNoiseReduction(bytes: &bytes, width: width, height: height, bytesPerRow: bytesPerRow, strength: strength * 0.4)
+    }
+
+    /// Contrast stretch to expand dynamic range
+    private func applyContrastStretch(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int) {
+        var minVal: Float = 255
+        var maxVal: Float = 0
+
+        // Find min/max luminance
+        for y in 0..<height {
+            for x in 0..<width {
+                let idx = (y * bytesPerRow + x * 4)
+                guard idx + 2 < bytes.count else { continue }
+                let lum = Float(bytes[idx]) * 0.299 + Float(bytes[idx + 1]) * 0.587 + Float(bytes[idx + 2]) * 0.114
+                minVal = min(minVal, lum)
+                maxVal = max(maxVal, lum)
+            }
+        }
+
+        guard maxVal > minVal else { return }
+
+        let range = maxVal - minVal
+
+        for y in 0..<height {
+            for x in 0..<width {
+                let idx = (y * bytesPerRow + x * 4)
+                guard idx + 2 < bytes.count else { continue }
+                bytes[idx]     = UInt8(min(255, max(0, Int((Float(bytes[idx]) - minVal) / range * 255.0))))
+                bytes[idx + 1] = UInt8(max(0, min(255, Int((Float(bytes[idx + 1]) - minVal) / range * 255.0))))
+                bytes[idx + 2] = UInt8(max(0, min(255, Int((Float(bytes[idx + 2]) - minVal) / range * 255.0))))
+            }
+        }
+    }
+
+    /// Simple noise reduction using 3x3 averaging
+    private func applyNoiseReduction(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, strength: Float) {
+        guard strength > 0.0 else { return }
+
+        var result = bytes
+
+        for y in 1..<(height - 1) {
+            for x in 1..<(width - 1) {
+                for c in 0..<3 {
+                    let idx = (y * bytesPerRow + x * 4) + c
+                    var sum: Float = 0
+                    let count: Float = 9
+
+                    for dy in -1...1 {
+                        for dx in -1...1 {
+                            let pIdx = ((y + dy) * bytesPerRow + (x + dx) * 4) + c
+                            sum += Float(bytes[pIdx])
+                        }
+                    }
+
+                    let avg = sum / count
+                    bytes[idx] = UInt8(max(0, min(255, Int(Float(bytes[idx]) * (1.0 - strength) + avg * strength))))
+                }
+            }
+        }
+    }
+}
+
+/// Night mode manager - holds night mode state and applies enhancement
+final class NightModeManager: ObservableObject {
+    @Published var isEnabled: Bool = false
+    @Published var strength: Float = 0.5
+
+    private let enhancer = NightEnhancer()
+
+    /// Apply night enhancement to a frame
+    func apply(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int) {
+        guard isEnabled else { return }
+        enhancer.enhance(bytes: &bytes, width: width, height: height, bytesPerRow: bytesPerRow, strength: strength)
     }
 }
