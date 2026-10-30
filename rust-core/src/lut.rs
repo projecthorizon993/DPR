@@ -35,7 +35,8 @@ fn build_lut(style: CameraStyle) -> LutGrid {
                     CameraStyle::Xiaomi => {
                         // Warm shift: push reds up, blues down, slight saturation of midtones.
                         let warm = (r - b).clamp(0.0, 1.0);
-                        let mid = (1.0 - (r - 0.5).abs() - (g - 0.5).abs() - (b - 0.5).abs()).clamp(0.0, 1.0);
+                        let mid = (1.0 - (r - 0.5).abs() - (g - 0.5).abs() - (b - 0.5).abs())
+                            .clamp(0.0, 1.0);
                         (0.06 * warm + 0.02 * mid, 0.01 * mid, -0.04 * warm)
                     }
                     CameraStyle::Oppo => {
@@ -115,4 +116,51 @@ pub fn sample_lut(grid: &LutGrid, r: f32, g: f32, b: f32) -> (f32, f32, f32) {
         out[c] = c0 * (1.0 - fb) + c1 * fb;
     }
     (out[0], out[1], out[2])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn natural_lut_is_all_zeros() {
+        let grid = lut_for(CameraStyle::Natural);
+        for node in grid.iter() {
+            assert_eq!(*node, [0.0, 0.0, 0.0]);
+        }
+    }
+
+    #[test]
+    fn sample_lut_natural_is_zero_offset() {
+        let grid = lut_for(CameraStyle::Natural);
+        let (dr, dg, db) = sample_lut(grid, 0.5, 0.5, 0.5);
+        assert_eq!((dr, dg, db), (0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn sample_lut_clamped_at_corners() {
+        let grid = lut_for(CameraStyle::Xiaomi);
+        // Black corner.
+        let (r, g, b) = sample_lut(grid, 0.0, 0.0, 0.0);
+        assert!(r.is_finite() && g.is_finite() && b.is_finite());
+        // White corner.
+        let (r, g, b) = sample_lut(grid, 1.0, 1.0, 1.0);
+        assert!(r.is_finite() && g.is_finite() && b.is_finite());
+    }
+
+    #[test]
+    fn xiaomi_lut_warms_reds_over_blues() {
+        let grid = lut_for(CameraStyle::Xiaomi);
+        // Where red > blue, red is pushed up and blue is pushed down.
+        let (dr_red, _, _) = sample_lut(grid, 0.8, 0.0, 0.4);
+        let (_, _, db_blue) = sample_lut(grid, 0.8, 0.0, 0.4);
+        assert!(dr_red > 0.0);
+        assert!(db_blue < 0.0);
+    }
+
+    #[test]
+    fn lut_grid_has_correct_size() {
+        let grid = lut_for(CameraStyle::Natural);
+        assert_eq!(grid.len(), LUT_NODES);
+    }
 }
