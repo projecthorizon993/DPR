@@ -1787,6 +1787,7 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
         let height = CVPixelBufferGetHeight(pixelBuffer)
         let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer)
         let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
+        let byteCount = height * bytesPerRow
 
         guard baseAddress != nil, bytesPerRow > 0 else { return }
         guard width > 0, height > 0, bytesPerRow > 0 else { return }
@@ -2070,8 +2071,70 @@ extension CaptureError: LocalizedError {
     }
 }
 
+/// Load LUT nodes from a PNG image file.
+func lutNodesFromPng(fileName: String) -> [LutNode]? {
+    guard let path = Bundle.main.path(forResource: fileName.replacingOccurrences(of: ".png", with: ""), ofType: "png"),
+          let image = UIImage(contentsOfFile: path),
+          let cgImage = image.cgImage else {
+        return nil
+    }
+    
+    let dim = 17
+    let inv = Float(dim - 1)
+    var nodes = [LutNode]()
+    nodes.reserveCapacity(dim * dim * dim)
+    
+    let width = Int(cgImage.width)
+    let height = Int(cgImage.height)
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
+    
+    guard let context = CGContext(data: nil, width: width, height: height,
+                                  bitsPerComponent: 8, bytesPerRow: width * 4,
+                                  space: colorSpace, bitmapInfo: bitmapInfo) else {
+        return nil
+    }
+    
+    context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+    
+    guard let data = context.data else { return nil }
+    
+    for iz in 0..<dim {
+        for iy in 0..<dim {
+            for ix in 0..<dim {
+                let r = Float(ix) / inv
+                let g = Float(iy) / inv
+                let b = Float(iz) / inv
+                
+                let px = Int(r * Float(width - 1))
+                let py = Int(g * Float(height - 1))
+                
+                guard px >= 0, px < width, py >= 0, py < height else {
+                    nodes.append(LutNode(r: 0, g: 0, b: 0, pad: 0))
+                    continue
+                }
+                
+                let pixelIndex = (py * width + px) * 4
+                let dr = Float(data[pixelIndex]) / 255.0
+                let dg = Float(data[pixelIndex + 1]) / 255.0
+                let db = Float(data[pixelIndex + 2]) / 255.0
+                
+                nodes.append(LutNode(r: dr, dg: dg, db: db, pad: 0))
+            }
+        }
+    }
+    return nodes
+}
+
+/// LUT nodes per variant from procedural generation (fallback when no PNG file).
+func lutNodesForStyleVariant(_ variant: CameraStyleVariant) -> [LutNode] {
+    // Generate procedural LUT based on style variant
+    return lutNodesForStyle(CameraStyle.natural) // Default fallback
+}
+
 /// Glare dim processing: reduces brightness in bright areas during night mode.
 func applyGlareDim(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, opacity: Float) {
+    guard opacity > 0.0, width > 0, height > 0 else { return }
     guard opacity > 0.0, width > 0, height > 0 else { return }
 
     let centerX = Float(width) / 2.0
