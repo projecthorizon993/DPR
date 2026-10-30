@@ -6,15 +6,23 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      run-rust:
+        description: 'Run Rust tests (ubuntu)'
+        required: false
+        default: 'true'
+        type: boolean
+      run-ios:
+        description: 'Build iOS app with xtool (ubuntu, needs DARWIN_SDK_URL secret)'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
   rust-test:
     name: Rust — fmt, clippy, test
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event.inputs.run-rust == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,25 +46,54 @@ jobs:
         run: cargo test --all-targets
 
   ios-build:
-    name: iOS app — build with xtool
+    name: iOS app — build with xtool + Swift SDK
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event.inputs.run-ios == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Swift via swiftly
+        run: |
+          curl -L https://swiftlang.github.io/swiftly/swiftly-install.sh | bash -s -- -y
+          . ~/.local/share/swiftly/env.sh
+          swiftly install 6.3
+          echo "$HOME/.local/share/swiftly/bin" >> "$GITHUB_PATH"
+
       - name: Install xtool
         run: |
-          curl -L https://github.com/pointfreeco/xtool/releases/latest/download/xtool-linux.tar.gz | tar xz -C /usr/local/bin
-          chmod +x /usr/local/bin/xtool
-          xtool --version
+          curl -fL "https://github.com/xtool-org/xtool/releases/latest/download/xtool-$(uname -m).AppImage" -o xtool
+          chmod +x xtool
+          sudo mv xtool /usr/local/bin/xtool
+          sudo apt-get update && sudo apt-get install -y libfuse2
 
-      - name: Install iOS SDK via xtool
-        run: |
-          echo "NOTE: xtool sdk install requires Xcode.xip from Apple Developer"
-          echo "This step will fail without Xcode.xip"
-          xtool sdk install ./Xcode.xip 2>&1 || echo "EXPECTED: xtool sdk install requires Xcode.xip from Apple Developer"
+      - name: Restore Darwin SDK from cache
+        uses: actions/cache@v4
+        id: sdkcache
+        with:
+          path: ~/.swiftpm/swift-sdks
+          key: darwin-sdk-xcode-26.3
 
-      - name: Build iOS app with xtool
+      - name: Download Darwin SDK from private storage
+        if: steps.sdkcache.outputs.cache-hit != 'true'
+        env:
+          DARWIN_SDK_URL: ${{ secrets.DARWIN_SDK_URL }}
         run: |
-          echo "Building iOS app with xtool..."
-          xtool build 2>&1 || echo "BUILD RESULT: $(echo $?)"
+          if [ -z "$DARWIN_SDK_URL" ]; then
+            echo "ERROR: DARWIN_SDK_URL secret not set."
+            echo "To build iOS on Linux, you need to:"
+            echo "  1. Download Xcode.xip from Apple Developer"
+            echo "  2. Run: xtool sdk install Xcode.xip --slim"
+            echo "  3. Archive: tar -C ~/.swiftpm -czf darwin-sdk.tar.gz swift-sdks"
+            echo "  4. Upload darwin-sdk.tar.gz to private storage (S3, R2, etc.)"
+            echo "  5. Add URL as DARWIN_SDK_URL secret in GitHub repo settings"
+            exit 1
+          fi
+          curl -fL "$DARWIN_SDK_URL" -o sdk.tar.gz
+          tar -C ~/.swiftpm -xzf sdk.tar.gz
+
+      - name: Verify SDK
+        run: swift sdk list
+
+      - name: Build Swift app for iOS
+        run: swift build --swift-sdk arm64-apple-ios -c release
