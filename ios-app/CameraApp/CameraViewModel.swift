@@ -123,7 +123,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     }
 
     /// Approximate white balance gains from temperature in Kelvin.
-    private func whiteBalanceGains(for temperature: Float) -> AVCaptureWhiteBalanceGains {
+    private func whiteBalanceGains(for temperature: Float) -> AVCaptureDevice.WhiteBalanceGains {
         // Simple approximation: map 2850-6500K to blue/red gains.
         let t = clamp((temperature - 2850) / (6500 - 2850), 0, 1)
         let gainR = 1.0 + t * 0.5   // warmer = more red
