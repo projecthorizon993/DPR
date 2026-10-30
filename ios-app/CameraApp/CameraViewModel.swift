@@ -59,7 +59,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     @Published var iso: Float = 100
     /// Supported ISO range for the active device.
     var isoRange: ClosedRange<Float> {
-        activeDevice?.isoRange ?? 1...100
+        1...100
     }
 
     /// Normalized shutter speed (0 = fastest, 1 = slowest).
@@ -89,9 +89,8 @@ final class CameraViewModel: NSObject, ObservableObject {
     @Published var whiteBalanceNormalized: Float = 0.5
     /// Current white balance temperature in Kelvin.
     var whiteBalanceTemperature: Float {
-        let device = activeDevice
-        let minTemp = device?.minWhiteBalanceTemperature ?? 2850
-        let maxTemp = device?.maxWhiteBalanceTemperature ?? 6500
+        let minTemp: Float = 2850
+        let maxTemp: Float = 6500
         return minTemp + whiteBalanceNormalized * (maxTemp - minTemp)
     }
 
