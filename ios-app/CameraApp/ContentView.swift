@@ -216,8 +216,8 @@ struct ContentView: View {
                     .frame(width: 46, height: 46)
                 Image(systemName: flashIconName)
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundStyle(flashMode == .off ? Color.white.opacity(0.5) : Color.white)
-                if flashMode == .on {
+                    .foregroundStyle(viewModel.flashMode == .off ? Color.white.opacity(0.5) : Color.white)
+                if viewModel.flashMode == .on {
                     Circle()
                         .fill(Color.white)
                         .frame(width: 8, height: 8)
@@ -225,7 +225,7 @@ struct ContentView: View {
                 }
             }
         }
-        .accessibilityLabel("Flash \(flashMode.title)")
+        .accessibilityLabel("Flash \(viewModel.flashMode.title)")
     }
 
     private var lensSelectorButton: some View {
