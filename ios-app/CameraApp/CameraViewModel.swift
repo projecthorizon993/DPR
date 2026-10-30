@@ -365,11 +365,8 @@ final class CameraViewModel: NSObject, ObservableObject {
         text.draw(in: CGRect(x: x, y: y, width: size.width, height: size.height), withAttributes: attributes)
 
         var bytes = [UInt8](repeating: 0, count: byteCount)
-        bytes.withUnsafeMutableBufferPointer { buf in
-            guard let base = buf.baseAddress else { return }
-            for i in 0..<byteCount {
-                bytes[i] = ptr[i]
-            }
+        for i in 0..<byteCount {
+            bytes[i] = ptr[i]
         }
         return bytes
     }
