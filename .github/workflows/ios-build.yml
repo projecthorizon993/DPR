@@ -63,4 +63,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build for iOS device (compile check)
-        run: xcodebuild -scheme CameraApp -sdk iphoneos build
+        run: xcodebuild -scheme CameraApp -destination 'generic/platform=iOS' build
