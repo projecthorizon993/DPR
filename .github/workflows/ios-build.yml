@@ -64,23 +64,3 @@ jobs:
 
       - name: Build Swift package for iOS
         run: xcodebuild -scheme CameraApp -destination 'generic/platform=iOS' build
-
-      - name: Archive iOS app
-        run: xcodebuild -scheme CameraApp -destination 'generic/platform=iOS' -configuration Release -archivePath ./build/CameraApp.xcarchive archive
-
-      - name: List build artifacts
-        run: ls -la ./build/CameraApp.xcarchive/Products/Applications/
-
-      - name: Upload unsigned app bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: CameraApp-unsigned-app
-          path: ./build/CameraApp.xcarchive/Products/Applications/CameraApp.app
-          retention-days: 7
-
-      - name: Upload Rust core staticlib
-        uses: actions/upload-artifact@v4
-        with:
-          name: camera-core-ios-staticlib
-          path: rust-core/target/aarch64-apple-ios/release/libcamera_core.a
-          retention-days: 7
