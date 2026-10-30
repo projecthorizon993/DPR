@@ -1,72 +1,46 @@
-name: Build Unsigned iOS IPA
+name: Build iOS CameraApp
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-latest
-    timeout-minutes: 120
-
+    runs-on: macos-14
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          sparse-checkout-cone-mode: false
-
-      - name: Install Xcode toolchain
-        run: |
-          xcodebuild -version
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          target: aarch64-apple-ios
-          profile: minimal
-          override: true
+          targets: aarch64-apple-ios
 
-      - name: Build Rust camera_core library
+      - name: Build Rust core for iOS
+        working-directory: rust-core
+        run: cargo build --release --target aarch64-apple-ios
+
+      - name: Build Swift app
         run: |
-          cd rust-core
-          cargo build --release --target aarch64-apple-ios
-          mkdir -p ../rust-libs
-          cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
+          xcodebuild -scheme CameraApp \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            build
 
-      - name: Build Swift package for iOS
+      - name: Archive unsigned IPA
         run: |
-          export DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer
-          cd ios-app
-          swift build --package-path . -c release \
-            -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphoneos --show-sdk-path)" \
-            -Xswiftc -target -Xswiftc aarch64-apple-ios \
-            -Xlinker -L../rust-libs -Xlinker -lcamera_core
+          xcodebuild -scheme CameraApp \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath ./build/CameraApp.xcarchive \
+            archive -allowProvisioningUpdates
 
-      - name: Export unsigned IPA
-        run: |
-          mkdir -p ./build/export
-          cat > ./build/export-options.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>stripSwiftSymbols</key>
-              <true/>
-              <key>teamID</key>
-              <string></string>
-          </dict>
-          </plist>
-          EOF
-          echo "Build artifacts available in ios-app/.build/release/"
-
-      - name: Upload build artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: camera-app-build
-          path: ios-app/.build/release/
-          retention-days: 7
+          name: CameraApp-unsigned-ipa
+          path: ./build/CameraApp.xcarchive
