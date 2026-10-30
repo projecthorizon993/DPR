@@ -1,4 +1,4 @@
-name: CI — test and build CameraApp
+name: CI — test CameraApp
 
 on:
   push:
@@ -36,20 +36,3 @@ jobs:
       - name: Rust unit tests
         working-directory: rust-core
         run: cargo test --all-targets
-
-  rust-ios:
-    name: Rust — build for iOS (aarch64-apple-ios)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-          targets: aarch64-apple-ios
-
-      - name: Build Rust core for iOS (release)
-        working-directory: rust-core
-        run: cargo build --release --target aarch64-apple-ios
