@@ -59,7 +59,7 @@ jobs:
       - name: Build Swift app for iOS
         run: xcodebuild -scheme CameraApp -destination 'generic/platform=iOS' -configuration Release build
 
-      - name: Archive unsigned IPA
+      - name: Archive iOS app
         run: |
           xcodebuild -scheme CameraApp \
             -configuration Release \
@@ -67,9 +67,29 @@ jobs:
             -archivePath ./build/CameraApp.xcarchive \
             archive -allowProvisioningUpdates
 
-      - name: Upload app archive
+      - name: Export unsigned IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath ./build/CameraApp.xcarchive \
+            -exportPath ./build/ipa \
+            -exportOptionsPlist - <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>ad-hoc</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>teamID</key>
+              <string></string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
-          name: CameraApp-unsigned-app
-          path: ./build/CameraApp.xcarchive
+          name: CameraApp-unsigned-ipa
+          path: ./build/ipa/*.ipa
           retention-days: 7
