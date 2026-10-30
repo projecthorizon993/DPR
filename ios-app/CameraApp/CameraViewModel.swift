@@ -1197,6 +1197,30 @@ enum CameraStyleVariant: CaseIterable, Codable {
         }
     }
 
+    /// Initials for badge display.
+    var initials: String {
+        switch self {
+        case .naturalStandard: return "N"
+        case .leicaStandard: return "L"
+        case .leica100th: return "L100"
+        case .leicaAuthentic: return "LA"
+        case .leicaM10R: return "M10"
+        case .leicaM3: return "M3"
+        case .leicaM9: return "M9"
+        case .hasselbladNatural: return "H"
+        case .hasselbladWorld: return "HW"
+        case .hasselbladStore: return "HS"
+        case .zeissNatural: return "Z"
+        case .zeissCinematic: return "ZC"
+        case .zeissSoftFocus: return "ZS"
+        case .zeissStarLight: return "ZSL"
+        case .zeissBiotar: return "ZB"
+        case .zeissDistagon: return "ZD"
+        case .zeissPlanar: return "ZP"
+        case .zeissSonnar: return "ZS"
+        }
+    }
+
     /// Per-variant accent color from decompiled APK color resources.
     var accentColor: Color {
         switch self {

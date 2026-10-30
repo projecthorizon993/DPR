@@ -7,6 +7,7 @@ struct ContentView: View {
 
     @State private var showingSettings = false
     @State private var showingStylePicker = false
+    @State private var showingVariantPicker = false
     @State private var showingProControls = false
     @State private var mode: CaptureMode = .photo
 
@@ -92,6 +93,11 @@ struct ContentView: View {
                 // Style selector (bottom right).
                 HStack {
                     Spacer()
+                    if CameraStyleVariant.variants(for: viewModel.selectedStyle).count > 1 {
+                        variantSelectorButton
+                            .padding(.trailing, 8)
+                            .padding(.bottom, 22)
+                    }
                     styleSelectorButton
                         .padding(.trailing, 24)
                         .padding(.bottom, 22)
@@ -134,6 +140,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingStylePicker) {
             StylePickerView(selectedStyle: $viewModel.selectedStyle)
+        }
+        .sheet(isPresented: $showingVariantPicker) {
+            VariantPickerView(selectedVariant: $viewModel.selectedVariant)
         }
         .sheet(isPresented: $showingProControls) {
             ProControlsView()
@@ -219,6 +228,26 @@ struct ContentView: View {
             }
         }
         .accessibilityLabel("Select photo style: \(viewModel.selectedStyle.title)")
+    }
+
+    /// Variant selector button — shown when current style has multiple variants.
+    private var variantSelectorButton: some View {
+        Button {
+            showingVariantPicker = true
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                    .frame(width: 46, height: 46)
+                Circle()
+                    .fill(viewModel.currentVariant.accentColor)
+                    .frame(width: 26, height: 26)
+                Text(viewModel.currentVariant.initials)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .accessibilityLabel("Select variant: \(viewModel.currentVariant.title)")
     }
 
     private var flashToggleButton: some View {
