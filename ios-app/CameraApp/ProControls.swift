@@ -95,6 +95,24 @@ struct ProControlsView: View {
                             .foregroundStyle(.red)
                     }
                 }
+
+                Section("RAW Capture") {
+                    Toggle("Save DNG/RAW", isOn: $viewModel.rawCaptureEnabled)
+                        .disabled(!viewModel.supportsRawCapture || !viewModel.isProMode)
+                    if !viewModel.supportsRawCapture {
+                        Text("RAW not supported on this device.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if !viewModel.isProMode {
+                        Text("Enable Pro mode to use RAW capture.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if viewModel.rawCaptureEnabled {
+                        Text("RAW photos save as DNG. Zoom resets to 1.0x during capture.")
+                            .font(.caption)
+                            .foregroundStyle(.green)
+                    }
+                }
             }
             .navigationTitle("Pro Controls")
             .navigationBarTitleDisplayMode(.inline)

@@ -1,5 +1,7 @@
 import SwiftUI
 import AVFoundation
+import CoreVideo
+import CoreMedia
 import Photos
 
 /// Holds camera session state, style selection, capture flow, lens, flash,
@@ -20,6 +22,18 @@ final class CameraViewModel: NSObject, ObservableObject {
     @AppStorage("watermarkEnabled") var watermarkEnabled = true
     @AppStorage("photoFormat") var photoFormat = "HEIF"
     @AppStorage("proModeEnabled") var proModeEnabled = false
+    @AppStorage("rawCaptureEnabled") var rawCaptureEnabled = false
+    @AppStorage("videoWatermarkEnabled") var videoWatermarkEnabled = true
+
+    /// Whether RAW capture is available on the current device.
+    var supportsRawCapture: Bool {
+        photoOutput?.availableRawPhotoPixelFormatTypes.count ?? 0 > 0
+    }
+
+    /// Whether RAW capture is active (only available in Pro mode).
+    var isRawCaptureActive: Bool {
+        isProMode && rawCaptureEnabled && supportsRawCapture
+    }
 
     /// Metal renderer for GPU-accelerated frame processing (bypasses Apple ISP).
     private let metalRenderer: MetalRenderer?
@@ -32,7 +46,16 @@ final class CameraViewModel: NSObject, ObservableObject {
     private var movieOutput: AVCaptureMovieFileOutput?
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var currentDeviceInput: AVCaptureDeviceInput?
+    private var currentCaptureDelegate: AnyObject?
     private var isProcessingFrame = false
+
+    // Video watermark recording (AVAssetWriter path).
+    private var videoAssetWriter: AVAssetWriter?
+    private var videoAssetWriterInput: AVAssetWriterInput?
+    private var videoAssetWriterAdaptor: AVAssetWriterInputPixelBufferAdaptor?
+    private var videoRecordingStartTime: CMTime = .zero
+    private var videoCaptureStartTime: CFAbsoluteTime = 0
+    private var videoOutputURL: URL?
 
     /// Current device for manual controls.
     private var activeDevice: AVCaptureDevice? {
@@ -444,20 +467,202 @@ final class CameraViewModel: NSObject, ObservableObject {
 
     func capturePhoto() {
         guard let photoOutput = photoOutput, session.isRunning else { return }
+
+        if isRawCaptureActive {
+            captureRawPhoto()
+        } else {
+            isCaptureInProgress = true
+            let settings = AVCapturePhotoSettings()
+            photoOutput.capturePhoto(with: settings, delegate: self)
+        }
+    }
+
+    /// Capture a RAW/DNG photo with zoom reset to satisfy Apple's 1.0x zoom constraint.
+    private func captureRawPhoto() {
+        guard let photoOutput = photoOutput, session.isRunning else { return }
+        guard let rawFormat = photoOutput.availableRawPhotoPixelFormatTypes.first else {
+            errorMessage = "RAW capture not supported on this device."
+            return
+        }
         isCaptureInProgress = true
-        let settings = AVCapturePhotoSettings()
-        photoOutput.capturePhoto(with: settings, delegate: self)
+
+        let zoomResetRequired = abs(currentDeviceInput?.device.videoZoomFactor ?? 1.0 - 1.0) > 0.001
+        let originalZoom = currentDeviceInput?.device.videoZoomFactor ?? 1.0
+
+        // Step 1: Reset zoom to 1.0x if needed (Apple RAW constraint).
+        if zoomResetRequired {
+            sessionQueue.async {
+                do {
+                    try self.currentDeviceInput?.device.lockForConfiguration()
+                    self.currentDeviceInput?.device.videoZoomFactor = 1.0
+                    self.currentDeviceInput?.device.unlockForConfiguration()
+                } catch {
+                    print("RAW zoom reset failed: \(error)")
+                }
+                // Small delay for zoom to stabilize before capture.
+                Thread.sleep(forTimeInterval: 0.1)
+                self.performRawCapture(photoOutput: photoOutput, rawFormat: rawFormat, originalZoom: originalZoom)
+            }
+        } else {
+            performRawCapture(photoOutput: photoOutput, rawFormat: rawFormat, originalZoom: originalZoom)
+        }
+    }
+
+    /// Perform the actual RAW capture using a delegate that holds the continuation.
+    private func performRawCapture(photoOutput: AVCapturePhotoOutput, rawFormat: OSType, originalZoom: CGFloat) {
+        let settings = AVCapturePhotoSettings(rawPixelFormatType: rawFormat)
+        settings.photoQualityPrioritization = .speed  // Apple requires .speed for RAW
+        settings.flashMode = flashMode == .on ? .on : .off
+
+        let delegate = RawCaptureDelegate { [weak self] result in
+            DispatchQueue.main.async {
+                self?.isCaptureInProgress = false
+                switch result {
+                case .success(let rawData, let metadata):
+                    self?.handleRawResult(rawData: rawData, metadata: metadata)
+                case .failure(let error):
+                    self?.errorMessage = error.localizedDescription
+                }
+                // Restore original zoom after RAW capture.
+                self?.restoreZoom(to: originalZoom)
+            }
+        }
+        currentCaptureDelegate = delegate
+        photoOutput.capturePhoto(with: settings, delegate: delegate)
+    }
+
+    /// Restore the original zoom factor after RAW capture.
+    private func restoreZoom(to originalZoom: CGFloat) {
+        guard abs(originalZoom - 1.0) > 0.001 else { return }
+        sessionQueue.async {
+            do {
+                try self.currentDeviceInput?.device.lockForConfiguration()
+                self.currentDeviceInput?.device.videoZoomFactor = originalZoom
+                self.currentDeviceInput?.device.unlockForConfiguration()
+            } catch {
+                print("RAW zoom restore failed: \(error)")
+            }
+        }
+    }
+
+    /// Handle a captured RAW/DNG result: process through Metal or save directly.
+    private func handleRawResult(rawData: Data, metadata: [String: Any]) {
+        // Save the raw DNG data to the photo library.
+        saveRawDataToLibrary(rawData: rawData, metadata: metadata)
+
+        // Also attempt to process through the Metal pipeline for a preview.
+        if let uiImage = UIImage(data: rawData) {
+            let styled = styleImage(uiImage) ?? uiImage
+            DispatchQueue.main.async {
+                self.capturedImage = styled
+                self.isReviewing = true
+            }
+        }
+    }
+
+    /// Save raw DNG data directly to the photo library.
+    private func saveRawDataToLibrary(rawData: Data, metadata: [String: Any]) {
+        PHPhotoLibrary.requestAuthorization { status in
+            guard status == .authorized || status == .limited else { return }
+            PHPhotoLibrary.shared().performChanges({
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(with: .photo, data: rawData, options: nil)
+            }) { success, error in
+                if !success {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "RAW save failed: \(error?.localizedDescription ?? "unknown")"
+                    }
+                }
+            }
+        }
     }
 
     func toggleVideoRecording() {
-        guard let movieOutput = movieOutput, session.isRunning else { return }
+        guard session.isRunning else { return }
+
         if isRecording {
-            movieOutput.stopRecording()
+            stopVideoRecording()
         } else {
-            let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let url = documents.appendingPathComponent("recording.mp4")
-            try? FileManager.default.removeItem(at: url)
-            movieOutput.startRecording(to: url, recordingDelegate: self)
+            startVideoRecording()
+        }
+    }
+
+    private func startVideoRecording() {
+        if videoWatermarkEnabled {
+            startVideoRecordingWithWatermark()
+        } else {
+            startVideoRecordingStandard()
+        }
+    }
+
+    private func startVideoRecordingStandard() {
+        guard let movieOutput = movieOutput else { return }
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let url = documents.appendingPathComponent("recording.mp4")
+        try? FileManager.default.removeItem(at: url)
+        movieOutput.startRecording(to: url, recordingDelegate: self)
+    }
+
+    private func startVideoRecordingWithWatermark() {
+        let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let url = documents.appendingPathComponent("recording_watermarked.mp4")
+        try? FileManager.default.removeItem(at: url)
+
+        do {
+            let writer = try AVAssetWriter(outputURL: url, fileType: .mp4)
+
+            let outputSettings: [String: Any] = [
+                AVVideoCodecKey: AVVideoCodecType.h264,
+                AVVideoWidthKey: 1920,
+                AVVideoHeightKey: 1080,
+            ]
+            let input = AVAssetWriterInput(mediaType: .video, outputSettings: outputSettings)
+            input.expectsMediaDataInRealTime = true
+
+            let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+                assetWriterInput: input,
+                sourcePixelBufferAttributes: [
+                    kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+                    kCVPixelBufferWidthKey as String: 1920,
+                    kCVPixelBufferHeightKey as String: 1080,
+                ]
+            )
+
+            if writer.canAdd(input) {
+                writer.add(input)
+            }
+            writer.startWriting()
+            writer.startSession(atSourceTime: .zero)
+
+            videoAssetWriter = writer
+            videoAssetWriterInput = input
+            videoAssetWriterAdaptor = adaptor
+            videoRecordingStartTime = .zero
+            videoCaptureStartTime = CFAbsoluteTimeGetCurrent()
+            videoOutputURL = url
+        } catch {
+            errorMessage = "Failed to create video writer: \(error.localizedDescription)"
+            return
+        }
+
+        isRecording = true
+    }
+
+    private func stopVideoRecording() {
+        if videoWatermarkEnabled, let writer = videoAssetWriter, let input = videoAssetWriterInput {
+            input.markAsFinished()
+            writer.finishWriting {
+                DispatchQueue.main.async {
+                    self.isRecording = false
+                    self.videoAssetWriter = nil
+                    self.videoAssetWriterInput = nil
+                    self.videoAssetWriterAdaptor = nil
+                    self.videoRecordingStartTime = .zero
+                    self.videoCaptureStartTime = 0
+                }
+            }
+        } else {
+            movieOutput?.stopRecording()
         }
     }
 
@@ -821,6 +1026,83 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                 self.processedFrame = metalImage
             }
         }
+
+        // Video watermark: write processed frame with watermark to AVAssetWriter.
+        if isRecording, videoWatermarkEnabled, let writerInput = videoAssetWriterInput,
+           writerInput.isReadyForMoreMediaData, let adaptor = videoAssetWriterAdaptor {
+            // Blend watermark into the processed RGBA bytes via Rust C ABI.
+            var frameBytes = rgbaBytes
+            if videoWatermarkEnabled {
+                let wmWidth = max(1, width / 4)
+                let wmHeight = max(1, height / 16)
+                if let wmBytes = makeWatermarkBytes(width: wmWidth, height: wmHeight) {
+                    wmBytes.withUnsafeMutableBufferPointer { wmPtr in
+                        guard let wmBase = wmPtr.baseAddress else { return }
+                        frameBytes.withUnsafeMutableBufferPointer { fbPtr in
+                            guard let fbBase = fbPtr.baseAddress else { return }
+                            let offsetX: Int32 = Int32(width - wmWidth - 20)
+                            let offsetY: Int32 = Int32(height - wmHeight - 20)
+                            let result = camera_blend_watermark(
+                                fbBase,
+                                UInt32(width),
+                                UInt32(height),
+                                wmBase,
+                                UInt32(wmWidth),
+                                UInt32(wmHeight),
+                                offsetX,
+                                offsetY,
+                                0.6
+                            )
+                            if result.ok {
+                                // Copy blended bytes back to frameBytes.
+                                for i in 0..<byteCount {
+                                    frameBytes[i] = fbPtr[i]
+                                }
+                            } else {
+                                print("Video watermark blend failed: \(result.code)")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Convert RGBA → BGRA for AVAssetWriter pixel buffer.
+            var bgraBytes = [UInt8](repeating: 0, count: byteCount)
+            for i in stride(from: 0, to: byteCount, by: 4) {
+                bgraBytes[i] = frameBytes[i + 2]     // B
+                bgraBytes[i + 1] = frameBytes[i + 1] // G
+                bgraBytes[i + 2] = frameBytes[i]     // R
+                bgraBytes[i + 3] = frameBytes[i + 3] // A
+            }
+
+            // Create CVPixelBuffer from BGRA bytes.
+            var pixelBuffer: CVPixelBuffer?
+            let attrs: [String: Any] = [
+                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+                kCVPixelBufferWidthKey as String: width,
+                kCVPixelBufferHeightKey as String: height,
+            ]
+            let status = CVPixelBufferCreate(nil, width, height, kCVPixelFormatType_32BGRA, attrs as CFDictionary, &pixelBuffer)
+            if status == kCVReturnSuccess, let pb = pixelBuffer {
+                CVPixelBufferLockBaseAddress(pb, [])
+                let pbBase = CVPixelBufferGetBaseAddress(pb)!.assumingMemoryBound(to: UInt8.self)
+                for i in 0..<byteCount {
+                    pbBase[i] = bgraBytes[i]
+                }
+                CVPixelBufferUnlockBaseAddress(pb, [])
+
+                let timeScale: CMTimeScale = 600
+                if videoRecordingStartTime == .zero {
+                    videoRecordingStartTime = CMTime(value: 0, timescale: timeScale)
+                }
+                let elapsed = CFAbsoluteTimeGetCurrent() - videoCaptureStartTime
+                let presentationTime = CMTime(value: CMTimeValue(elapsed * Double(timeScale)), timescale: timeScale)
+                let success = adaptor.append(pb, withPresentationTime: presentationTime)
+                if !success {
+                    print("Failed to append pixel buffer to video writer.")
+                }
+            }
+        }
     }
 }
 
@@ -884,6 +1166,56 @@ extension CameraViewModel: AVCaptureFileOutputRecordingDelegate {
             DispatchQueue.main.async {
                 self.errorMessage = "Recording failed: \(error.localizedDescription)"
             }
+        }
+    }
+}
+
+/// Delegate for RAW/DNG photo capture. Holds the callback closure to prevent
+/// premature release during the async capture flow.
+private final class RawCaptureDelegate: NSObject, AVCapturePhotoCaptureDelegate {
+    private let callback: (Result<(data: Data, metadata: [String: Any]), Error>) -> Void
+    private let resumeLock = NSLock()
+    private var hasResumed = false
+
+    init(callback: @escaping (Result<(data: Data, metadata: [String: Any]), Error>) -> Void) {
+        self.callback = callback
+        super.init()
+    }
+
+    func photoOutput(
+        _ output: AVCapturePhotoOutput,
+        didFinishProcessingPhoto photo: AVCapturePhoto,
+        error: Error?
+    ) {
+        if let error = error {
+            resume { .failure(error) }
+            return
+        }
+        guard let data = photo.fileDataRepresentation() else {
+            resume { .failure(CaptureError.noData) }
+            return
+        }
+        let metadata = photo.metadata
+        resume { .success((data: data, metadata: metadata)) }
+    }
+
+    private func resume(_ result: @escaping () -> Result<(data: Data, metadata: [String: Any]), Error>) {
+        resumeLock.lock()
+        defer { resumeLock.unlock() }
+        guard !hasResumed else { return }
+        hasResumed = true
+        callback(result())
+    }
+}
+
+private enum CaptureError: Error {
+    case noData
+}
+
+extension CaptureError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .noData: return "No RAW data received from camera."
         }
     }
 }

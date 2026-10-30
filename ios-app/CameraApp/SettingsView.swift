@@ -3,6 +3,7 @@ import SwiftUI
 /// App settings: watermark toggle, format, style. From-scratch implementation.
 struct SettingsView: View {
     @AppStorage("watermarkEnabled") private var watermarkEnabled = true
+    @AppStorage("videoWatermarkEnabled") private var videoWatermarkEnabled = true
     @AppStorage("photoFormat") private var photoFormat = "HEIF"
     @Environment(\.dismiss) private var dismiss
 
@@ -11,6 +12,7 @@ struct SettingsView: View {
             Form {
                 Section("Capture") {
                     Toggle("Watermark on saved photos", isOn: $watermarkEnabled)
+                    Toggle("Watermark on recorded videos", isOn: $videoWatermarkEnabled)
                     Picker("Photo format", selection: $photoFormat) {
                         Text("HEIF").tag("HEIF")
                         Text("JPEG").tag("JPEG")
