@@ -1,14 +1,18 @@
 [package]
-name = "camera_core"
+name = "camera-core"
 version = "0.1.0"
 edition = "2021"
+description = "From-scratch image-processing core for CameraApp (C ABI)."
+license = "MIT"
 
 [lib]
 name = "camera_core"
 crate-type = ["staticlib", "cdylib"]
 
 [profile.release]
-opt-level = 3
+opt-level = "z"
 lto = true
 codegen-units = 1
-panic = "unwind"
+panic = "abort"
+
+[dependencies]

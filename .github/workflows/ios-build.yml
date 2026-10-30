@@ -1,72 +1,70 @@
-name: Build Unsigned iOS IPA
+name: CI — test and build iOS CameraApp
 
 on:
   push:
-    branches: [ main ]
+    branches: [master, from-scratch-camera-app]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: macos-latest
-    timeout-minutes: 120
-
+  rust-test:
+    name: Rust — fmt, clippy, test
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          sparse-checkout-cone-mode: false
-
-      - name: Install Xcode toolchain
-        run: |
-          xcodebuild -version
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
-          target: aarch64-apple-ios
-          profile: minimal
-          override: true
+          components: rustfmt, clippy
 
-      - name: Build Rust camera_core library
-        run: |
-          cd rust-core
-          cargo build --release --target aarch64-apple-ios
-          mkdir -p ../rust-libs
-          cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
+      - name: Rust fmt check
+        working-directory: rust-core
+        run: cargo fmt --all --check
+
+      - name: Rust clippy (deny warnings)
+        working-directory: rust-core
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Rust unit tests
+        working-directory: rust-core
+        run: cargo test --all-targets
+
+  rust-ios:
+    name: Rust — build for iOS (aarch64-apple-ios)
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: aarch64-apple-ios
+
+      - name: Build Rust core for iOS (release)
+        working-directory: rust-core
+        run: cargo build --release --target aarch64-apple-ios
+
+  ios-app:
+    name: iOS app — xcodebuild build
+    runs-on: macos-14
+    needs: rust-ios
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Build Swift package for iOS
         run: |
-          export DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer
-          cd ios-app
-          swift build --package-path . -c release \
-            -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphoneos --show-sdk-path)" \
-            -Xswiftc -target -Xswiftc aarch64-apple-ios \
-            -Xlinker -L../rust-libs -Xlinker -lcamera_core
-
-      - name: Export unsigned IPA
-        run: |
-          mkdir -p ./build/export
-          cat > ./build/export-options.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>stripSwiftSymbols</key>
-              <true/>
-              <key>teamID</key>
-              <string></string>
-          </dict>
-          </plist>
-          EOF
-          echo "Build artifacts available in ios-app/.build/release/"
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: camera-app-build
-          path: ios-app/.build/release/
-          retention-days: 7
+          xcodebuild -scheme CameraApp \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            build

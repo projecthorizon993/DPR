@@ -1,26 +1,30 @@
-# Xcode
-*.pbxuser
-*.xcuserstate
-.xcodeproj/project.xcworkspace/xcshareddata/
-DerivedData/
-*.ipa
-*.xcarchive
-.build/
+# --- Pre-existing / reference projects (NOT part of this from-scratch build) ---
+# Kept on disk for reference, but never committed and never reused.
+iphone-camera-app/
+BeautifulRust/
+justraw-worktree/
+recovered/
+found/
+.agents/
 
-# Swift
+# --- This project's build artifacts ---
+ios-app/build/
+rust-core/target/
+*.xcarchive
+*.ipa
+DerivedData/
+
+# Swift Package Manager
 .swiftpm/
 Package.resolved
+*.xccheckout
 
 # Rust
-/target/
-Cargo.lock
-
-# Prebuilt static libraries (built by CI, not committed)
-rust-libs/*.a
-*.a
+*.d
 
 # macOS
 .DS_Store
 
-# iOS
-*.dSYM/
+# Logs / temp
+*.log
+.env
