@@ -24,6 +24,16 @@ final class CameraViewModel: NSObject, ObservableObject {
     /// Metal renderer for GPU-accelerated frame processing (bypasses Apple ISP).
     private let metalRenderer: MetalRenderer?
 
+    private let session = AVCaptureSession()
+    private let sessionQueue = DispatchQueue(label: "camera.session.queue")
+    private let processingQueue = DispatchQueue(label: "camera.processing.queue")
+    private var videoOutput: AVCaptureVideoDataOutput?
+    private var photoOutput: AVCapturePhotoOutput?
+    private var movieOutput: AVCaptureMovieFileOutput?
+    private var previewLayer: AVCaptureVideoPreviewLayer?
+    private var currentDeviceInput: AVCaptureDeviceInput?
+    private var isProcessingFrame = false
+
     /// Current device for manual controls.
     private var activeDevice: AVCaptureDevice? {
         currentDeviceInput?.device
@@ -49,7 +59,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     @Published var iso: Float = 100
     /// Supported ISO range for the active device.
     var isoRange: ClosedRange<Float> {
-        activeDevice?.isoRange ?? 1...100
+        activeDevice?.activeFormat.isoRange ?? 1...100
     }
 
     /// Normalized shutter speed (0 = fastest, 1 = slowest).
@@ -80,8 +90,8 @@ final class CameraViewModel: NSObject, ObservableObject {
     /// Current white balance temperature in Kelvin.
     var whiteBalanceTemperature: Float {
         let device = activeDevice
-        let minTemp = device?.minWhiteBalanceTemperature ?? 2850
-        let maxTemp = device?.maxWhiteBalanceTemperature ?? 6500
+        let minTemp = device?.activeFormat.minWhiteBalanceTemperature ?? 2850
+        let maxTemp = device?.activeFormat.maxWhiteBalanceTemperature ?? 6500
         return minTemp + whiteBalanceNormalized * (maxTemp - minTemp)
     }
 
@@ -91,16 +101,15 @@ final class CameraViewModel: NSObject, ObservableObject {
             guard let device = self.activeDevice else { return }
             do {
                 try device.lockForConfiguration()
-                // ISO
-                if device.isISOModeSupported(.continuousAutoExposure) {
-                    device.setExposureModeCustom(duration: device.exposureDuration,
-                                                 iso: self.iso,
-                                                 completionHandler: nil)
-                }
+                // ISO + exposure
+                device.setExposureModeCustom(duration: device.exposureDuration,
+                                             iso: self.iso,
+                                             completionHandler: nil)
                 // White balance
-                if device.isLockingWhiteBalanceSupported,
-                   let temp = self.activeDevice?.whiteBalanceTemperatureAndGains(for: self.whiteBalanceTemperature) {
-                    device.setWhiteBalanceModeLocked(with: temp.temperature, gains: temp.gains, completionHandler: nil)
+                if device.isWhiteBalanceModeSupported(.locked) {
+                    let temp = self.whiteBalanceTemperature
+                    let gains = self.whiteBalanceGains(for: temp)
+                    device.setWhiteBalanceModeLocked(with: gains, completionHandler: nil)
                 }
                 // Focus
                 if device.isFocusModeSupported(.locked) {
@@ -111,6 +120,20 @@ final class CameraViewModel: NSObject, ObservableObject {
                 print("ProControls: lockForConfiguration failed: \(error)")
             }
         }
+    }
+
+    /// Approximate white balance gains from temperature in Kelvin.
+    private func whiteBalanceGains(for temperature: Float) -> AVCaptureWhiteBalanceGains {
+        // Simple approximation: map 2850-6500K to blue/red gains.
+        let t = clamp((temperature - 2850) / (6500 - 2850), 0, 1)
+        let gainR = 1.0 + t * 0.5   // warmer = more red
+        let gainB = 1.5 - t * 0.5   // cooler = more blue
+        return AVCaptureWhiteBalanceGains(gainR: gainR, gainG: 1.0, gainB: gainB)
+    }
+
+    /// Clamp value to [0, 1].
+    private func clamp(_ v: Float, _ lo: Float, _ hi: Float) -> Float {
+        min(max(v, lo), hi)
     }
 
     /// Set ISO (manual).
@@ -129,10 +152,8 @@ final class CameraViewModel: NSObject, ObservableObject {
                 let minDuration = device.activeFormat.minExposureDuration
                 let maxDuration = device.activeFormat.maxExposureDuration
                 let range = CMTimeSubtract(maxDuration, minDuration)
-                let target = CMTimeAdd(minDuration, CMTimeMultiplyFloat64(range, Float64(normalized)))
-                if device.isExposureModeSupported(.custom) {
-                    device.setExposureModeCustom(duration: target, iso: self.iso, completionHandler: nil)
-                }
+                let target = CMTimeAdd(minDuration, CMTimeMultiplyByFloat64(range, Float64(normalized)))
+                device.setExposureModeCustom(duration: target, iso: self.iso, completionHandler: nil)
                 device.unlockForConfiguration()
             } catch {
                 print("ProControls: shutter lock failed: \(error)")
@@ -158,11 +179,9 @@ final class CameraViewModel: NSObject, ObservableObject {
             guard let device = self.activeDevice else { return }
             do {
                 try device.lockForConfiguration()
-                if device.isExposureModeSupported(.locked) {
-                    device.setExposureModeLocked(duration: device.exposureDuration,
-                                                 iso: device.iso,
-                                                 completionHandler: nil)
-                }
+                device.setExposureModeCustom(duration: device.exposureDuration,
+                                             iso: device.iso,
+                                             completionHandler: nil)
                 device.unlockForConfiguration()
             } catch { print("ProControls: exposure lock failed: \(error)") }
         }
@@ -174,9 +193,7 @@ final class CameraViewModel: NSObject, ObservableObject {
             guard let device = self.activeDevice else { return }
             do {
                 try device.lockForConfiguration()
-                if device.isFocusModeSupported(.locked) {
-                    device.setFocusModeLocked(lensPosition: device.lensPosition, completionHandler: nil)
-                }
+                device.setFocusModeLocked(lensPosition: device.lensPosition, completionHandler: nil)
                 device.unlockForConfiguration()
             } catch { print("ProControls: focus lock failed: \(error)") }
         }
