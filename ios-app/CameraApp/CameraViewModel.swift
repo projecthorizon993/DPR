@@ -38,6 +38,11 @@ final class CameraViewModel: NSObject, ObservableObject {
     /// Metal renderer for GPU-accelerated frame processing (bypasses Apple ISP).
     private let metalRenderer: MetalRenderer?
 
+    /// Loaded watermark assets per brand (RGBA8 bytes).
+    private var watermarkBytes: [WatermarkBrand: [UInt8]] = [:]
+    /// Loaded watermark dimensions per brand.
+    private var watermarkSizes: [WatermarkBrand: (width: Int, height: Int)] = [:]
+
     private let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
     private let processingQueue = DispatchQueue(label: "camera.processing.queue")
@@ -65,6 +70,54 @@ final class CameraViewModel: NSObject, ObservableObject {
     override init() {
         self.metalRenderer = MetalRenderer()
         super.init()
+        loadWatermarkAssets()
+    }
+
+    /// Load watermark assets from Assets.watermarks/ folder.
+    private func loadWatermarkAssets() {
+        guard let assetsDir = Bundle.main.resourceURL?.appendingPathComponent("Assets.watermarks") else {
+            print("Watermark assets directory not found.")
+            return
+        }
+        let brandFiles: [WatermarkBrand: String] = [
+            .zeiss: "wm_zeiss_logo_default_v1.webp",
+            .leica: "wm_leica_logo.webp",
+            .hasselblad: "wm_hasselblad_logo.png",
+        ]
+        for (brand, fileName) in brandFiles {
+            let url = assetsDir.appendingPathComponent(fileName)
+            guard let image = UIImage(contentsOfFile: url.path),
+                  let cgImage = image.cgImage else {
+                print("Failed to load watermark asset: \(fileName)")
+                continue
+            }
+            let width = cgImage.width
+            let height = cgImage.height
+            let bytesPerRow = width * 4
+            let byteCount = bytesPerRow * height
+
+            guard let data = CFDataCreateMutable(nil, byteCount) else { continue }
+            CFDataSetLength(data, byteCount)
+            let ptr: UnsafeMutablePointer<UInt8> = CFDataGetMutableBytePtr(data)
+
+            let colorSpace = CGColorSpaceCreateDeviceRGB()
+            guard let context = CGContext(
+                data: ptr, width: width, height: height,
+                bitsPerComponent: 8, bytesPerRow: bytesPerRow,
+                space: colorSpace,
+                bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { continue }
+
+            context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+            var bytes = [UInt8](repeating: 0, count: byteCount)
+            for i in 0..<byteCount {
+                bytes[i] = ptr[i]
+            }
+            watermarkBytes[brand] = bytes
+            watermarkSizes[brand] = (width, height)
+            print("Loaded watermark: \(brand.title) (\(width)x\(height))")
+        }
     }
 
     // MARK: - Pro mode manual controls
@@ -751,7 +804,7 @@ final class CameraViewModel: NSObject, ObservableObject {
         }
     }
 
-    /// Blend a "ZEISS" watermark onto the image using the Rust core, bottom-right.
+    /// Blend a style-specific watermark onto the image using the Rust core, bottom-right.
     private func applyWatermark(to image: UIImage) -> UIImage? {
         guard let cgImage = image.cgImage else { return nil }
         let width = cgImage.width
@@ -759,10 +812,17 @@ final class CameraViewModel: NSObject, ObservableObject {
         let bytesPerRow = width * 4
         let byteCount = bytesPerRow * height
 
-        // Generate a simple "ZEISS" watermark RGBA8 buffer (1/4 width, 1/16 height).
-        let wmWidth = max(1, width / 4)
-        let wmHeight = max(1, height / 16)
-        guard let wmBytes = makeWatermarkBytes(width: wmWidth, height: wmHeight) else { return nil }
+        // Determine watermark brand from current style.
+        let brand = selectedStyle.watermarkBrand
+        guard brand != .none,
+              let wmBytes = watermarkBytes[brand],
+              let wmSize = watermarkSizes[brand] else {
+            // No watermark asset for this brand, return original.
+            return image
+        }
+
+        let wmWidth = wmSize.width
+        let wmHeight = wmSize.height
 
         guard let data = CFDataCreateMutable(nil, byteCount) else { return nil }
         CFDataSetLength(data, byteCount)
@@ -803,47 +863,6 @@ final class CameraViewModel: NSObject, ObservableObject {
 
         guard let outCg = bitmapContext.makeImage() else { return nil }
         return UIImage(cgImage: outCg)
-    }
-
-    /// Generate a simple "ZEISS" text watermark as an RGBA8 buffer.
-    private func makeWatermarkBytes(width: Int, height: Int) -> [UInt8]? {
-        guard width > 0, height > 0 else { return nil }
-        let bytesPerRow = width * 4
-        let byteCount = bytesPerRow * height
-
-        guard let data = CFDataCreateMutable(nil, byteCount) else { return nil }
-        CFDataSetLength(data, byteCount)
-        let ptr: UnsafeMutablePointer<UInt8> = CFDataGetMutableBytePtr(data)
-
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        guard let context = CGContext(
-            data: ptr,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: bytesPerRow,
-            space: colorSpace,
-            bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else { return nil }
-
-        context.setFillColor(red: 1, green: 1, blue: 1, alpha: 0)
-        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
-
-        let text = "ZEISS" as NSString
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: UIFont.boldSystemFont(ofSize: CGFloat(max(8, height / 2))),
-            .foregroundColor: UIColor.white
-        ]
-        let size = text.size(withAttributes: attributes)
-        let x = (CGFloat(width) - size.width) / 2
-        let y = (CGFloat(height) - size.height) / 2
-        text.draw(in: CGRect(x: x, y: y, width: size.width, height: size.height), withAttributes: attributes)
-
-        var bytes = [UInt8](repeating: 0, count: byteCount)
-        for i in 0..<byteCount {
-            bytes[i] = ptr[i]
-        }
-        return bytes
     }
 
     /// Return image data in the selected format (HEIF or JPEG).
@@ -943,6 +962,42 @@ struct CameraResult {
     var code: UInt32
 }
 
+/// Watermark brand applied per style.
+enum WatermarkBrand: CaseIterable, Codable {
+    case none
+    case zeiss    // Vivo
+    case leica    // Xiaomi
+    case hasselblad // Oppo
+
+    var title: String {
+        switch self {
+        case .none: return "None"
+        case .zeiss: return "ZEISS"
+        case .leica: return "LEICA"
+        case .hasselblad: return "HASSELBLAD"
+        }
+    }
+
+    var accentColor: Color {
+        switch self {
+        case .none: return Color.clear
+        case .zeiss: return Color.white
+        case .leica: return Color(red: 0.9, green: 0.1, blue: 0.1)   // Leica red
+        case .hasselblad: return Color(red: 0.2, green: 0.4, blue: 0.2) // Hasselblad green
+        }
+    }
+
+    /// The text to render in the watermark.
+    var label: String {
+        switch self {
+        case .none: return ""
+        case .zeiss: return "ZEISS"
+        case .leica: return "LEICA"
+        case .hasselblad: return "HASSELBLAD"
+        }
+    }
+}
+
 /// Mirrors Rust `#[repr(C)] enum CameraStyle`.
 enum CameraStyle: Int32, CaseIterable, Codable {
     case natural = 0
@@ -974,6 +1029,16 @@ enum CameraStyle: Int32, CaseIterable, Codable {
         case .xiaomi: return Color(red: 1.0, green: 0.82, blue: 0.20)
         case .oppo: return Color(red: 0.3, green: 0.6, blue: 1.0)
         case .vivo: return Color(red: 1.0, green: 0.7, blue: 0.3)
+        }
+    }
+
+    /// The watermark brand associated with this style.
+    var watermarkBrand: WatermarkBrand {
+        switch self {
+        case .natural: return .none
+        case .xiaomi: return .leica       // Xiaomi -> Leica
+        case .oppo: return .hasselblad    // Oppo -> Hasselblad
+        case .vivo: return .zeiss         // Vivo -> Zeiss
         }
     }
 }
@@ -1030,35 +1095,36 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
         // Video watermark: write processed frame with watermark to AVAssetWriter.
         if isRecording, videoWatermarkEnabled, let writerInput = videoAssetWriterInput,
            writerInput.isReadyForMoreMediaData, let adaptor = videoAssetWriterAdaptor {
-            // Blend watermark into the processed RGBA bytes via Rust C ABI.
+            // Blend style-specific watermark into the processed RGBA bytes via Rust C ABI.
             var frameBytes = rgbaBytes
-            if videoWatermarkEnabled {
-                let wmWidth = max(1, width / 4)
-                let wmHeight = max(1, height / 16)
-                if var wmBytes = makeWatermarkBytes(width: wmWidth, height: wmHeight) {
-                    wmBytes.withUnsafeMutableBufferPointer { wmPtr in
-                        guard let wmBase = wmPtr.baseAddress else { return }
-                        frameBytes.withUnsafeMutableBufferPointer { fbPtr in
-                            guard let fbBase = fbPtr.baseAddress else { return }
-                            let offsetX: Int32 = Int32(width - wmWidth - 20)
-                            let offsetY: Int32 = Int32(height - wmHeight - 20)
-                            let result = camera_blend_watermark(
-                                fbBase,
-                                UInt32(width),
-                                UInt32(height),
-                                wmBase,
-                                UInt32(wmWidth),
-                                UInt32(wmHeight),
-                                offsetX,
-                                offsetY,
-                                0.6
-                            )
-                            if !result.ok {
-                                print("Video watermark blend failed: \(result.code)")
-                            }
-                            // camera_blend_watermark writes in-place via fbBase,
-                            // so frameBytes is already updated.
+            let brand = selectedStyle.watermarkBrand
+            if brand != .none,
+               let wmBytes = watermarkBytes[brand],
+               let wmSize = watermarkSizes[brand] {
+                let wmWidth = wmSize.width
+                let wmHeight = wmSize.height
+                wmBytes.withUnsafeMutableBufferPointer { wmPtr in
+                    guard let wmBase = wmPtr.baseAddress else { return }
+                    frameBytes.withUnsafeMutableBufferPointer { fbPtr in
+                        guard let fbBase = fbPtr.baseAddress else { return }
+                        let offsetX: Int32 = Int32(width - wmWidth - 20)
+                        let offsetY: Int32 = Int32(height - wmHeight - 20)
+                        let result = camera_blend_watermark(
+                            fbBase,
+                            UInt32(width),
+                            UInt32(height),
+                            wmBase,
+                            UInt32(wmWidth),
+                            UInt32(wmHeight),
+                            offsetX,
+                            offsetY,
+                            0.6
+                        )
+                        if !result.ok {
+                            print("Video watermark blend failed: \(result.code)")
                         }
+                        // camera_blend_watermark writes in-place via fbBase,
+                        // so frameBytes is already updated.
                     }
                 }
             }
