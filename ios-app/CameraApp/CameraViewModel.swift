@@ -1035,7 +1035,7 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
             if videoWatermarkEnabled {
                 let wmWidth = max(1, width / 4)
                 let wmHeight = max(1, height / 16)
-                if let wmBytes = makeWatermarkBytes(width: wmWidth, height: wmHeight) {
+                if var wmBytes = makeWatermarkBytes(width: wmWidth, height: wmHeight) {
                     wmBytes.withUnsafeMutableBufferPointer { wmPtr in
                         guard let wmBase = wmPtr.baseAddress else { return }
                         frameBytes.withUnsafeMutableBufferPointer { fbPtr in
