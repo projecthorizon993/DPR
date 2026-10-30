@@ -6,7 +6,7 @@ struct StylePickerView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             List {
                 ForEach(CameraStyle.allCases, id: \.self) { style in
                     Button {

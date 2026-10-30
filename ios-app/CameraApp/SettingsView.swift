@@ -7,7 +7,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
                 Section("Capture") {
                     Toggle("Watermark on saved photos", isOn: $watermarkEnabled)
