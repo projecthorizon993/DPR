@@ -304,7 +304,7 @@ final class CameraViewModel: NSObject, ObservableObject {
             }
             watermarkBytes[brand] = bytes
             watermarkSizes[brand] = (width, height)
-            print("Loaded watermark: \(brand.variantName) (\(width)x\(height))")
+            print("Loaded watermark: \(brand.title) (\(width)x\(height))")
         }
     }
 
