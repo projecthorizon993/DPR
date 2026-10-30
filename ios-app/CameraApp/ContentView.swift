@@ -1,24 +1,47 @@
 import SwiftUI
 
-/// Main camera interface: live preview, shutter, style picker, settings, gallery,
-/// and post-capture review overlay. From-scratch implementation.
+/// Main camera interface: live preview, shutter/record, style picker, settings,
+/// lens selector, flash toggle, and post-capture review overlay. From-scratch implementation.
 struct ContentView: View {
     @EnvironmentObject var viewModel: CameraViewModel
 
     @State private var showingSettings = false
     @State private var showingStylePicker = false
+    @State private var mode: CaptureMode = .photo
 
     var body: some View {
         ZStack {
-            // Live preview.
+            // Live preview (raw camera feed).
             CameraView()
                 .ignoresSafeArea()
+
+            // Live processed frame overlay (styled preview).
+            if let processed = viewModel.processedFrame {
+                Image(uiImage: processed)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                    .opacity(0.85)
+            }
 
             // Dim when reviewing.
             if viewModel.isReviewing {
                 Color.black.opacity(0.55)
                     .ignoresSafeArea()
                     .transition(.opacity)
+            }
+
+            // Recording indicator.
+            if viewModel.isRecording {
+                VStack {
+                    HStack {
+                        Spacer()
+                        recordingIndicator
+                            .padding(.trailing, 24)
+                            .padding(.top, 44)
+                    }
+                    Spacer()
+                }
             }
 
             // Top bar.
@@ -36,8 +59,8 @@ struct ContentView: View {
 
                     // Mode pills (PHOTO / VIDEO).
                     HStack(spacing: 8) {
-                        modePill("PHOTO", isSelected: true)
-                        modePill("VIDEO", isSelected: false)
+                        modePill("PHOTO", isSelected: mode == .photo)
+                        modePill("VIDEO", isSelected: mode == .video)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -62,18 +85,35 @@ struct ContentView: View {
                         .padding(.bottom, 22)
                 }
 
-                // Shutter + gallery (bottom center / left).
+                // Flash toggle (above style selector).
                 HStack {
-                    // Gallery shortcut (bottom left).
-                    galleryButton
+                    Spacer()
+                    flashToggleButton
+                        .padding(.trailing, 24)
+                        .padding(.bottom, 78)
+                }
+
+                // Shutter / record (center bottom).
+                HStack {
+                    Spacer()
+
+                    if mode == .video {
+                        videoRecordButton
+                    } else {
+                        shutterButton
+                    }
+
+                    Spacer()
+                }
+                .padding(.bottom, 24)
+
+                // Lens selector (bottom left).
+                HStack {
+                    lensSelectorButton
                         .padding(.leading, 24)
                         .padding(.bottom, 24)
 
                     Spacer()
-
-                    // Shutter button (center bottom).
-                    shutterButton
-                        .padding(.bottom, 24)
                 }
             }
         }
@@ -114,6 +154,25 @@ struct ContentView: View {
         .accessibilityLabel("Shutter")
     }
 
+    private var videoRecordButton: some View {
+        Button {
+            viewModel.toggleVideoRecording()
+        } label: {
+            Circle()
+                .fill(viewModel.isRecording ? Color.red : Color.white)
+                .frame(width: 74, height: 74)
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.35), lineWidth: 4)
+                        .frame(width: 82, height: 82)
+                )
+                .scaleEffect(viewModel.isRecording ? 0.92 : 1.0)
+                .animation(.spring(response: 0.2, dampingFraction: 0.6), value: viewModel.isRecording)
+        }
+        .disabled(viewModel.isCaptureInProgress)
+        .accessibilityLabel(viewModel.isRecording ? "Stop recording" : "Start recording")
+    }
+
     private var galleryButton: some View {
         Button {
             // Placeholder: open last thumbnail.
@@ -147,12 +206,89 @@ struct ContentView: View {
         .accessibilityLabel("Select photo style: \(viewModel.selectedStyle.title)")
     }
 
+    private var flashToggleButton: some View {
+        Button {
+            viewModel.toggleFlash()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                    .frame(width: 46, height: 46)
+                Image(systemName: flashIconName)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(flashMode == .off ? Color.white.opacity(0.5) : Color.white)
+                if flashMode == .on {
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 8, height: 8)
+                        .offset(x: 10, y: -10)
+                }
+            }
+        }
+        .accessibilityLabel("Flash \(flashMode.title)")
+    }
+
+    private var lensSelectorButton: some View {
+        Menu {
+            ForEach(CameraLens.allCases, id: \.self) { lens in
+                Button {
+                    viewModel.switchLens(lens)
+                } label: {
+                    HStack {
+                        Text(lens.title)
+                        if viewModel.lens == lens {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                    .frame(width: 46, height: 46)
+                Text(viewModel.lens.title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .accessibilityLabel("Select lens: \(viewModel.lens.title)")
+    }
+
+    private var recordingIndicator: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(Color.red)
+                .frame(width: 10, height: 10)
+                .scaleEffect(viewModel.isRecording ? 1.1 : 1.0)
+                .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: viewModel.isRecording)
+            Text("REC")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.white)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.black.opacity(0.6))
+        .clipShape(Capsule())
+    }
+
+    private var flashIconName: String {
+        switch viewModel.flashMode {
+        case .off: return "bolt.slash.fill"
+        case .on: return "bolt.fill"
+        case .auto: return "bolt.circle.fill"
+        }
+    }
+
     private func modePill(_ title: String, isSelected: Bool) -> some View {
         Text(title)
             .font(.system(size: 13, weight: .medium))
             .foregroundStyle(isSelected ? Color.black : Color.white)
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
+            .onTapGesture {
+                mode = isSelected ? .photo : .video
+            }
     }
 
     @ViewBuilder
@@ -167,6 +303,10 @@ struct ContentView: View {
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
+}
+
+enum CaptureMode {
+    case photo, video
 }
 
 struct ContentView_Previews: PreviewProvider {
