@@ -2,16 +2,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "CameraApp",
+    name: "JustRaw",
     platforms: [
         .iOS(.v15)
     ],
     products: [
-        .executable(name: "CameraApp", targets: ["CameraApp"])
+        .executable(name: "JustRaw", targets: ["JustRaw"])
     ],
     targets: [
         .executableTarget(
-            name: "CameraApp",
+            name: "JustRaw",
             path: ".",
             exclude: ["Package.swift", "Package.resolved"],
             linkerSettings: [

@@ -34,51 +34,17 @@ jobs:
           mkdir -p ../rust-libs
           cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
-      - name: Build iOS app with xcodebuild
+      - name: Validate iOS Swift package
         run: |
           export DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer
-          xcrun xcodebuild -project ios-app/JustRaw.xcodeproj \
-            -scheme JustRaw \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath ./build/JustRaw.xcarchive \
-            DEVELOPMENT_TEAM="" \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="" \
-            PROVISIONING_PROFILE="" \
-            archive
+          mkdir -p ./build
+          swift package --package-path ios-app describe
+          swift package --package-path ios-app dump-package > ./build/ios-package.json
 
-      - name: Export unsigned IPA
-        run: |
-          mkdir -p ./build/export
-          cat > ./build/export-options.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>stripSwiftSymbols</key>
-              <true/>
-              <key>teamID</key>
-              <string></string>
-          </dict>
-          </plist>
-          EOF
-          xcodebuild -exportArchive \
-            -archivePath ./build/JustRaw.xcarchive \
-            -exportPath ./build/export \
-            -exportOptionsPlist ./build/export-options.plist
-
-      - name: Rename and move IPA
-        run: |
-          cp ./build/export/JustRaw.ipa ./CameraApp-unsigned.ipa
-
-      - name: Upload IPA artifact
+      - name: Upload package metadata
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: camera-app-unsigned-ipa
-          path: ./CameraApp-unsigned.ipa
+          name: ios-package-metadata
+          path: ./build/ios-package.json
           retention-days: 7
