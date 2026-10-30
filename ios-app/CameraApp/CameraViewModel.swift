@@ -1066,51 +1066,6 @@ enum CameraStyle: Int32, CaseIterable, Codable {
     }
 }
 
-/// Mirrors Rust `#[repr(C)] enum CameraStyle`.
-enum CameraStyle: Int32, CaseIterable, Codable {
-    case natural = 0
-    case xiaomi = 1
-    case oppo = 2
-    case vivo = 3
-
-    var title: String {
-        switch self {
-        case .natural: return "Natural"
-        case .xiaomi: return "Xiaomi"
-        case .oppo: return "Oppo"
-        case .vivo: return "Vivo"
-        }
-    }
-
-    var initials: String {
-        switch self {
-        case .natural: return "N"
-        case .xiaomi: return "X"
-        case .oppo: return "O"
-        case .vivo: return "V"
-        }
-    }
-
-    var accentColor: Color {
-        switch self {
-        case .natural: return Color.white
-        case .xiaomi: return Color(red: 1.0, green: 0.82, blue: 0.20)
-        case .oppo: return Color(red: 0.3, green: 0.6, blue: 1.0)
-        case .vivo: return Color(red: 1.0, green: 0.7, blue: 0.3)
-        }
-    }
-
-    /// The watermark brand associated with this style, matched to OEM naming.
-    var watermarkBrand: WatermarkBrand {
-        switch self {
-        case .natural: return .none
-        case .xiaomi: return .leica       // Xiaomi -> LEICA / watermark_leica_100th
-        case .oppo: return .hasselblad    // Oppo -> hasselblad_logo / Hasselblad World
-        case .vivo: return .zeiss         // Vivo -> ZEISS Natural / zeiss_nature
-        }
-    }
-}
-
 // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate (live frame processing)
 
 extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
