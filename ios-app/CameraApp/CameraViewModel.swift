@@ -229,7 +229,7 @@ final class CameraViewModel: NSObject, ObservableObject {
         )
 
         let result = withUnsafeMutablePointer(to: &frame) { framePtr in
-            camera_process_frame(framePtr, CameraStyle(rawValue: Int32(selectedStyle.rawValue)))
+            camera_process_frame(framePtr, selectedStyle.rawValue)
         }
 
         guard result.ok else {
@@ -378,7 +378,10 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
         // Copy BGRA pixels into a mutable buffer for the Rust core.
         var rgbaBytes = [UInt8](repeating: 0, count: byteCount)
         rgbaBytes.withUnsafeMutableBufferPointer { dest in
-            _ = dest.initialize(from: baseAddress!.assumingMemoryBound(to: UInt8.self), count: byteCount)
+            let src = baseAddress!.assumingMemoryBound(to: UInt8.self)
+            for i in 0..<byteCount {
+                dest[i] = src[i]
+            }
         }
 
         // BGRA -> RGBA: swap blue and red channels.
@@ -395,7 +398,7 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                 byte_count: byteCount
             )
             let result = withUnsafeMutablePointer(to: &frame) { framePtr in
-                camera_process_frame(framePtr, CameraStyle(rawValue: Int32(selectedStyle.rawValue)))
+                camera_process_frame(framePtr, selectedStyle.rawValue)
             }
             guard result.ok else { return }
 
