@@ -3,7 +3,7 @@ import AVFoundation
 
 /// Holds camera session state, style selection, capture flow, lens, flash,
 /// live frame processing, and video recording. From-scratch implementation.
-final class CameraViewModel: ObservableObject {
+final class CameraViewModel: NSObject, ObservableObject {
     @Published var isSessionRunning = false
     @Published var authorizationStatus: AVAuthorizationStatus = .notDetermined
     @Published var selectedStyle: CameraStyle = .natural
