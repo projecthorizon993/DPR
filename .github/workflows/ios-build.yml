@@ -1,14 +1,44 @@
-name: Build iOS CameraApp
+name: CI — test and build iOS CameraApp
 
 on:
   push:
-    branches: [main]
+    branches: [master, from-scratch-camera-app]
   pull_request:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build:
+  rust-test:
+    name: Rust — fmt, clippy, test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Rust fmt check
+        working-directory: rust-core
+        run: cargo fmt --all --check
+
+      - name: Rust clippy (deny warnings)
+        working-directory: rust-core
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Rust unit tests
+        working-directory: rust-core
+        run: cargo test --all-targets
+
+  rust-ios:
+    name: Rust — build for iOS (aarch64-apple-ios)
     runs-on: macos-14
     steps:
       - name: Checkout
@@ -20,27 +50,21 @@ jobs:
           toolchain: stable
           targets: aarch64-apple-ios
 
-      - name: Build Rust core for iOS
+      - name: Build Rust core for iOS (release)
         working-directory: rust-core
         run: cargo build --release --target aarch64-apple-ios
 
-      - name: Build Swift app
+  ios-app:
+    name: iOS app — xcodebuild build
+    runs-on: macos-14
+    needs: rust-ios
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Swift package for iOS
         run: |
           xcodebuild -scheme CameraApp \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             build
-
-      - name: Archive unsigned IPA
-        run: |
-          xcodebuild -scheme CameraApp \
-            -configuration Release \
-            -destination 'generic/platform=iOS' \
-            -archivePath ./build/CameraApp.xcarchive \
-            archive -allowProvisioningUpdates
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: CameraApp-unsigned-ipa
-          path: ./build/CameraApp.xcarchive
