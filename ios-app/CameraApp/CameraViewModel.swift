@@ -1053,14 +1053,11 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                                 offsetY,
                                 0.6
                             )
-                            if result.ok {
-                                // Copy blended bytes back to frameBytes.
-                                for i in 0..<byteCount {
-                                    frameBytes[i] = fbPtr[i]
-                                }
-                            } else {
+                            if !result.ok {
                                 print("Video watermark blend failed: \(result.code)")
                             }
+                            // camera_blend_watermark writes in-place via fbBase,
+                            // so frameBytes is already updated.
                         }
                     }
                 }
