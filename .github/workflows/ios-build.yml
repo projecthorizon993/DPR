@@ -55,12 +55,52 @@ jobs:
         run: cargo build --release --target aarch64-apple-ios
 
   ios-app:
-    name: iOS app — xcodebuild for iOS device SDK
+    name: iOS app — build and produce unsigned IPA
     runs-on: macos-14
     needs: rust-ios
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build for iOS device (compile check)
+      - name: Build Swift package for iOS (compile check)
         run: xcodebuild -scheme CameraApp -destination 'generic/platform=iOS' build
+
+      - name: Archive iOS app
+        run: |
+          xcodebuild -scheme CameraApp \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -archivePath ./build/CameraApp.xcarchive \
+            archive
+
+      - name: Export unsigned IPA
+        run: |
+          mkdir -p ./build/ipa
+          xcodebuild -exportArchive \
+            -archivePath ./build/CameraApp.xcarchive \
+            -exportPath ./build/ipa \
+            -exportOptionsPlist - <<'EOF'
+          {
+            "method": "development",
+            "signingStyle": "automatic",
+            "teamID": "",
+            "compileBitcode": false
+          }
+          EOF
+
+      - name: List IPA files
+        run: ls -la ./build/ipa/
+
+      - name: Upload unsigned IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CameraApp-unsigned-ipa
+          path: ./build/ipa/*.ipa
+          retention-days: 7
+
+      - name: Upload Rust core artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: camera-core-ios-staticlib
+          path: rust-core/target/aarch64-apple-ios/release/libcamera_core.a
+          retention-days: 7
