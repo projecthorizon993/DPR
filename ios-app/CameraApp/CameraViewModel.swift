@@ -47,7 +47,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     // MARK: - Pro mode manual controls
 
     /// Whether pro mode is active (manual exposure controls).
-    @Published var isProMode: Bool {
+    @Published var isProMode: Bool = false {
         didSet {
             if isProMode {
                 updateProControls()
