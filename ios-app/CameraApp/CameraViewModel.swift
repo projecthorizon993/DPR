@@ -213,6 +213,20 @@ final class CameraViewModel: NSObject, ObservableObject {
     @AppStorage("proModeEnabled") var proModeEnabled = false
     @AppStorage("rawCaptureEnabled") var rawCaptureEnabled = false
     @AppStorage("videoWatermarkEnabled") var videoWatermarkEnabled = true
+    @AppStorage("faceDetectionEnabled") var faceDetectionEnabled = false
+
+    /// Detected face bounding boxes in normalized coordinates (0..1).
+    @Published var detectedFaces: [FaceBox] = []
+
+    /// Face detection output for live face tracking.
+    private var faceOutput: AVCaptureMetadataOutput?
+
+    /// Detected face bounding box with confidence.
+    struct FaceBox: Identifiable {
+        let id = UUID()
+        let bounds: CGRect  // normalized coordinates (0..1)
+        let confidence: Float
+    }
 
     /// Whether RAW capture is available on the current device.
     var supportsRawCapture: Bool {
@@ -536,6 +550,15 @@ final class CameraViewModel: NSObject, ObservableObject {
             if self.session.canAddOutput(videoOutput) {
                 self.session.addOutput(videoOutput)
                 self.videoOutput = videoOutput
+            }
+
+            // Face detection output for live face tracking.
+            let faceOutput = AVCaptureMetadataOutput()
+            if self.session.canAddOutput(faceOutput) {
+                self.session.addOutput(faceOutput)
+                faceOutput.setMetadataObjectsDelegate(self, queue: self.processingQueue)
+                faceOutput.metadataObjectTypes = [.face]
+                self.faceOutput = faceOutput
             }
 
             // Photo output.
@@ -1405,8 +1428,38 @@ enum CameraStyleVariant: CaseIterable, Codable {
         }
     }
 
+    /// LUT file name from decompiled APK assets (nil = procedural fallback).
+    var lutFileName: String? {
+        switch self {
+        case .naturalStandard: return nil
+        case .leicaStandard: return "Assets.luts/Xiaomi/hdrLut.png"
+        case .leica100th: return "Assets.luts/Xiaomi/lut_aiscene_autumn.png"
+        case .leicaAuthentic: return "Assets.luts/Xiaomi/lut_aiscene_beach.png"
+        case .leicaM10R: return "Assets.luts/Xiaomi/lut_aiscene_building.png"
+        case .leicaM3: return "Assets.luts/Xiaomi/lut_aiscene_candlelight.png"
+        case .leicaM9: return "Assets.luts/Xiaomi/lut_aiscene_car.png"
+        case .hasselbladNatural: return "Assets.luts/Oppo/lut_all_points.png"
+        case .hasselbladWorld: return "Assets.luts/Oppo/lut_all_points.png"
+        case .hasselbladStore: return "Assets.luts/Oppo/lut_all_points.png"
+        case .zeissNatural: return "Assets.luts/Vivo/cartoon1_lut.png"
+        case .zeissCinematic: return "Assets.luts/Vivo/DVRecordLut.png"
+        case .zeissSoftFocus: return "Assets.luts/Vivo/DVScreenLut.png"
+        case .zeissStarLight: return "Assets.luts/Zeiss/zeiss_star_light_star_lut.png"
+        case .zeissBiotar: return "Assets.luts/Vivo/cartoon1_lut.png"
+        case .zeissDistagon: return "Assets.luts/Vivo/cartoon1_lut.png"
+        case .zeissPlanar: return "Assets.luts/Vivo/cartoon1_lut.png"
+        case .zeissSonnar: return "Assets.luts/Vivo/cartoon1_lut.png"
+        }
+    }
+
     /// LUT nodes per variant (17³ = 4913 nodes).
     var lutNodes: [LutNode] {
+        // Try to load from PNG file first
+        if let fileName = lutFileName,
+           let nodes = lutNodesFromPng(fileName: fileName) {
+            return nodes
+        }
+        // Fall back to procedural generation
         switch self {
         case .naturalStandard:
             return lutNodesForStyle(.natural)
@@ -1446,7 +1499,6 @@ enum CameraStyleVariant: CaseIterable, Codable {
             return lutNodesForStyleVariant(.zeissSonnar)
         }
     }
-}
 
 /// Mirrors Rust `#[repr(C)] enum CameraStyle`.
 enum CameraStyle: Int32, CaseIterable, Codable {
@@ -1819,6 +1871,38 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                     print("Failed to append pixel buffer to video writer.")
                 }
             }
+        }
+    }
+}
+
+// MARK: - AVCaptureMetadataOutputObjectsDelegate (face detection)
+
+extension CameraViewModel: AVCaptureMetadataOutputObjectsDelegate {
+    nonisolated func metadataOutput(
+        _ output: AVCaptureMetadataOutput,
+        didOutput metadataObjects: [AVMetadataObject],
+        from connection: AVCaptureConnection
+    ) {
+        guard faceDetectionEnabled else {
+            DispatchQueue.main.async {
+                self.detectedFaces = []
+            }
+            return
+        }
+
+        let faceBoxes: [FaceBox] = metadataObjects.compactMap { obj in
+            guard obj.type == .face else { return nil }
+            guard let transformed = output.transformedMetadataObject(for: obj) as? AVMetadataFaceObject else {
+                return nil
+            }
+            return FaceBox(
+                bounds: transformed.bounds,
+                confidence: 1.0  // AVFoundation doesn't provide confidence for face detection
+            )
+        }
+
+        DispatchQueue.main.async {
+            self.detectedFaces = faceBoxes
         }
     }
 }

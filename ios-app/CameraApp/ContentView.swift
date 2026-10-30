@@ -46,6 +46,13 @@ struct ContentView: View {
                 }
             }
 
+            // Face detection overlay boxes.
+            if viewModel.faceDetectionEnabled {
+                ForEach(viewModel.detectedFaces) { faceBox in
+                    FaceDetectionBox(faceBox: faceBox)
+                }
+            }
+
             // Top bar.
             VStack {
                 HStack {
@@ -365,6 +372,37 @@ struct ContentView: View {
                 viewModel.dismissReview()
             })
             .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    /// Face detection box overlay drawn around each detected face.
+    private struct FaceDetectionBox: View {
+        let faceBox: CameraViewModel.FaceBox
+
+        var body: some View {
+            Rectangle()
+                .stroke(Color.green, lineWidth: 3)
+                .frame(
+                    width: faceBox.bounds.width * UIScreen.main.bounds.width,
+                    height: faceBox.bounds.height * UIScreen.main.bounds.height
+                )
+                .position(
+                    x: faceBox.bounds.midX * UIScreen.main.bounds.width,
+                    y: faceBox.bounds.midY * UIScreen.main.bounds.height
+                )
+                .overlay(
+                    Text("FACE \(Int(faceBox.confidence * 100))%")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.green)
+                        .padding(4)
+                        .background(Color.black.opacity(0.6))
+                        .clipShape(Capsule())
+                        .offset(y: -faceBox.bounds.height * UIScreen.main.bounds.height / 2 - 10),
+                    alignment: .top
+                )
+                .animation(.easeInOut(duration: 0.1), value: faceBox.bounds)
+                .animation(.easeInOut(duration: 0.1), value: faceBox.confidence)
         }
     }
 }

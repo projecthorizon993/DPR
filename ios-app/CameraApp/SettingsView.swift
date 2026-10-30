@@ -5,6 +5,7 @@ struct SettingsView: View {
     @AppStorage("watermarkEnabled") private var watermarkEnabled = true
     @AppStorage("videoWatermarkEnabled") private var videoWatermarkEnabled = true
     @AppStorage("photoFormat") private var photoFormat = "HEIF"
+    @AppStorage("faceDetectionEnabled") private var faceDetectionEnabled = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -13,6 +14,7 @@ struct SettingsView: View {
                 Section("Capture") {
                     Toggle("Watermark on saved photos", isOn: $watermarkEnabled)
                     Toggle("Watermark on recorded videos", isOn: $videoWatermarkEnabled)
+                    Toggle("Face detection (smart tracking)", isOn: $faceDetectionEnabled)
                     Picker("Photo format", selection: $photoFormat) {
                         Text("HEIF").tag("HEIF")
                         Text("JPEG").tag("JPEG")
