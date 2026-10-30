@@ -116,7 +116,7 @@ final class CameraViewModel: NSObject, ObservableObject {
             }
             watermarkBytes[brand] = bytes
             watermarkSizes[brand] = (width, height)
-            print("Loaded watermark: \(brand.title) (\(width)x\(height))")
+            print("Loaded watermark: \(brand.variantName) (\(width)x\(height))")
         }
     }
 
@@ -841,8 +841,8 @@ final class CameraViewModel: NSObject, ObservableObject {
 
         bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        let offsetX: Int32 = Int32(width - wmWidth - brand.watermarkMargin)
-        let offsetY: Int32 = Int32(height - wmHeight - brand.watermarkMargin)
+        let offsetX: Int32 = Int32(width) - Int32(wmWidth) - brand.watermarkMargin
+        let offsetY: Int32 = Int32(height) - Int32(wmHeight) - brand.watermarkMargin
 
         var result = camera_blend_watermark(
             mutablePtr,
@@ -1130,8 +1130,8 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                     guard let wmBase = wmPtr.baseAddress else { return }
                     frameBytes.withUnsafeMutableBufferPointer { fbPtr in
                         guard let fbBase = fbPtr.baseAddress else { return }
-                        let offsetX: Int32 = Int32(width - wmWidth - brand.watermarkMargin)
-                        let offsetY: Int32 = Int32(height - wmHeight - brand.watermarkMargin)
+                        let offsetX: Int32 = Int32(width) - Int32(wmWidth) - brand.watermarkMargin
+                        let offsetY: Int32 = Int32(height) - Int32(wmHeight) - brand.watermarkMargin
                         let result = camera_blend_watermark(
                             fbBase,
                             UInt32(width),
