@@ -76,10 +76,7 @@ jobs:
       - name: Export unsigned IPA
         run: |
           mkdir -p ./build/ipa
-          xcodebuild -exportArchive \
-            -archivePath ./build/CameraApp.xcarchive \
-            -exportPath ./build/ipa \
-            -exportOptionsPlist - <<'EOF'
+          cat > ./build/export-options.plist <<'EOF'
           {
             "method": "development",
             "signingStyle": "automatic",
@@ -87,6 +84,10 @@ jobs:
             "compileBitcode": false
           }
           EOF
+          xcodebuild -exportArchive \
+            -archivePath ./build/CameraApp.xcarchive \
+            -exportPath ./build/ipa \
+            -exportOptionsPlist ./build/export-options.plist
 
       - name: List IPA files
         run: ls -la ./build/ipa/
