@@ -7,6 +7,7 @@ struct ContentView: View {
 
     @State private var showingSettings = false
     @State private var showingStylePicker = false
+    @State private var showingProControls = false
     @State private var mode: CaptureMode = .photo
 
     var body: some View {
@@ -54,6 +55,17 @@ struct ContentView: View {
                             .padding()
                     }
                     .accessibilityLabel("Settings")
+
+                    Button {
+                        showingProControls = true
+                        viewModel.isProMode = true
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 26, weight: .regular))
+                            .foregroundStyle(viewModel.isProMode ? Color(red: 1.0, green: 0.82, blue: 0.20) : Color.white)
+                            .padding()
+                    }
+                    .accessibilityLabel(viewModel.isProMode ? "Pro mode on" : "Pro mode off")
 
                     Spacer()
 
@@ -122,6 +134,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingStylePicker) {
             StylePickerView(selectedStyle: $viewModel.selectedStyle)
+        }
+        .sheet(isPresented: $showingProControls) {
+            ProControlsView()
         }
         .overlay(reviewOverlay, alignment: .center)
         .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {

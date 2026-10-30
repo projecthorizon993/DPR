@@ -19,16 +19,188 @@ final class CameraViewModel: NSObject, ObservableObject {
 
     @AppStorage("watermarkEnabled") var watermarkEnabled = true
     @AppStorage("photoFormat") var photoFormat = "HEIF"
+    @AppStorage("proModeEnabled") var proModeEnabled = false
 
-    private let session = AVCaptureSession()
-    private let sessionQueue = DispatchQueue(label: "camera.session.queue")
-    private let processingQueue = DispatchQueue(label: "camera.processing.queue")
-    private var videoOutput: AVCaptureVideoDataOutput?
-    private var photoOutput: AVCapturePhotoOutput?
-    private var movieOutput: AVCaptureMovieFileOutput?
-    private var previewLayer: AVCaptureVideoPreviewLayer?
-    private var currentDeviceInput: AVCaptureDeviceInput?
-    private var isProcessingFrame = false
+    /// Metal renderer for GPU-accelerated frame processing (bypasses Apple ISP).
+    private let metalRenderer: MetalRenderer?
+
+    /// Current device for manual controls.
+    private var activeDevice: AVCaptureDevice? {
+        currentDeviceInput?.device
+    }
+
+    override init() {
+        self.metalRenderer = MetalRenderer()
+        super.init()
+    }
+
+    // MARK: - Pro mode manual controls
+
+    /// Whether pro mode is active (manual exposure controls).
+    @Published var isProMode: Bool {
+        didSet {
+            if isProMode {
+                updateProControls()
+            }
+        }
+    }
+
+    /// Current ISO value.
+    @Published var iso: Float = 100
+    /// Supported ISO range for the active device.
+    var isoRange: ClosedRange<Float> {
+        activeDevice?.isoRange ?? 1...100
+    }
+
+    /// Normalized shutter speed (0 = fastest, 1 = slowest).
+    @Published var shutterSpeedNormalized: Float = 0.5
+    /// Human-readable shutter speed string.
+    var shutterSpeedString: String {
+        guard let device = activeDevice else { return "—" }
+        let duration = device.exposureDuration.seconds
+        if duration >= 1 {
+            return String(format: "%.1fs", duration)
+        }
+        return String(format: "1/%.0f", 1.0 / duration)
+    }
+
+    /// Current focus value (0 = close, 1 = infinity).
+    @Published var focusValue: Float = 0.5
+    /// Human-readable focus position string.
+    var focusPointString: String {
+        switch focusValue {
+        case 0: return "Close"
+        case 1: return "Infinity"
+        default: return String(format: "%.0f%%", focusValue * 100)
+        }
+    }
+
+    /// Normalized white balance temperature (0 = cool, 1 = warm).
+    @Published var whiteBalanceNormalized: Float = 0.5
+    /// Current white balance temperature in Kelvin.
+    var whiteBalanceTemperature: Float {
+        let device = activeDevice
+        let minTemp = device?.minWhiteBalanceTemperature ?? 2850
+        let maxTemp = device?.maxWhiteBalanceTemperature ?? 6500
+        return minTemp + whiteBalanceNormalized * (maxTemp - minTemp)
+    }
+
+    /// Sync UI values to the active device's hardware controls.
+    private func updateProControls() {
+        sessionQueue.async {
+            guard let device = self.activeDevice else { return }
+            do {
+                try device.lockForConfiguration()
+                // ISO
+                if device.isISOModeSupported(.continuousAutoExposure) {
+                    device.setExposureModeCustom(duration: device.exposureDuration,
+                                                 iso: self.iso,
+                                                 completionHandler: nil)
+                }
+                // White balance
+                if device.isLockingWhiteBalanceSupported,
+                   let temp = self.activeDevice?.whiteBalanceTemperatureAndGains(for: self.whiteBalanceTemperature) {
+                    device.setWhiteBalanceModeLocked(with: temp.temperature, gains: temp.gains, completionHandler: nil)
+                }
+                // Focus
+                if device.isFocusModeSupported(.locked) {
+                    device.setFocusModeLocked(lensPosition: self.focusValue, completionHandler: nil)
+                }
+                device.unlockForConfiguration()
+            } catch {
+                print("ProControls: lockForConfiguration failed: \(error)")
+            }
+        }
+    }
+
+    /// Set ISO (manual).
+    func setISO(_ value: Float) {
+        iso = value
+        if isProMode { updateProControls() }
+    }
+
+    /// Set shutter speed (normalized 0=fastest, 1=slowest).
+    func setShutterSpeed(_ normalized: Float) {
+        shutterSpeedNormalized = normalized
+        sessionQueue.async {
+            guard let device = self.activeDevice else { return }
+            do {
+                try device.lockForConfiguration()
+                let minDuration = device.activeFormat.minExposureDuration
+                let maxDuration = device.activeFormat.maxExposureDuration
+                let range = CMTimeSubtract(maxDuration, minDuration)
+                let target = CMTimeAdd(minDuration, CMTimeMultiplyFloat64(range, Float64(normalized)))
+                if device.isExposureModeSupported(.custom) {
+                    device.setExposureModeCustom(duration: target, iso: self.iso, completionHandler: nil)
+                }
+                device.unlockForConfiguration()
+            } catch {
+                print("ProControls: shutter lock failed: \(error)")
+            }
+        }
+    }
+
+    /// Set focus (normalized 0=close, 1=infinity).
+    func setFocus(_ value: Float) {
+        focusValue = value
+        if isProMode { updateProControls() }
+    }
+
+    /// Set white balance (normalized 0=cool, 1=warm).
+    func setWhiteBalance(_ value: Float) {
+        whiteBalanceNormalized = value
+        if isProMode { updateProControls() }
+    }
+
+    /// Lock exposure at current values.
+    func lockExposure() {
+        sessionQueue.async {
+            guard let device = self.activeDevice else { return }
+            do {
+                try device.lockForConfiguration()
+                if device.isExposureModeSupported(.locked) {
+                    device.setExposureModeLocked(duration: device.exposureDuration,
+                                                 iso: device.iso,
+                                                 completionHandler: nil)
+                }
+                device.unlockForConfiguration()
+            } catch { print("ProControls: exposure lock failed: \(error)") }
+        }
+    }
+
+    /// Lock focus at current position.
+    func lockFocus() {
+        sessionQueue.async {
+            guard let device = self.activeDevice else { return }
+            do {
+                try device.lockForConfiguration()
+                if device.isFocusModeSupported(.locked) {
+                    device.setFocusModeLocked(lensPosition: device.lensPosition, completionHandler: nil)
+                }
+                device.unlockForConfiguration()
+            } catch { print("ProControls: focus lock failed: \(error)") }
+        }
+    }
+
+    /// Unlock all manual controls (return to auto).
+    func unlockAll() {
+        sessionQueue.async {
+            guard let device = self.activeDevice else { return }
+            do {
+                try device.lockForConfiguration()
+                if device.isExposureModeSupported(.continuousAutoExposure) {
+                    device.exposureMode = .continuousAutoExposure
+                }
+                if device.isFocusModeSupported(.continuousAutoFocus) {
+                    device.focusMode = .continuousAutoFocus
+                }
+                if device.isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+                    device.whiteBalanceMode = .continuousAutoWhiteBalance
+                }
+                device.unlockForConfiguration()
+            } catch { print("ProControls: unlock failed: \(error)") }
+        }
+    }
 
     var previewLayerView: AVCaptureVideoPreviewLayer? { previewLayer }
 
@@ -122,12 +294,94 @@ final class CameraViewModel: NSObject, ObservableObject {
 
     func switchStyle(_ style: CameraStyle) {
         selectedStyle = style
+        updateMetalStyle()
     }
 
     func switchLens(_ lens: CameraLens) {
         guard self.lens != lens else { return }
         self.lens = lens
         startSession()
+    }
+
+    /// Update Metal renderer params to match current style.
+    private func updateMetalStyle() {
+        let matrix: [[Float]] = {
+            switch selectedStyle {
+            case .natural:
+                return [[1.00, 0.00, 0.00],
+                        [0.00, 1.00, 0.00],
+                        [0.00, 0.00, 1.00]]
+            case .xiaomi:
+                return [[1.06, 0.04, 0.00],
+                        [0.02, 1.02, 0.00],
+                        [0.00, 0.04, 0.92]]
+            case .oppo:
+                return [[0.94, 0.00, 0.00],
+                        [0.00, 1.00, 0.00],
+                        [0.05, 0.02, 1.08]]
+            case .vivo:
+                return [[1.03, 0.03, 0.00],
+                        [0.01, 1.00, 0.00],
+                        [0.00, 0.02, 1.00]]
+            }
+        }()
+        let gamma: Float = {
+            switch selectedStyle {
+            case .natural: return 1.00
+            case .xiaomi: return 1.04
+            case .oppo: return 1.02
+            case .vivo: return 1.00
+            }
+        }()
+        metalRenderer?.setMatrix(matrix)
+        metalRenderer?.setGamma(gamma)
+
+        // Upload LUT grid matching the Rust procedural LUT.
+        let nodes = buildLutNodes(style: selectedStyle)
+        metalRenderer?.updateLut(nodes: nodes)
+    }
+
+    /// Build 17^3 LUT nodes matching the Rust procedural LUT.
+    private func buildLutNodes(style: CameraStyle) -> [LutNode] {
+        let dim = 17
+        let inv = Float(dim - 1)
+        var nodes = [LutNode]()
+        nodes.reserveCapacity(dim * dim * dim)
+
+        for iz in 0..<dim {
+            for iy in 0..<dim {
+                for ix in 0..<dim {
+                    let r = Float(ix) / inv
+                    let g = Float(iy) / inv
+                    let b = Float(iz) / inv
+
+                    let (dr, dg, db): (Float, Float, Float)
+                    switch style {
+                    case .natural:
+                        (dr, dg, db) = (0, 0, 0)
+                    case .xiaomi:
+                        let warm = max(0, min(1, r - b))
+                        let mid = max(0, min(1, 1.0 - abs(r - 0.5) - abs(g - 0.5) - abs(b - 0.5)))
+                        dr = 0.06 * warm + 0.02 * mid
+                        dg = 0.01 * mid
+                        db = -0.04 * warm
+                    case .oppo:
+                        let cool = max(0, min(1, b - r))
+                        dr = -0.04 * cool
+                        dg = 0.01 * cool
+                        db = 0.06 * cool
+                    case .vivo:
+                        let skin = max(0, min(1, (r * 0.7 + g * 0.3) - b))
+                        let mid = max(0, min(1, 1.0 - abs(r - 0.5) - abs(g - 0.5)))
+                        dr = 0.05 * skin * mid
+                        dg = 0.02 * skin * mid
+                        db = 0
+                    }
+                    nodes.append(LutNode(r: dr * 255, g: dg * 255, b: db * 255, pad: 0))
+                }
+            }
+        }
+        return nodes
     }
 
     func toggleFlash() {
@@ -542,35 +796,13 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
             rgbaBytes.swapAt(i, i + 2)
         }
 
-        rgbaBytes.withUnsafeMutableBufferPointer { buf in
-            guard let ptr = buf.baseAddress else { return }
-            var frame = CameraFrame(
-                width: UInt32(width),
-                height: UInt32(height),
-                bytes: ptr,
-                byte_count: byteCount
-            )
-            let result = withUnsafeMutablePointer(to: &frame) { framePtr in
-                camera_process_frame(framePtr, selectedStyle.rawValue)
-            }
-            guard result.ok else { return }
-
-            // Convert processed RGBA8 to CGImage.
-            let colorSpace = CGColorSpaceCreateDeviceRGB()
-            guard let context = CGContext(
-                data: ptr,
-                width: width,
-                height: height,
-                bitsPerComponent: 8,
-                bytesPerRow: bytesPerRow,
-                space: colorSpace,
-                bitmapInfo: CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
-            ),
-            let cgImage = context.makeImage() else { return }
-
-            let image = UIImage(cgImage: cgImage)
+        // Bypass Apple ISP: process through Metal GPU compute shader.
+        if let metalImage = metalRenderer?.process(bgraBytes: rgbaBytes,
+                                                      width: width,
+                                                      height: height,
+                                                      bytesPerRow: bytesPerRow) {
             DispatchQueue.main.async {
-                self.processedFrame = image
+                self.processedFrame = metalImage
             }
         }
     }
