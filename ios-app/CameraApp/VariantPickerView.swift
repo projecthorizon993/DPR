@@ -47,7 +47,7 @@ struct VariantPickerView: View {
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(variant.title)
                                         .font(.body)
-                                    Text(variantMatrixDescription(for: variant))
+                                    Text(matrixString(for: variant.colorMatrix))
                                         .font(.caption2)
                                         .foregroundStyle(.secondary)
                                 }

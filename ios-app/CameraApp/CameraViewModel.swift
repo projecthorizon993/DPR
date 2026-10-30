@@ -204,6 +204,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     @Published var isRecording = false
     @Published var processedFrame: UIImage?
     @Published var lens: CameraLens = .wide
+    @Published var lensCorrection: LensCorrection = .wide
     @Published var flashMode: FlashMode = .off
     @Published var errorMessage: String?
 
@@ -587,6 +588,12 @@ final class CameraViewModel: NSObject, ObservableObject {
     func switchLens(_ lens: CameraLens) {
         guard self.lens != lens else { return }
         self.lens = lens
+        // Auto-map lens to correction profile
+        switch lens {
+        case .ultraWide: self.lensCorrection = .ultraWide
+        case .wide: self.lensCorrection = .wide
+        case .telephoto: self.lensCorrection = .telephoto
+        }
         startSession()
     }
 
@@ -1075,6 +1082,15 @@ enum CameraLens: CaseIterable, Codable {
         case .telephoto: return "camera.telephoto"
         }
     }
+
+    /// Corresponding lens correction profile for this lens type.
+    var correspondingCorrection: LensCorrection {
+        switch self {
+        case .ultraWide: return .ultraWide
+        case .wide: return .wide
+        case .telephoto: return .telephoto
+        }
+    }
 }
 
 /// Flash mode.
@@ -1522,6 +1538,156 @@ enum WatermarkBrand: CaseIterable, Codable {
     }
 }
 
+/// Lens distortion correction model per lens type, matching OEM camera profiles.
+enum LensCorrection: CaseIterable, Codable {
+    case none
+    case ultraWide    // 0.5x — strongest barrel distortion correction
+    case wide         // 1.0x — minimal correction
+    case telephoto    // 2.0x — slight pincushion correction
+
+    var title: String {
+        switch self {
+        case .none: return "None"
+        case .ultraWide: return "0.5× Ultra Wide"
+        case .wide: return "1× Wide"
+        case .telephoto: return "2× Telephoto"
+        }
+    }
+
+    /// K1 radial distortion coefficient (negative = barrel, positive = pincushion).
+    var k1: Float {
+        switch self {
+        case .none: return 0.0
+        case .ultraWide: return -0.35
+        case .wide: return -0.08
+        case .telephoto: return 0.05
+        }
+    }
+
+    /// K2 radial distortion coefficient (higher order).
+    var k2: Float {
+        switch self {
+        case .none: return 0.0
+        case .ultraWide: return 0.15
+        case .wide: return 0.02
+        case .telephoto: return -0.03
+        }
+    }
+
+    /// P1 tangential distortion.
+    var p1: Float {
+        switch self {
+        case .none: return 0.0
+        case .ultraWide: return 0.001
+        case .wide: return 0.0
+        case .telephoto: return 0.0
+        }
+    }
+
+    /// P2 tangential distortion.
+    var p2: Float {
+        switch self {
+        case .none: return 0.0
+        case .ultraWide: return -0.001
+        case .wide: return 0.0
+        case .telephoto: return 0.0
+        }
+    }
+
+    /// Focal length scale factor relative to 1x wide.
+    var focalLengthScale: Float {
+        switch self {
+        case .none: return 1.0
+        case .ultraWide: return 0.5
+        case .wide: return 1.0
+        case .telephoto: return 2.0
+        }
+    }
+
+    /// Chromatic aberration per channel (R, G, B radial scale factors).
+    var chromaticAberration: (r: Float, g: Float, b: Float) {
+        switch self {
+        case .none: return (1.0, 1.0, 1.0)
+        case .ultraWide: return (1.02, 1.00, 0.98)
+        case .wide: return (1.01, 1.00, 0.99)
+        case .telephoto: return (1.005, 1.00, 0.995)
+        }
+    }
+}
+
+/// Lens correction processing: applies radial distortion, tangential distortion,
+/// and chromatic aberration correction to RGBA8 frame data.
+func applyLensCorrection(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, correction: LensCorrection) {
+    guard correction != .none else { return }
+
+    let cx = Float(width) / 2.0
+    let cy = Float(height) / 2.0
+    let maxR = Float(max(width, height)) / 2.0
+
+    // Process each pixel (RGBA8, row-major)
+    for y in 0..<height {
+        for x in 0..<width {
+            let idx = (y * bytesPerRow + x * 4)
+
+            // Normalized coordinates centered at image center
+            let nx = (Float(x) - cx) / cx
+            let ny = (Float(y) - cy) / cy
+            let r2 = nx * nx + ny * ny
+
+            // Radial distortion correction: r_corrected = r * (1 + k1*r^2 + k2*r^4)
+            let r4 = r2 * r2
+            let radialFactor = 1.0 + correction.k1 * r2 + correction.k2 * r4
+
+            // Tangential distortion
+            let dx = 2.0 * correction.p1 * nx * ny + correction.p2 * (r2 + 2.0 * nx * nx)
+            let dy = correction.p1 * (r2 + 2.0 * ny * ny) + 2.0 * correction.p2 * nx * ny
+
+            // Corrected source coordinates
+            let sx = cx + (cx * nx * radialFactor + dx) * cx
+            let sy = cy + (cy * ny * radialFactor + dy) * cy
+
+            // Clamp to image bounds
+            let sxClamped = max(0, min(Float(width - 1), sx))
+            let syClamped = max(0, min(Float(height - 1), sy))
+
+            // Bilinear interpolation
+            let x0 = Int(floor(sxClamped))
+            let y0 = Int(floor(syClamped))
+            let x1 = min(x0 + 1, width - 1)
+            let y1 = min(y0 + 1, height - 1)
+
+            let fx = sxClamped - Float(x0)
+            let fy = syClamped - Float(y0)
+
+            // Chromatic aberration: sample each channel at slightly different radius
+            let chromaticR = correction.chromaticAberration.r
+            let chromaticG = correction.chromaticAberration.g
+            let chromaticB = correction.chromaticAberration.b
+
+            // Sample R, G, B channels with chromatic aberration offset
+            let srcIndex = { (x: Int, y: Int, channel: Int) -> UInt8 in
+                let clampedX = max(0, min(x, width - 1))
+                let clampedY = max(0, min(y, height - 1))
+                return bytes[(clampedY * bytesPerRow + clampedX * 4) + channel]
+            }
+
+            // For chromatic aberration, slightly offset the sampling position per channel
+            let chromaticScale: Float = 0.98 // Sub-pixel shift factor
+            let rx = min(max(Int(sxClamped * chromaticR), 0), width - 1)
+            let ry = min(max(Int(syClamped * chromaticR), 0), height - 1)
+            let gx = min(max(Int(sxClamped * chromaticG), 0), width - 1)
+            let gy = min(max(Int(syClamped * chromaticG), 0), height - 1)
+            let bx = min(max(Int(sxClamped * chromaticB), 0), width - 1)
+            let by = min(max(Int(syClamped * chromaticB), 0), height - 1)
+
+            bytes[idx]     = srcIndex(rx, ry, 0)     // R
+            bytes[idx + 1] = srcIndex(gx, gy, 1)     // G
+            bytes[idx + 2] = srcIndex(bx, by, 2)     // B
+            bytes[idx + 3] = bytes[idx + 3]          // A unchanged
+        }
+    }
+}
+
 // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate (live frame processing)
 
 extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
@@ -1569,6 +1735,15 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
             DispatchQueue.main.async {
                 self.processedFrame = metalImage
             }
+        }
+
+        // Apply lens correction for the current lens type.
+        if lensCorrection != .none {
+            applyLensCorrection(bytes: &rgbaBytes,
+                                width: width,
+                                height: height,
+                                bytesPerRow: bytesPerRow,
+                                correction: lensCorrection)
         }
 
         // Video watermark: write processed frame with watermark to AVAssetWriter.

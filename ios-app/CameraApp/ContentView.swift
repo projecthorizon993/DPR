@@ -106,6 +106,9 @@ struct ContentView: View {
                 // Flash toggle (above style selector).
                 HStack {
                     Spacer()
+                    lensCorrectionButton
+                        .padding(.trailing, 8)
+                        .padding(.bottom, 78)
                     flashToggleButton
                         .padding(.trailing, 24)
                         .padding(.bottom, 78)
@@ -297,6 +300,23 @@ struct ContentView: View {
             }
         }
         .accessibilityLabel("Select lens: \(viewModel.lens.title)")
+    }
+
+    /// Lens correction toggle — applies distortion correction for current lens.
+    private var lensCorrectionButton: some View {
+        Button {
+            viewModel.lensCorrection = viewModel.lensCorrection == .none ? viewModel.lens.correspondingCorrection : .none
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                    .frame(width: 46, height: 46)
+                Image(systemName: viewModel.lensCorrection == .none ? "camera.aperture" : "camera.aperture.fill")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(viewModel.lensCorrection == .none ? Color.white.opacity(0.5) : Color.white)
+            }
+        }
+        .accessibilityLabel(viewModel.lensCorrection == .none ? "Lens correction off" : "Lens correction on: \(viewModel.lensCorrection.title)")
     }
 
     private var recordingIndicator: some View {
