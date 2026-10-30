@@ -62,8 +62,5 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Generate Xcode project from SwiftPM
-        run: swift package generate-xcodebuild
-
       - name: Build for iOS device (compile check)
         run: xcodebuild -scheme CameraApp -sdk iphoneos build
