@@ -183,7 +183,7 @@ final class CameraViewModel: NSObject, ObservableObject {
             let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             let url = documents.appendingPathComponent("recording.mp4")
             try? FileManager.default.removeItem(at: url)
-            movieOutput.startRecording(to: url, delegate: self)
+            movieOutput.startRecording(to: url, recordingDelegate: self)
         }
     }
 
@@ -229,7 +229,7 @@ final class CameraViewModel: NSObject, ObservableObject {
         )
 
         let result = withUnsafeMutablePointer(to: &frame) { framePtr in
-            camera_process_frame(framePtr, CameraStyle(rawValue: selectedStyle.rawValue))
+            camera_process_frame(framePtr, CameraStyle(rawValue: Int32(selectedStyle.rawValue)))
         }
 
         guard result.ok else {
@@ -378,10 +378,7 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
         // Copy BGRA pixels into a mutable buffer for the Rust core.
         var rgbaBytes = [UInt8](repeating: 0, count: byteCount)
         rgbaBytes.withUnsafeMutableBufferPointer { dest in
-            dest.baseAddress?.initializeMemory(
-                from: baseAddress!.assumingMemoryBound(to: UInt8.self),
-                count: byteCount
-            )
+            _ = dest.initialize(from: baseAddress!.assumingMemoryBound(to: UInt8.self), count: byteCount)
         }
 
         // BGRA -> RGBA: swap blue and red channels.
@@ -398,7 +395,7 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                 byte_count: byteCount
             )
             let result = withUnsafeMutablePointer(to: &frame) { framePtr in
-                camera_process_frame(framePtr, CameraStyle(rawValue: selectedStyle.rawValue))
+                camera_process_frame(framePtr, CameraStyle(rawValue: Int32(selectedStyle.rawValue)))
             }
             guard result.ok else { return }
 
