@@ -208,6 +208,21 @@ final class CameraViewModel: NSObject, ObservableObject {
     @Published var flashMode: FlashMode = .off
     @Published var errorMessage: String?
 
+    // MARK: - Glare dim & night mode
+    @Published var glareDimEnabled = false
+    @Published var nightModeEnabled = false
+    @Published var glareDimOpacity: Float = 0.5
+
+    /// Per-variant color matrix adjustments for night mode.
+    private func nightModeMatrix(_ matrix: [[Float]]) -> [[Float]] {
+        return matrix.map { row in row.map { $0 * 0.85 } } // dim overall
+    }
+
+    /// Apply gamma boost for night mode visibility.
+    private func nightModeGamma(_ gamma: Float) -> Float {
+        return max(gamma - 0.15, 0.5) // brighter midtones
+    }
+
     @AppStorage("watermarkEnabled") var watermarkEnabled = true
     @AppStorage("photoFormat") var photoFormat = "HEIF"
     @AppStorage("proModeEnabled") var proModeEnabled = false
@@ -623,8 +638,17 @@ final class CameraViewModel: NSObject, ObservableObject {
     /// Update Metal renderer params to match current variant.
     private func updateMetalStyle() {
         let variant = currentVariant
-        metalRenderer?.setMatrix(variant.colorMatrix)
-        metalRenderer?.setGamma(variant.gamma)
+        var matrix = variant.colorMatrix
+        var gamma = variant.gamma
+
+        // Night mode adjustments.
+        if nightModeEnabled {
+            matrix = nightModeMatrix(matrix)
+            gamma = nightModeGamma(gamma)
+        }
+
+        metalRenderer?.setMatrix(matrix)
+        metalRenderer?.setGamma(gamma)
 
         // Upload per-variant 17³ LUT grid.
         metalRenderer?.updateLut(nodes: variant.lutNodes)
@@ -1499,7 +1523,7 @@ enum CameraStyleVariant: CaseIterable, Codable {
             return lutNodesForStyleVariant(.zeissSonnar)
         }
     }
-
+}
 /// Mirrors Rust `#[repr(C)] enum CameraStyle`.
 enum CameraStyle: Int32, CaseIterable, Codable {
     case natural = 0
@@ -1680,6 +1704,7 @@ func applyLensCorrection(bytes: inout [UInt8], width: Int, height: Int, bytesPer
     for y in 0..<height {
         for x in 0..<width {
             let idx = (y * bytesPerRow + x * 4)
+            guard idx + 3 < bytes.count else { continue }
 
             // Normalized coordinates centered at image center
             let nx = (Float(x) - cx) / cx
@@ -1721,7 +1746,9 @@ func applyLensCorrection(bytes: inout [UInt8], width: Int, height: Int, bytesPer
             func pixelAt(_ x: Int, _ y: Int, _ channel: Int) -> UInt8 {
                 let clampedX = max(0, min(x, width - 1))
                 let clampedY = max(0, min(y, height - 1))
-                return bytes[(clampedY * bytesPerRow + clampedX * 4) + channel]
+                let idx = (clampedY * bytesPerRow + clampedX * 4) + channel
+                guard idx >= 0, idx < bytes.count else { return 0 }
+                return bytes[idx]
             }
 
             // For chromatic aberration, slightly offset the sampling position per channel
@@ -1762,8 +1789,14 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
         let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
 
         guard baseAddress != nil, bytesPerRow > 0 else { return }
+        guard width > 0, height > 0, bytesPerRow > 0 else { return }
+        guard byteCount > 0 else { return }
 
-        let byteCount = bytesPerRow * height
+        // Safety: ensure byteCount doesn't exceed reasonable bounds
+        guard byteCount <= width * height * 4 else {
+            errorMessage = "Invalid frame dimensions: \(width)x\(height)"
+            return
+        }
 
         // Copy BGRA pixels into a mutable buffer for the Rust core.
         var rgbaBytes = [UInt8](repeating: 0, count: byteCount)
@@ -1798,7 +1831,23 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                                 correction: lensCorrection)
         }
 
-        // Video watermark: write processed frame with watermark to AVAssetWriter.
+        // Apply glare dim for night mode.
+        if glareDimEnabled {
+            applyGlareDim(bytes: &rgbaBytes,
+                          width: width,
+                          height: height,
+                          bytesPerRow: bytesPerRow,
+                          opacity: glareDimOpacity)
+        }
+
+        // Apply night mode gamma boost for low-light visibility.
+        if nightModeEnabled {
+            applyNightModeGamma(bytes: &rgbaBytes,
+                                width: width,
+                                height: height,
+                                bytesPerRow: bytesPerRow,
+                                gamma: currentVariant.gamma)
+        }
         if isRecording, videoWatermarkEnabled, let writerInput = videoAssetWriterInput,
            writerInput.isReadyForMoreMediaData, let adaptor = videoAssetWriterAdaptor {
             // Blend style-specific watermark into the processed RGBA bytes via Rust C ABI.
@@ -2017,6 +2066,78 @@ extension CaptureError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noData: return "No RAW data received from camera."
+        }
+    }
+}
+
+/// Glare dim processing: reduces brightness in bright areas during night mode.
+func applyGlareDim(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, opacity: Float) {
+    guard opacity > 0.0, width > 0, height > 0 else { return }
+
+    let centerX = Float(width) / 2.0
+    let centerY = Float(height) / 2.0
+    let maxRadius = Float(max(width, height)) / 2.0
+
+    // Process each pixel (RGBA8, row-major)
+    for y in 0..<height {
+        for x in 0..<width {
+            let idx = (y * bytesPerRow + x * 4)
+
+            guard idx + 2 < bytes.count else { continue }
+
+            let r = Float(bytes[idx])
+            let g = Float(bytes[idx + 1])
+            let b = Float(bytes[idx + 2])
+
+            // Luminance (perceived brightness)
+            let luminance = (r * 0.299 + g * 0.587 + b * 0.114) / 255.0
+
+            // Only dim bright areas (above threshold)
+            guard luminance > 0.35 else { continue }
+
+            // Distance from center for radial falloff
+            let dx = Float(x) - centerX
+            let dy = Float(y) - centerY
+            let dist = sqrt(dx * dx + dy * dy)
+            let radial = max(0.0, 1.0 - dist / maxRadius)
+
+            // Dim factor based on luminance and opacity
+            let dimFactor = luminance * opacity * radial
+
+            // Apply dimming
+            bytes[idx]     = UInt8(max(0, Float(bytes[idx]) * (1.0 - dimFactor * 0.6)))
+            bytes[idx + 1] = UInt8(max(0, Float(bytes[idx + 1]) * (1.0 - dimFactor * 0.6)))
+            bytes[idx + 2] = UInt8(max(0, Float(bytes[idx + 2]) * (1.0 - dimFactor * 0.6)))
+            // Alpha unchanged
+        }
+    }
+}
+
+/// Night mode gamma boost: brightens midtones for low-light visibility.
+func applyNightModeGamma(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, gamma: Float) {
+    guard gamma > 0.0, width > 0, height > 0 else { return }
+
+    let invGamma = 1.0 / gamma
+
+    for y in 0..<height {
+        for x in 0..<width {
+            let idx = (y * bytesPerRow + x * 4)
+
+            guard idx + 2 < bytes.count else { continue }
+
+            let r = Float(bytes[idx]) / 255.0
+            let g = Float(bytes[idx + 1]) / 255.0
+            let b = Float(bytes[idx + 2]) / 255.0
+
+            // Apply gamma: brighten midtones
+            let newR = pow(r, invGamma)
+            let newG = pow(g, invGamma)
+            let newB = pow(b, invGamma)
+
+            bytes[idx]     = UInt8(min(255, max(0, newR * 255.0)))
+            bytes[idx + 1] = UInt8(min(255, max(0, newG * 255.0)))
+            bytes[idx + 2] = UInt8(min(255, max(0, newB * 255.0)))
+            // Alpha unchanged
         }
     }
 }

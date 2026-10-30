@@ -117,6 +117,12 @@ struct ContentView: View {
                         .padding(.trailing, 8)
                         .padding(.bottom, 78)
                     flashToggleButton
+                        .padding(.trailing, 8)
+                        .padding(.bottom, 78)
+                    nightModeToggle
+                        .padding(.trailing, 8)
+                        .padding(.bottom, 78)
+                    glareDimToggle
                         .padding(.trailing, 24)
                         .padding(.bottom, 78)
                 }
@@ -324,6 +330,40 @@ struct ContentView: View {
             }
         }
         .accessibilityLabel(viewModel.lensCorrection == .none ? "Lens correction off" : "Lens correction on: \(viewModel.lensCorrection.title)")
+    }
+
+    /// Glare dim toggle — dims bright areas during night mode.
+    private var glareDimToggle: some View {
+        Button {
+            viewModel.glareDimEnabled.toggle()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                    .frame(width: 46, height: 46)
+                Image(systemName: viewModel.glareDimEnabled ? "brightness.reduce" : "brightness")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(viewModel.glareDimEnabled ? Color.white : Color.white.opacity(0.5))
+            }
+        }
+        .accessibilityLabel(viewModel.glareDimEnabled ? "Glare dim on" : "Glare dim off")
+    }
+
+    /// Night mode toggle — applies warm gamma boost for low-light viewing.
+    private var nightModeToggle: some View {
+        Button {
+            viewModel.nightModeEnabled.toggle()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                    .frame(width: 46, height: 46)
+                Image(systemName: viewModel.nightModeEnabled ? "moon.fill" : "sun.max")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(viewModel.nightModeEnabled ? Color.white : Color.white.opacity(0.5))
+            }
+        }
+        .accessibilityLabel(viewModel.nightModeEnabled ? "Night mode on" : "Night mode off")
     }
 
     private var recordingIndicator: some View {
