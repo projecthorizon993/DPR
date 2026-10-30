@@ -34,20 +34,19 @@ jobs:
           mkdir -p ../rust-libs
           cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
-      - name: Build iOS app with xcodebuild-action
-        uses: maxbttt/xcodebuild-action@v1
-        with:
-          xcode-version: latest
-          xcodeproj-path: ios-app/JustRaw.xcodeproj
-          scheme: JustRaw
-          configuration: Release
-          sdk: iphoneos
-          archive-path: ./build/JustRaw.xcarchive
-          development-team: ""
-          code-sign-style: Automatic
-          code-sign-identity: ""
-          provisioning-profile: ""
-          action: archive
+      - name: Build iOS app with xcodebuild
+        run: |
+          export DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer
+          xcrun xcodebuild -project ios-app/JustRaw.xcodeproj \
+            -scheme JustRaw \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath ./build/JustRaw.xcarchive \
+            DEVELOPMENT_TEAM="" \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_IDENTITY="" \
+            PROVISIONING_PROFILE="" \
+            archive
 
       - name: Export unsigned IPA
         run: |

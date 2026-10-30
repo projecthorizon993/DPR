@@ -7,7 +7,7 @@
 	<key>classes</key>
 	<dict/>
 	<key>objectVersion</key>
-	<string>46</string>
+	<string>52</string>
 	<key>objects</key>
 	<dict>
 		<key>PBXBuildFile</key>
