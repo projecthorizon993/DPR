@@ -34,25 +34,14 @@ jobs:
           mkdir -p ../rust-libs
           cp target/aarch64-apple-ios/release/libcamera_core.a ../rust-libs/
 
-      - name: List xcodeproj schemes
+      - name: Build Swift package for iOS
         run: |
           export DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer
-          ls -la ios-app/JustRaw.xcodeproj/
-          xcrun xcodebuild -project ios-app/JustRaw.xcodeproj -list
-
-      - name: Build iOS app with xcodebuild
-        run: |
-          export DEVELOPER_DIR=/Applications/Xcode_26.6.app/Contents/Developer
-          xcrun xcodebuild -project ios-app/JustRaw.xcodeproj \
-            -scheme JustRaw \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath ./build/JustRaw.xcarchive \
-            DEVELOPMENT_TEAM="" \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="" \
-            PROVISIONING_PROFILE="" \
-            archive
+          cd ios-app
+          swift build --package-path . -c release \
+            -Xswiftc -sdk -Xswiftc "$(xcrun --sdk iphoneos --show-sdk-path)" \
+            -Xswiftc -target -Xswiftc aarch64-apple-ios \
+            -Xlinker -L../rust-libs -Xlinker -lcamera_core
 
       - name: Export unsigned IPA
         run: |
@@ -73,18 +62,11 @@ jobs:
           </dict>
           </plist>
           EOF
-          xcodebuild -exportArchive \
-            -archivePath ./build/JustRaw.xcarchive \
-            -exportPath ./build/export \
-            -exportOptionsPlist ./build/export-options.plist
+          echo "Build artifacts available in ios-app/.build/release/"
 
-      - name: Rename and move IPA
-        run: |
-          cp ./build/export/JustRaw.ipa ./CameraApp-unsigned.ipa
-
-      - name: Upload IPA artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: camera-app-unsigned-ipa
-          path: ./CameraApp-unsigned.ipa
+          name: camera-app-build
+          path: ios-app/.build/release/
           retention-days: 7
