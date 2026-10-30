@@ -55,55 +55,30 @@ jobs:
         run: cargo build --release --target aarch64-apple-ios
 
   ios-app:
-    name: iOS app — build and produce unsigned IPA
+    name: iOS app — build for iOS device SDK
     runs-on: macos-14
     needs: rust-ios
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Swift package for iOS (compile check)
+      - name: Build Swift package for iOS
         run: xcodebuild -scheme CameraApp -destination 'generic/platform=iOS' build
 
       - name: Archive iOS app
-        run: |
-          xcodebuild -scheme CameraApp \
-            -destination 'generic/platform=iOS' \
-            -configuration Release \
-            -archivePath ./build/CameraApp.xcarchive \
-            archive
+        run: xcodebuild -scheme CameraApp -destination 'generic/platform=iOS' -configuration Release -archivePath ./build/CameraApp.xcarchive archive
 
-      - name: Export unsigned IPA
-        run: |
-          mkdir -p ./build/ipa
-          cat > ./build/ExportOptions.plist <<'PLISTEOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>signingStyle</key>
-              <string>automatic</string>
-          </dict>
-          </plist>
-          PLISTEOF
-          xcodebuild -exportArchive \
-            -archivePath ./build/CameraApp.xcarchive \
-            -exportPath ./build/ipa \
-            -exportOptionsPlist ./build/ExportOptions.plist
+      - name: List build artifacts
+        run: ls -la ./build/CameraApp.xcarchive/Products/Applications/
 
-      - name: List IPA files
-        run: ls -la ./build/ipa/
-
-      - name: Upload unsigned IPA artifact
+      - name: Upload unsigned app bundle
         uses: actions/upload-artifact@v4
         with:
-          name: CameraApp-unsigned-ipa
-          path: ./build/ipa/*.ipa
+          name: CameraApp-unsigned-app
+          path: ./build/CameraApp.xcarchive/Products/Applications/CameraApp.app
           retention-days: 7
 
-      - name: Upload Rust core artifact
+      - name: Upload Rust core staticlib
         uses: actions/upload-artifact@v4
         with:
           name: camera-core-ios-staticlib
