@@ -13,16 +13,16 @@ on:
         default: 'true'
         type: boolean
       run-ios:
-        description: 'Build iOS app (macOS, requires Xcode)'
+        description: 'Build iOS app with xcodebuild (macOS)'
         required: false
-        default: 'true'
+        default: 'false'
         type: boolean
 
 jobs:
   rust-test:
     name: Rust — fmt, clippy, test
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-rust != 'false'
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-rust == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
   ios-build:
     name: iOS app — build with xcodebuild (macOS)
     runs-on: macos-14
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run-ios == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
