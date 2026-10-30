@@ -59,7 +59,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     @Published var iso: Float = 100
     /// Supported ISO range for the active device.
     var isoRange: ClosedRange<Float> {
-        activeDevice?.activeFormat.isoRange ?? 1...100
+        activeDevice?.isoRange ?? 1...100
     }
 
     /// Normalized shutter speed (0 = fastest, 1 = slowest).
@@ -90,8 +90,8 @@ final class CameraViewModel: NSObject, ObservableObject {
     /// Current white balance temperature in Kelvin.
     var whiteBalanceTemperature: Float {
         let device = activeDevice
-        let minTemp = device?.activeFormat.minWhiteBalanceTemperature ?? 2850
-        let maxTemp = device?.activeFormat.maxWhiteBalanceTemperature ?? 6500
+        let minTemp = device?.minWhiteBalanceTemperature ?? 2850
+        let maxTemp = device?.maxWhiteBalanceTemperature ?? 6500
         return minTemp + whiteBalanceNormalized * (maxTemp - minTemp)
     }
 
@@ -128,7 +128,7 @@ final class CameraViewModel: NSObject, ObservableObject {
         let t = clamp((temperature - 2850) / (6500 - 2850), 0, 1)
         let gainR = 1.0 + t * 0.5   // warmer = more red
         let gainB = 1.5 - t * 0.5   // cooler = more blue
-        return AVCaptureWhiteBalanceGains(gainR: gainR, gainG: 1.0, gainB: gainB)
+        return AVCaptureDevice.WhiteBalanceGains(redGain: gainR, greenGain: 1.0, blueGain: gainB)
     }
 
     /// Clamp value to [0, 1].
@@ -152,7 +152,7 @@ final class CameraViewModel: NSObject, ObservableObject {
                 let minDuration = device.activeFormat.minExposureDuration
                 let maxDuration = device.activeFormat.maxExposureDuration
                 let range = CMTimeSubtract(maxDuration, minDuration)
-                let target = CMTimeAdd(minDuration, CMTimeMultiplyByFloat64(range, Float64(normalized)))
+                let target = CMTimeAdd(minDuration, CMTimeMultiplyByFloat64(range, multiplier: Float64(normalized)))
                 device.setExposureModeCustom(duration: target, iso: self.iso, completionHandler: nil)
                 device.unlockForConfiguration()
             } catch {
