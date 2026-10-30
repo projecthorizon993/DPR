@@ -1099,7 +1099,7 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
             var frameBytes = rgbaBytes
             let brand = selectedStyle.watermarkBrand
             if brand != .none,
-               let wmBytes = watermarkBytes[brand],
+               var wmBytes = watermarkBytes[brand],
                let wmSize = watermarkSizes[brand] {
                 let wmWidth = wmSize.width
                 let wmHeight = wmSize.height
