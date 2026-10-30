@@ -5,135 +5,136 @@
 	<key>archiveVersion</key>
 	<string>1</string>
 	<key>classes</key>
-	<dict>
-	</dict>
+	<dict/>
 	<key>objectVersion</key>
-	<string>52</string>
+	<string>46</string>
 	<key>objects</key>
 	<dict>
-		<key>BuildPhase placeholders</key>
-		<dict>
-		</dict>
 		<key>PBXBuildFile</key>
 		<dict>
-			<key>1A</key>
+			<key>1</key>
+			<dict>
+				<key>fileRef</key>
+				<string>2</string>
+			</dict>
+			<key>3</key>
+			<dict>
+				<key>fileRef</key>
+				<string>4</string>
+			</dict>
+			<key>5</key>
+			<dict>
+				<key>fileRef</key>
+				<string>6</string>
+			</dict>
+			<key>7</key>
+			<dict>
+				<key>fileRef</key>
+				<string>8</string>
+			</dict>
+			<key>9</key>
+			<dict>
+				<key>fileRef</key>
+				<string>A</string>
+			</dict>
+			<key>B</key>
+			<dict>
+				<key>fileRef</key>
+				<string>C</string>
+			</dict>
+			<key>D</key>
+			<dict>
+				<key>fileRef</key>
+				<string>E</string>
+			</dict>
+			<key>F</key>
+			<dict>
+				<key>fileRef</key>
+				<string>10</string>
+			</dict>
+			<key>11</key>
+			<dict>
+				<key>fileRef</key>
+				<string>12</string>
+			</dict>
+			<key>13</key>
+			<dict>
+				<key>fileRef</key>
+				<string>14</string>
+			</dict>
+			<key>15</key>
+			<dict>
+				<key>fileRef</key>
+				<string>16</string>
+			</dict>
+			<key>17</key>
+			<dict>
+				<key>fileRef</key>
+				<string>18</string>
+			</dict>
+			<key>19</key>
+			<dict>
+				<key>fileRef</key>
+				<string>1A</string>
+			</dict>
+			<key>1B</key>
+			<dict>
+				<key>fileRef</key>
+				<string>1C</string>
+			</dict>
+			<key>1D</key>
+			<dict>
+				<key>fileRef</key>
+				<string>1E</string>
+			</dict>
+			<key>1F</key>
+			<dict>
+				<key>fileRef</key>
+				<string>20</string>
+			</dict>
+			<key>21</key>
+			<dict>
+				<key>fileRef</key>
+				<string>22</string>
+			</dict>
+			<key>23</key>
+			<dict>
+				<key>fileRef</key>
+				<string>24</string>
+			</dict>
+			<key>25</key>
+			<dict>
+				<key>fileRef</key>
+				<string>26</string>
+			</dict>
+			<key>27</key>
+			<dict>
+				<key>fileRef</key>
+				<string>28</string>
+			</dict>
+			<key>29</key>
 			<dict>
 				<key>fileRef</key>
 				<string>2A</string>
-				<key>settings</key>
-				<dict>
-				</dict>
 			</dict>
-			<key>2A</key>
+			<key>2B</key>
 			<dict>
 				<key>fileRef</key>
-				<string>3A</string>
-				<key>settings</key>
-				<dict>
-				</dict>
+				<string>2C</string>
 			</dict>
-			<key>3A</key>
-			<dict>
-				<key>fileRef</key>
-				<string>4A</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-			<key>4A</key>
-			<dict>
-				<key>fileRef</key>
-				<string>5A</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-			<key>5A</key>
-			<dict>
-				<key>fileRef</key>
-				<string>6A</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-			<key>6A</key>
-			<dict>
-				<key>fileRef</key>
-				<string>7A</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-			<key>7A</key>
-			<dict>
-				<key>fileRef</key>
-				<string>8A</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-			<key>8A</key>
-			<dict>
-				<key>fileRef</key>
-				<string>9A</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-			<key>9A</key>
-			<dict>
-				<key>fileRef</key>
-				<string>AA</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-			<key>AA</key>
-			<dict>
-				<key>fileRef</key>
-				<string>BA</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-			<key>BA</key>
-			<dict>
-				<key>fileRef</key>
-				<string>CA</string>
-				<key>settings</key>
-				<dict>
-				</dict>
-			</dict>
-		</dict>
-		<key>PBXContainerItemProxy</key>
-		<dict>
-			<key>1A</key>
-			<dict>
-				<key>containerPortal</key>
-				<string>82051E3E24AD7A4300C99491</string>
-				<key>proxyType</key>
-				<integer>1</integer>
-				<key>remoteGlobalIDString</key>
-				<string>82051E4D24AD7A4300C99491</string>
-				<key>remoteInfo</key>
-				<string>CameraApp</string>
-			</dict>
-		</dict>
-		<key>PBXCopyFilesBuildPhase</key>
-		<dict>
 		</dict>
 		<key>PBXFileReference</key>
 		<dict>
-			<key>2A</key>
+			<key>2</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>sourcecode.swift</string>
 				<key>path</key>
-				<string>CameraApp.swift</string>
+				<string>JustRawApp.swift</string>
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>3A</key>
+			<key>4</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>sourcecode.swift</string>
@@ -142,7 +143,7 @@
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>4A</key>
+			<key>6</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>sourcecode.swift</string>
@@ -151,7 +152,7 @@
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>5A</key>
+			<key>8</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>sourcecode.swift</string>
@@ -160,7 +161,70 @@
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>6A</key>
+			<key>A</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>CameraService.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>C</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>Logger.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>E</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>ErrorHandler.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>10</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>AppStateManager.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>12</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>PermissionManager.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>14</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>RAWProcessorService.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>16</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>PhotoSaveService.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>18</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>sourcecode.swift</string>
@@ -169,16 +233,7 @@
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>7A</key>
-			<dict>
-				<key>lastKnownFileType</key>
-				<string>sourcecode.swift</string>
-				<key>path</key>
-				<string>CameraViewModel.swift</string>
-				<key>sourceTree</key>
-				<string>&lt;group&gt;</string>
-			</dict>
-			<key>8A</key>
+			<key>1A</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>sourcecode.swift</string>
@@ -187,7 +242,7 @@
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>9A</key>
+			<key>1C</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>sourcecode.swift</string>
@@ -196,25 +251,7 @@
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>AA</key>
-			<dict>
-				<key>lastKnownFileType</key>
-				<string>sourcecode.swift</string>
-				<key>path</key>
-				<string>ReviewView.swift</string>
-				<key>sourceTree</key>
-				<string>&lt;group&gt;</string>
-			</dict>
-			<key>BA</key>
-			<dict>
-				<key>lastKnownFileType</key>
-				<string>sourcecode.swift</string>
-				<key>path</key>
-				<string>PhotoLibrary.swift</string>
-				<key>sourceTree</key>
-				<string>&lt;group&gt;</string>
-			</dict>
-			<key>CA</key>
+			<key>1E</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>sourcecode.swift</string>
@@ -223,16 +260,52 @@
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>82051E3F24AD7A4300C99491</key>
+			<key>20</key>
 			<dict>
 				<key>lastKnownFileType</key>
-				<string>folder</string>
+				<string>sourcecode.swift</string>
 				<key>path</key>
-				<string>CameraApp</string>
+				<string>ReviewView.swift</string>
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>82051E4E24AD7A4300C99491</key>
+			<key>22</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>LaunchJustRawIntent.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>24</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>ColorHex.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>26</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>sourcecode.swift</string>
+				<key>path</key>
+				<string>PerformanceMonitor.swift</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>28</key>
+			<dict>
+				<key>lastKnownFileType</key>
+				<string>archive.ar</string>
+				<key>path</key>
+				<string>../rust-libs/libcamera_core.a</string>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>2A</key>
 			<dict>
 				<key>lastKnownFileType</key>
 				<string>text.plist.xml</string>
@@ -241,210 +314,217 @@
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
-			<key>82051E6124AD7A4300C99491</key>
+			<key>2C</key>
 			<dict>
 				<key>lastKnownFileType</key>
-				<string>application</string>
+				<string>folder.assetcatalog</string>
 				<key>path</key>
-				<string>CameraApp.app</string>
+				<string>Assets.xcassets</string>
 				<key>sourceTree</key>
-				<string>BUILT_PRODUCTS_DIR</string>
+				<string>&lt;group&gt;</string>
 			</dict>
 		</dict>
 		<key>PBXFrameworksBuildPhase</key>
 		<dict>
-			<key>1A</key>
+			<key>2D</key>
 			<dict>
 				<key>buildActionMask</key>
 				<integer>2147483647</integer>
 				<key>files</key>
 				<array>
+					<string>27</string>
 				</array>
 				<key>runOnlyForDeploymentPostprocessing</key>
-				<integer>0</integer>
+				<false/>
 			</dict>
 		</dict>
 		<key>PBXGroup</key>
 		<dict>
-			<key>1A</key>
+			<key>2E</key>
 			<dict>
 				<key>children</key>
 				<array>
-					<string>82051E3F24AD7A4300C99491</string>
-					<string>82051E4E24AD7A4300C99491</string>
-				</array>
-				<key>sourceTree</key>
-				<string>&lt;group&gt;</string>
-			</dict>
-			<key>82051E3E24AD7A4300C99491</key>
-			<dict>
-				<key>children</key>
-				<array>
+					<string>2</string>
+					<string>4</string>
+					<string>6</string>
+					<string>8</string>
+					<string>A</string>
+					<string>C</string>
+					<string>E</string>
+					<string>10</string>
+					<string>12</string>
+					<string>14</string>
+					<string>16</string>
+					<string>18</string>
 					<string>1A</string>
+					<string>1C</string>
+					<string>1E</string>
+					<string>20</string>
+					<string>22</string>
+					<string>24</string>
+					<string>26</string>
+					<string>28</string>
+					<string>2A</string>
+					<string>2C</string>
 				</array>
 				<key>sourceTree</key>
 				<string>&lt;group&gt;</string>
 			</dict>
+			<key>2F</key>
+			<dict>
+				<key>children</key>
+				<array>
+					<string>30</string>
+				</array>
+				<key>sourceTree</key>
+				<string>&lt;group&gt;</string>
+			</dict>
+			<key>30</key>
+			<dict>
+				<key>explicitFileType</key>
+				<string>wrapper.application</string>
+				<key>includeInIndex</key>
+				<false/>
+				<key>path</key>
+				<string>JustRaw.app</string>
+				<key>sourceTree</key>
+				<string>BUILT_PRODUCTS_DIR</string>
+			</dict>
+		</dict>
+		<key>PBXHeadersBuildPhase</key>
+		<dict>
 		</dict>
 		<key>PBXNativeTarget</key>
 		<dict>
-			<key>82051E4D24AD7A4300C99491</key>
+			<key>31</key>
 			<dict>
 				<key>buildConfigurationList</key>
-				<string>82051E5B24AD7A4300C99491</string>
+				<string>34</string>
 				<key>buildPhases</key>
 				<array>
-					<string>1A</string>
+					<string>32</string>
+					<string>2D</string>
+					<string>33</string>
 				</array>
 				<key>buildRules</key>
-				<array>
-				</array>
+				<array/>
 				<key>dependencies</key>
-				<array>
-				</array>
+				<array/>
 				<key>name</key>
-				<string>CameraApp</string>
+				<string>JustRaw</string>
 				<key>productName</key>
-				<string>CameraApp</string>
+				<string>JustRaw</string>
 				<key>productReference</key>
-				<string>82051E6124AD7A4300C99491</string>
+				<string>30</string>
 				<key>productType</key>
 				<string>com.apple.product-type.application</string>
 			</dict>
 		</dict>
 		<key>PBXProject</key>
 		<dict>
-			<key>82051E3E24AD7A4300C99491</key>
+			<key>35</key>
 			<dict>
+				<key>attributes</key>
+				<dict>
+					<key>LastSwiftUpdateCheck</key>
+					<string>1600</string>
+					<key>LastUpgradeCheck</key>
+					<string>1600</string>
+					<key>TargetAttributes</key>
+					<dict>
+						<key>31</key>
+						<dict>
+							<key>CreatedOnToolsVersion</key>
+							<string>16.0</string>
+						</dict>
+					</dict>
+				</dict>
 				<key>buildConfigurationList</key>
-				<string>82051E4224AD7A4300C99491</string>
-				<key>compatibilityVersion</key>
-				<string>Xcode 13.0</string>
+				<string>36</string>
 				<key>developmentRegion</key>
 				<string>en</string>
 				<key>hasScannedForEncodings</key>
-				<integer>1</integer>
+				<false/>
 				<key>knownRegions</key>
 				<array>
 					<string>en</string>
+					<string>Base</string>
 				</array>
 				<key>mainGroup</key>
-				<string>82051E3E24AD7A4300C99491</string>
+				<string>2E</string>
 				<key>productRefGroup</key>
-				<string>1A</string>
+				<string>2F</string>
 				<key>projectDirPath</key>
 				<string></string>
 				<key>projectRoot</key>
 				<string></string>
 				<key>targets</key>
 				<array>
-					<string>82051E4D24AD7A4300C99491</string>
+					<string>31</string>
 				</array>
 			</dict>
 		</dict>
-		<key>PBXSourcesBuildPhase</key>
+		<key>PBXResourcesBuildPhase</key>
 		<dict>
-			<key>1A</key>
+			<key>33</key>
 			<dict>
 				<key>buildActionMask</key>
 				<integer>2147483647</integer>
 				<key>files</key>
 				<array>
-					<string>1A</string>
-					<string>2A</string>
-					<string>3A</string>
-					<string>4A</string>
-					<string>5A</string>
-					<string>6A</string>
-					<string>7A</string>
-					<string>8A</string>
-					<string>9A</string>
-					<string>AA</string>
-					<string>BA</string>
-					<string>CA</string>
+					<string>29</string>
+					<string>2B</string>
 				</array>
 				<key>runOnlyForDeploymentPostprocessing</key>
-				<integer>0</integer>
+				<false/>
 			</dict>
 		</dict>
-		<key>PBXTargetDependency</key>
+		<key>PBXSourcesBuildPhase</key>
 		<dict>
-		</dict>
-		<key>PBXVariantGroup</key>
-		<dict>
+			<key>32</key>
+			<dict>
+				<key>buildActionMask</key>
+				<integer>2147483647</integer>
+				<key>files</key>
+				<array>
+					<string>1</string>
+					<string>3</string>
+					<string>5</string>
+					<string>7</string>
+					<string>9</string>
+					<string>B</string>
+					<string>D</string>
+					<string>F</string>
+					<string>11</string>
+					<string>13</string>
+					<string>15</string>
+					<string>17</string>
+					<string>19</string>
+					<string>1B</string>
+					<string>1D</string>
+					<string>1F</string>
+					<string>21</string>
+					<string>23</string>
+					<string>25</string>
+				</array>
+				<key>runOnlyForDeploymentPostprocessing</key>
+				<false/>
+			</dict>
 		</dict>
 		<key>XCBuildConfiguration</key>
 		<dict>
-			<key>82051E4324AD7A4300C99491</key>
+			<key>37</key>
 			<dict>
 				<key>buildSettings</key>
 				<dict>
 					<key>ALWAYS_SEARCH_USER_PATHS</key>
 					<string>NO</string>
-					<key>CLANG_ANALYZER_NONNULL</key>
-					<string>YES</string>
-					<key>CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_CXX_LANGUAGE_STANDARD</key>
-					<string>gnu++17</string>
-					<key>CLANG_ENABLE_MODULES</key>
-					<string>YES</string>
 					<key>CLANG_ENABLE_OBJC_ARC</key>
 					<string>YES</string>
 					<key>CLANG_ENABLE_OBJC_WEAK</key>
 					<string>YES</string>
-					<key>CLANG_WARN_BLOCK_CAPTURE_AUTORELEASESCOPE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_BOOL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_COMMA</key>
-					<string>YES</string>
-					<key>CLANG_WARN_CONSTANT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DOCUMENTATION_COMMENTS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_EMPTY_BODY</key>
-					<string>YES</string>
-					<key>CLANG_WARN_ENUM_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_INFINITE_RECURSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_INT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_NON_LITERAL_NULL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_LITERAL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER</key>
-					<string>YES</string>
-					<key>CLANG_WARN_RANGE_LOOP_ANALYSIS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_STRICT_PROTOTYPES</key>
-					<string>YES</string>
-					<key>CLANG_WARN_SUSPICIOUS_MOVE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_UNREACHABLE_CODE</key>
-					<string>YES</string>
-					<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
-					<string>YES</string>
-					<key>COPY_PHASE_STRIP</key>
-					<string>NO</string>
-					<key>DEBUG_INFORMATION_FORMAT</key>
-					<string>dwarf</string>
-					<key>ENABLE_STRICT_OBJC_MSGSEND</key>
-					<string>YES</string>
-					<key>ENABLE_TESTABILITY</key>
-					<string>YES</string>
 					<key>GCC_C_LANGUAGE_STANDARD</key>
-					<string>gnu11</string>
+					<string>gnu17</string>
 					<key>GCC_DYNAMIC_NO_PIC</key>
 					<string>NO</string>
 					<key>GCC_NO_COMMON_BLOCKS</key>
@@ -459,398 +539,161 @@
 					<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
 					<string>YES</string>
 					<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
-					<string>YES</string>
+					<string>yes_error</string>
 					<key>GCC_WARN_UNDECLARED_SELECTOR</key>
 					<string>YES</string>
 					<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
-					<string>YES</string>
+					<string>yes_aggressive</string>
 					<key>GCC_WARN_UNUSED_FUNCTION</key>
 					<string>YES</string>
 					<key>GCC_WARN_UNUSED_VARIABLE</key>
 					<string>YES</string>
 					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-					<string>15.0</string>
+					<string>18.0</string>
+					<key>LIBRARY_SEARCH_PATHS</key>
+					<array>
+						<string>$(PROJECT_DIR)/../rust-libs</string>
+					</array>
 					<key>MTL_ENABLE_DEBUG_INFO</key>
+					<string>include-source</string>
+					<key>MTL_FAST_MATH</key>
 					<string>YES</string>
 					<key>ONLY_ACTIVE_ARCH</key>
 					<string>YES</string>
 					<key>SDKROOT</key>
 					<string>iphoneos</string>
 					<key>SWIFT_ACTIVE_COMPILATION_CONDITIONS</key>
-					<string>DEBUG</string>
+					<string>DEBUG $(inherited)</string>
 					<key>SWIFT_OPTIMIZATION_LEVEL</key>
 					<string>-Onone</string>
 					<key>SWIFT_VERSION</key>
 					<string>5.0</string>
-					<key>TARGETED_DEVICE_FAMILY</key>
-					<string>1</string>
 				</dict>
 				<key>name</key>
 				<string>Debug</string>
 			</dict>
-			<key>82051E4424AD7A4300C99491</key>
+			<key>38</key>
 			<dict>
 				<key>buildSettings</key>
 				<dict>
 					<key>ALWAYS_SEARCH_USER_PATHS</key>
 					<string>NO</string>
-					<key>CLANG_ANALYZER_NONNULL</key>
-					<string>YES</string>
-					<key>CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_CXX_LANGUAGE_STANDARD</key>
-					<string>gnu++17</string>
-					<key>CLANG_ENABLE_MODULES</key>
-					<string>YES</string>
 					<key>CLANG_ENABLE_OBJC_ARC</key>
 					<string>YES</string>
 					<key>CLANG_ENABLE_OBJC_WEAK</key>
-					<string>YES</string>
-					<key>CLANG_WARN_BLOCK_CAPTURE_AUTORELEASESCOPE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_BOOL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_COMMA</key>
-					<string>YES</string>
-					<key>CLANG_WARN_CONSTANT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DOCUMENTATION_COMMENTS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_EMPTY_BODY</key>
-					<string>YES</string>
-					<key>CLANG_WARN_ENUM_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_INFINITE_RECURSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_INT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_NON_LITERAL_NULL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_LITERAL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER</key>
-					<string>YES</string>
-					<key>CLANG_WARN_RANGE_LOOP_ANALYSIS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_STRICT_PROTOTYPES</key>
-					<string>YES</string>
-					<key>CLANG_WARN_SUSPICIOUS_MOVE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_UNREACHABLE_CODE</key>
-					<string>YES</string>
-					<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
-					<string>YES</string>
-					<key>CODE_SIGN_IDENTITY</key>
-					<string>Apple Distribution</string>
-					<key>COPY_PHASE_STRIP</key>
-					<string>NO</string>
-					<key>DEBUG_INFORMATION_FORMAT</key>
-					<string>dwarf-with-symbol</string>
-					<key>ENABLE_NS_ASSERTIONS</key>
-					<string>NO</string>
-					<key>GCC_OPTIMIZATION_LEVEL</key>
-					<string>s</string>
-					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-					<string>15.0</string>
-					<key>MTL_ENABLE_DEBUG_INFO</key>
-					<string>NO</string>
-					<key>SDKROOT</key>
-					<string>iphoneos</string>
-					<key>SWIFT_OPTIMIZATION_LEVEL</key>
-					<string>-O</string>
-					<key>SWIFT_VERSION</key>
-					<string>5.0</string>
-					<key>TARGETED_DEVICE_FAMILY</key>
-					<string>1</string>
-					<key>VALIDATE_PRODUCT</key>
-					<string>YES</string>
-				</dict>
-				<key>name</key>
-				<string>Release</string>
-			</dict>
-			<key>82051E4524AD7A4300C99491</key>
-			<dict>
-				<key>buildSettings</key>
-				<dict>
-					<key>ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES</key>
-					<string>YES</string>
-					<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
-					<string>AppIcon</string>
-					<key>ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME</key>
-					<string>LaunchImage</string>
-					<key>CLANG_ENABLE_MODULES</key>
-					<string>YES</string>
-					<key>CLANG_ENABLE_OBJC_ARC</key>
-					<string>YES</string>
-					<key>CODE_SIGN_STYLE</key>
-					<string>Manual</string>
-					<key>DEVELOPMENT_TEAM</key>
-					<string></string>
-					<key>INFOPLIST_FILE</key>
-					<string>CameraApp/Info.plist</string>
-					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-					<string>15.0</string>
-					<key>LD_RUNPATH_SEARCH_PATHS</key>
-					<string>$(inherited) @executable_path/Frameworks</string>
-					<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-					<string>com.cameraapp.profile</string>
-					<key>PRODUCT_NAME</key>
-					<string>$(TARGET_NAME)</string>
-					<key>SWIFT_EMIT_LOC_STRINGS</key>
-					<string>NO</string>
-					<key>SWIFT_VERSION</key>
-					<string>5.0</string>
-					<key>TARGETED_DEVICE_FAMILY</key>
-					<string>1</string>
-				</dict>
-				<key>name</key>
-				<string>Debug</string>
-			</dict>
-			<key>82051E4624AD7A4300C99491</key>
-			<dict>
-				<key>buildSettings</key>
-				<dict>
-					<key>ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES</key>
-					<string>YES</string>
-					<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
-					<string>AppIcon</string>
-					<key>ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME</key>
-					<string>LaunchImage</string>
-					<key>CLANG_ENABLE_MODULES</key>
-					<string>YES</string>
-					<key>CLANG_ENABLE_OBJC_ARC</key>
-					<string>YES</string>
-					<key>CODE_SIGN_STYLE</key>
-					<string>Manual</string>
-					<key>DEVELOPMENT_TEAM</key>
-					<string></string>
-					<key>INFOPLIST_FILE</key>
-					<string>CameraApp/Info.plist</string>
-					<key>IPHONEOS_DEPLOYMENT_TIMEOUT</key>
-					<string>300</string>
-					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-					<string>15.0</string>
-					<key>LD_RUNPATH_SEARCH_PATHS</key>
-					<string>$(inherited) @executable_path/Frameworks</string>
-					<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-					<string>com.cameraapp.profile</string>
-					<key>PRODUCT_NAME</key>
-					<string>$(TARGET_NAME)</string>
-					<key>SWIFT_EMIT_LOC_STRINGS</key>
-					<string>NO</string>
-					<key>SWIFT_VERSION</key>
-					<string>5.0</string>
-					<key>TARGETED_DEVICE_FAMILY</key>
-					<string>1</string>
-				</dict>
-				<key>name</key>
-				<string>Release</string>
-			</dict>
-			<key>82051E4724AD7A4300C99491</key>
-			<dict>
-				<key>buildSettings</key>
-				<dict>
-					<key>ALWAYS_SEARCH_USER_PATHS</key>
-					<string>NO</string>
-					<key>CLANG_ANALYZER_NONNULL</key>
-					<string>YES</string>
-					<key>CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_CXX_LANGUAGE_STANDARD</key>
-					<string>gnu++17</string>
-					<key>CLANG_ENABLE_MODULES</key>
-					<string>YES</string>
-					<key>CLANG_ENABLE_OBJC_ARC</key>
-					<string>YES</string>
-					<key>CLANG_ENABLE_OBJC_WEAK</key>
-					<string>YES</string>
-					<key>CLANG_WARN_BLOCK_CAPTURE_AUTORELEASESCOPE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_BOOL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_COMMA</key>
-					<string>YES</string>
-					<key>CLANG_WARN_CONSTANT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DOCUMENTATION_COMMENTS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_EMPTY_BODY</key>
-					<string>YES</string>
-					<key>CLANG_WARN_ENUM_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_INFINITE_RECURSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_INT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_NON_LITERAL_NULL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_LITERAL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER</key>
-					<string>YES</string>
-					<key>CLANG_WARN_RANGE_LOOP_ANALYSIS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_STRICT_PROTOTYPES</key>
-					<string>YES</string>
-					<key>CLANG_WARN_SUSPICIOUS_MOVE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_UNREACHABLE_CODE</key>
-					<string>YES</string>
-					<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
-					<string>YES</string>
-					<key>COPY_PHASE_STRIP</key>
-					<string>NO</string>
-					<key>DEBUG_INFORMATION_FORMAT</key>
-					<string>dwarf</string>
-					<key>ENABLE_STRICT_OBJC_MSGSEND</key>
-					<string>YES</string>
-					<key>ENABLE_TESTABILITY</key>
 					<string>YES</string>
 					<key>GCC_C_LANGUAGE_STANDARD</key>
-					<string>gnu11</string>
-					<key>GCC_DYNAMIC_NO_PIC</key>
-					<string>NO</string>
+					<string>gnu17</string>
 					<key>GCC_NO_COMMON_BLOCKS</key>
 					<string>YES</string>
-					<key>GCC_OPTIMIZATION_LEVEL</key>
-					<string>0</string>
-					<key>GCC_PREPROCESSOR_DEFINITIONS</key>
-					<array>
-						<string>DEBUG=1</string>
-						<string>$(inherited)</string>
-					</array>
 					<key>GCC_WARN_64_TO_32_BIT_CONVERSION</key>
 					<string>YES</string>
 					<key>GCC_WARN_ABOUT_RETURN_TYPE</key>
-					<string>YES</string>
+					<string>yes_error</string>
 					<key>GCC_WARN_UNDECLARED_SELECTOR</key>
 					<string>YES</string>
 					<key>GCC_WARN_UNINITIALIZED_AUTOS</key>
-					<string>YES</string>
+					<string>yes_aggressive</string>
 					<key>GCC_WARN_UNUSED_FUNCTION</key>
 					<string>YES</string>
 					<key>GCC_WARN_UNUSED_VARIABLE</key>
 					<string>YES</string>
 					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-					<string>15.0</string>
+					<string>18.0</string>
+					<key>LIBRARY_SEARCH_PATHS</key>
+					<array>
+						<string>$(PROJECT_DIR)/../rust-libs</string>
+					</array>
 					<key>MTL_ENABLE_DEBUG_INFO</key>
+					<string>NO</string>
+					<key>MTL_FAST_MATH</key>
 					<string>YES</string>
 					<key>ONLY_ACTIVE_ARCH</key>
 					<string>YES</string>
 					<key>SDKROOT</key>
 					<string>iphoneos</string>
-					<key>SWIFT_ACTIVE_COMPILATION_CONDITIONS</key>
-					<string>DEBUG</string>
-					<key>SWIFT_OPTIMIZATION_LEVEL</key>
-					<string>-Onone</string>
-					<key>SWIFT_VERSION</key>
-					<string>5.0</string>
-					<key>TARGETED_DEVICE_FAMILY</key>
-					<string>1</string>
-				</dict>
-				<key>name</key>
-				<string>Debug</string>
-			</dict>
-			<key>82051E4824AD7A4300C99491</key>
-			<dict>
-				<key>buildSettings</key>
-				<dict>
-					<key>ALWAYS_SEARCH_USER_PATHS</key>
-					<string>NO</string>
-					<key>CLANG_ANALYZER_NONNULL</key>
-					<string>YES</string>
-					<key>CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_CXX_LANGUAGE_STANDARD</key>
-					<string>gnu++17</string>
-					<key>CLANG_ENABLE_MODULES</key>
-					<string>YES</string>
-					<key>CLANG_ENABLE_OBJC_ARC</key>
-					<string>YES</string>
-					<key>CLANG_ENABLE_OBJC_WEAK</key>
-					<string>YES</string>
-					<key>CLANG_WARN_BLOCK_CAPTURE_AUTORELEASESCOPE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_BOOL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_COMMA</key>
-					<string>YES</string>
-					<key>CLANG_WARN_CONSTANT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DIRECT_OBJC_ISA_USAGE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_DOCUMENTATION_COMMENTS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_EMPTY_BODY</key>
-					<string>YES</string>
-					<key>CLANG_WARN_ENUM_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_INFINITE_RECURSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_INT_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_NON_LITERAL_NULL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_LITERAL_CONVERSION</key>
-					<string>YES</string>
-					<key>CLANG_WARN_OBJC_ROOT_CLASS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER</key>
-					<string>YES</string>
-					<key>CLANG_WARN_RANGE_LOOP_ANALYSIS</key>
-					<string>YES</string>
-					<key>CLANG_WARN_STRICT_PROTOTYPES</key>
-					<string>YES</string>
-					<key>CLANG_WARN_SUSPICIOUS_MOVE</key>
-					<string>YES</string>
-					<key>CLANG_WARN_UNREACHABLE_CODE</key>
-					<string>YES</string>
-					<key>CLANG_WARN__DUPLICATE_METHOD_MATCH</key>
-					<string>YES</string>
-					<key>CODE_SIGN_IDENTITY</key>
-					<string>Apple Distribution</string>
-					<key>COPY_PHASE_STRIP</key>
-					<string>NO</string>
-					<key>DEBUG_INFORMATION_FORMAT</key>
-					<string>dwarf-with-symbol</string>
-					<key>ENABLE_NS_ASSERTIONS</key>
-					<string>NO</string>
-					<key>GCC_OPTIMIZATION_LEVEL</key>
-					<string>s</string>
-					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-					<string>15.0</string>
-					<key>MTL_ENABLE_DEBUG_INFO</key>
-					<string>NO</string>
-					<key>SDKROOT</key>
-					<string>iphoneos</string>
+					<key>SWIFT_COMPILATION_MODE</key>
+					<string>wholemodule</string>
 					<key>SWIFT_OPTIMIZATION_LEVEL</key>
 					<string>-O</string>
 					<key>SWIFT_VERSION</key>
 					<string>5.0</string>
-					<key>TARGETED_DEVICE_FAMILY</key>
-					<string>1</string>
 					<key>VALIDATE_PRODUCT</key>
 					<string>YES</string>
+				</dict>
+				<key>name</key>
+				<string>Release</string>
+			</dict>
+			<key>39</key>
+			<dict>
+				<key>buildSettings</key>
+				<dict>
+					<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
+					<string>AppIcon</string>
+					<key>CODE_SIGN_STYLE</key>
+					<string>Automatic</string>
+					<key>CURRENT_PROJECT_VERSION</key>
+					<integer>1</integer>
+					<key>DEVELOPMENT_TEAM</key>
+					<string></string>
+					<key>GENERATE_INFOPLIST_FILE</key>
+					<string>NO</string>
+					<key>INFOPLIST_FILE</key>
+					<string>Info.plist</string>
+					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+					<string>18.0</string>
+					<key>LD_RUNPATH_SEARCH_PATHS</key>
+					<array>
+						<string>$(inherited)</string>
+						<string>@executable_path/Frameworks</string>
+					</array>
+					<key>MARKETING_VERSION</key>
+					<string>1.0</string>
+					<key>PRODUCT_BUNDLE_IDENTIFIER</key>
+					<string>raw.JustRaw</string>
+					<key>PRODUCT_NAME</key>
+					<string>$(TARGET_NAME)</string>
+					<key>SWIFT_VERSION</key>
+					<string>5.0</string>
+					<key>TARGETED_DEVICE_FAMILY</key>
+					<string>1,2</string>
+				</dict>
+				<key>name</key>
+				<string>Debug</string>
+			</dict>
+			<key>3A</key>
+			<dict>
+				<key>buildSettings</key>
+				<dict>
+					<key>ASSETCATALOG_COMPILER_APPICON_NAME</key>
+					<string>AppIcon</string>
+					<key>CODE_SIGN_STYLE</key>
+					<string>Automatic</string>
+					<key>CURRENT_PROJECT_VERSION</key>
+					<integer>1</integer>
+					<key>DEVELOPMENT_TEAM</key>
+					<string></string>
+					<key>GENERATE_INFOPLIST_FILE</key>
+					<string>NO</string>
+					<key>INFOPLIST_FILE</key>
+					<string>Info.plist</string>
+					<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+					<string>18.0</string>
+					<key>LD_RUNPATH_SEARCH_PATHS</key>
+					<array>
+						<string>$(inherited)</string>
+						<string>@executable_path/Frameworks</string>
+					</array>
+					<key>MARKETING_VERSION</key>
+					<string>1.0</string>
+					<key>PRODUCT_BUNDLE_IDENTIFIER</key>
+					<string>raw.JustRaw</string>
+					<key>PRODUCT_NAME</key>
+					<string>$(TARGET_NAME)</string>
+					<key>SWIFT_VERSION</key>
+					<string>5.0</string>
+					<key>TARGETED_DEVICE_FAMILY</key>
+					<string>1,2</string>
 				</dict>
 				<key>name</key>
 				<string>Release</string>
@@ -858,33 +701,33 @@
 		</dict>
 		<key>XCConfigurationList</key>
 		<dict>
-			<key>82051E4224AD7A4300C99491</key>
+			<key>36</key>
 			<dict>
 				<key>buildConfigurations</key>
 				<array>
-					<string>82051E4324AD7A4300C99491</string>
-					<string>82051E4424AD7A4300C99491</string>
+					<string>37</string>
+					<string>38</string>
 				</array>
 				<key>defaultConfigurationIsVisible</key>
-				<integer>0</integer>
+				<false/>
 				<key>defaultConfigurationName</key>
 				<string>Release</string>
 			</dict>
-			<key>82051E5B24AD7A4300C99491</key>
+			<key>34</key>
 			<dict>
 				<key>buildConfigurations</key>
 				<array>
-					<string>82051E4724AD7A4300C99491</string>
-					<string>82051E4824AD7A4300C99491</string>
+					<string>39</string>
+					<string>3A</string>
 				</array>
 				<key>defaultConfigurationIsVisible</key>
-				<integer>0</integer>
+				<false/>
 				<key>defaultConfigurationName</key>
 				<string>Release</string>
 			</dict>
 		</dict>
 	</dict>
 	<key>rootObject</key>
-	<string>82051E3E24AD7A4300C99491</string>
+	<string>35</string>
 </dict>
 </plist>
