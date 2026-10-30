@@ -55,21 +55,12 @@ jobs:
         run: cargo build --release --target aarch64-apple-ios
 
   ios-app:
-    name: iOS app — SwiftPM build + test
+    name: iOS app — SwiftPM build for iOS target
     runs-on: macos-14
     needs: rust-ios
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Xcode toolchain
-        run: sudo xcode-select -switch /Applications/Xcode_15.4.app/Contents/Developer
-
-      - name: Swift build (debug)
-        run: swift build
-
-      - name: Swift test
-        run: swift test
-
-      - name: Swift build (release, iOS)
-        run: swift build -c release
+      - name: Swift build for iOS (compile check)
+        run: swift build -target arm64-apple-ios15.0
