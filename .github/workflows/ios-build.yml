@@ -55,12 +55,15 @@ jobs:
         run: cargo build --release --target aarch64-apple-ios
 
   ios-app:
-    name: iOS app — SwiftPM build for iOS target
+    name: iOS app — xcodebuild for iOS device SDK
     runs-on: macos-14
     needs: rust-ios
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Swift build for iOS (compile check)
-        run: swift build -target arm64-apple-ios15.0
+      - name: Generate Xcode project from SwiftPM
+        run: swift package generate-xcodebuild
+
+      - name: Build for iOS device (compile check)
+        run: xcodebuild -scheme CameraApp -sdk iphoneos build
