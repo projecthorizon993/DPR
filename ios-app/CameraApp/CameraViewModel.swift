@@ -841,8 +841,8 @@ final class CameraViewModel: NSObject, ObservableObject {
 
         bitmapContext.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
 
-        let offsetX: Int32 = Int32(width - wmWidth - 20) // 20px margin from right
-        let offsetY: Int32 = Int32(height - wmHeight - 20) // 20px margin from bottom
+        let offsetX: Int32 = Int32(width - wmWidth - brand.watermarkMargin)
+        let offsetY: Int32 = Int32(height - wmHeight - brand.watermarkMargin)
 
         var result = camera_blend_watermark(
             mutablePtr,
@@ -853,7 +853,7 @@ final class CameraViewModel: NSObject, ObservableObject {
             UInt32(wmHeight),
             offsetX,
             offsetY,
-            0.6 // opacity
+            brand.watermarkOpacity
         )
 
         guard result.ok else {
@@ -963,20 +963,12 @@ struct CameraResult {
 }
 
 /// Watermark brand applied per style, matching per-OEM naming from decompiled APKs.
+/// Each brand has its own color config and watermark variant from the APK resources.
 enum WatermarkBrand: CaseIterable, Codable {
     case none
     case zeiss        // Vivo — "ZEISS Natural", "zeiss_nature", "zeiss_vivo_logo"
     case leica        // Xiaomi — "LEICA", "watermark_leica_100th", "authentic"
     case hasselblad   // Oppo — "hasselblad_logo", "Hasselblad World"
-
-    var title: String {
-        switch self {
-        case .none: return "None"
-        case .zeiss: return "ZEISS"
-        case .leica: return "LEICA"
-        case .hasselblad: return "HASSELBLAD"
-        }
-    }
 
     /// Brand-specific watermark variant name from the decompiled OEM APKs.
     var variantName: String {
@@ -988,11 +980,12 @@ enum WatermarkBrand: CaseIterable, Codable {
         }
     }
 
+    /// Brand-specific accent color from decompiled APK color resources.
     var accentColor: Color {
         switch self {
         case .none: return Color.clear
-        case .zeiss: return Color.white
-        case .leica: return Color(red: 0.9, green: 0.1, blue: 0.1)   // leica_red (0x7f0601c0)
+        case .zeiss: return Color.white                       // Zeiss white
+        case .leica: return Color(red: 0.9, green: 0.1, blue: 0.1)  // leica_red (0x7f0601c0)
         case .hasselblad: return Color(red: 0.2, green: 0.4, blue: 0.2) // Hasselblad green
         }
     }
@@ -1004,6 +997,71 @@ enum WatermarkBrand: CaseIterable, Codable {
         case .zeiss: return "ZEISS"
         case .leica: return "LEICA"
         case .hasselblad: return "HASSELBLAD"
+        }
+    }
+
+    /// Watermark opacity per brand variant (from APK watermark config).
+    var watermarkOpacity: Float {
+        switch self {
+        case .none: return 0.0
+        case .zeiss: return 0.65      // Zeiss vertical/horizontal logo opacity
+        case .leica: return 0.75      // Leica 100th limited watermark opacity
+        case .hasselblad: return 0.55 // Hasselblad World watermark opacity
+        }
+    }
+
+    /// Watermark margin from frame edge per brand variant.
+    var watermarkMargin: Int32 {
+        switch self {
+        case .none: return 0
+        case .zeiss: return 20
+        case .leica: return 15
+        case .hasselblad: return 25
+        }
+    }
+}
+
+/// Mirrors Rust `#[repr(C)] enum CameraStyle`.
+enum CameraStyle: Int32, CaseIterable, Codable {
+    case natural = 0
+    case xiaomi = 1
+    case oppo = 2
+    case vivo = 3
+
+    var title: String {
+        switch self {
+        case .natural: return "Natural"
+        case .xiaomi: return "Xiaomi"
+        case .oppo: return "Oppo"
+        case .vivo: return "Vivo"
+        }
+    }
+
+    var initials: String {
+        switch self {
+        case .natural: return "N"
+        case .xiaomi: return "X"
+        case .oppo: return "O"
+        case .vivo: return "V"
+        }
+    }
+
+    var accentColor: Color {
+        switch self {
+        case .natural: return Color.white
+        case .xiaomi: return Color(red: 1.0, green: 0.82, blue: 0.20)
+        case .oppo: return Color(red: 0.3, green: 0.6, blue: 1.0)
+        case .vivo: return Color(red: 1.0, green: 0.7, blue: 0.3)
+        }
+    }
+
+    /// The watermark brand associated with this style, matched to OEM naming.
+    var watermarkBrand: WatermarkBrand {
+        switch self {
+        case .natural: return .none
+        case .xiaomi: return .leica       // Xiaomi -> LEICA / watermark_leica_100th
+        case .oppo: return .hasselblad    // Oppo -> hasselblad_logo / Hasselblad World
+        case .vivo: return .zeiss         // Vivo -> ZEISS Natural / zeiss_nature
         }
     }
 }
@@ -1117,8 +1175,8 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                     guard let wmBase = wmPtr.baseAddress else { return }
                     frameBytes.withUnsafeMutableBufferPointer { fbPtr in
                         guard let fbBase = fbPtr.baseAddress else { return }
-                        let offsetX: Int32 = Int32(width - wmWidth - 20)
-                        let offsetY: Int32 = Int32(height - wmHeight - 20)
+                        let offsetX: Int32 = Int32(width - wmWidth - brand.watermarkMargin)
+                        let offsetY: Int32 = Int32(height - wmHeight - brand.watermarkMargin)
                         let result = camera_blend_watermark(
                             fbBase,
                             UInt32(width),
@@ -1128,7 +1186,7 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                             UInt32(wmHeight),
                             offsetX,
                             offsetY,
-                            0.6
+                            brand.watermarkOpacity
                         )
                         if !result.ok {
                             print("Video watermark blend failed: \(result.code)")
