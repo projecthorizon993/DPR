@@ -88,6 +88,27 @@ jobs:
           echo "=== DerivedData structure ==="
           find ./build/DerivedData -type d 2>/dev/null | head -30
 
+      - name: Try xcodebuild exportArchive (development)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
+        run: |
+          cat > ./build/exportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath ./build/CameraApp.xcarchive \
+            -exportPath ./build/ipa_export \
+            -exportOptionsPlist ./build/exportOptions.plist 2>&1 || echo "exportArchive failed (expected without Apple Developer account)"
+          ls -la ./build/ipa_export/ 2>/dev/null || echo "no export directory"
+
       - name: Build unsigned IPA from build products (no signing required)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
