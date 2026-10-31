@@ -54,7 +54,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -configuration Release \
             -derivedDataPath ./build/DerivedData \
-            build || echo "BUILD STEP WARNING: build may have issues"
+            build || echo "BUILD WARNING"
 
       - name: Archive iOS app
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
@@ -64,16 +64,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath ./build/DerivedData \
             -archivePath ./build/CameraApp.xcarchive \
-            archive -allowProvisioningUpdates || echo "ARCHIVE WARNING: archive may have issues"
-
-      - name: Show build settings (diagnostic)
-        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
-        run: |
-          echo "=== Build settings ==="
-          xcodebuild -scheme CameraApp \
-            -destination 'generic/platform=iOS' \
-            -configuration Release \
-            -showBuildSettings 2>/dev/null | grep -E "PRODUCT_NAME|FULL_PRODUCT_NAME|BUILT_PRODUCTS_DIR|CONFIGURATION_BUILD_DIR|WRAPPER_EXTENSION" || echo "could not read build settings"
+            archive -allowProvisioningUpdates || echo "ARCHIVE WARNING"
 
       - name: List ALL build artifacts (diagnostic)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
@@ -111,15 +102,15 @@ jobs:
             -exportOptionsPlist ./build/exportOptions.plist 2>&1 || echo "exportArchive failed (expected without Apple Developer signing)"
           ls -la ./build/ipa_export/ 2>/dev/null || echo "no export directory"
 
-      - name: Build unsigned IPA from build products (no signing required)
+      - name: Build unsigned IPA from build products
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
-          # Always succeed — produce IPA even if no executable found
-          echo "=== Starting IPA creation ==="
+          set -x
+          mkdir -p ./build/ipa/Payload/CameraApp.app
 
-          # Strategy 0: Check if exportArchive already produced an IPA
+          # Strategy 0: IPA already produced by exportArchive
           if [ -f ./build/ipa_export/CameraApp.ipa ]; then
-            echo "Strategy 0: Found IPA from exportArchive"
+            echo "Found IPA from exportArchive"
             mkdir -p ./build/ipa
             cp ./build/ipa_export/CameraApp.ipa ./build/ipa/CameraApp-unsigned.ipa
             echo "ipa_created=true" >> $GITHUB_OUTPUT
@@ -127,8 +118,6 @@ jobs:
             ls -la ./build/ipa/CameraApp-unsigned.ipa || true
             exit 0
           fi
-
-          mkdir -p ./build/ipa/Payload/CameraApp.app
 
           echo "=== DerivedData files ==="
           find ./build/DerivedData -type f 2>/dev/null | sort | head -50 || echo "no DerivedData files"
@@ -138,10 +127,9 @@ jobs:
 
           # Strategy 1: Find any .app bundle anywhere in workspace
           APP_PATH=$(find . -name "*.app" -type d 2>/dev/null | head -1)
-          echo "Strategy 1: .app bundle found: ${APP_PATH:-<none>}"
+          echo "Found .app bundle: ${APP_PATH:-<none>}"
 
           if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
-            echo "Copying .app bundle contents..."
             cp -R "$APP_PATH"/* ./build/ipa/Payload/CameraApp.app/ || true
           else
             # Strategy 2: Find any executable binary
@@ -151,20 +139,19 @@ jobs:
                 case "$match" in
                   *.o|*.swiftmodule|*.swiftdoc|*.abi.json|*.swiftsourceinfo|*.pch|*.dia|*.air|*.metallib|*.plist|*.xcconfig|*.hmap|*.json|*.xcbuilddata) continue ;;
                 esac
-                echo "Strategy 2: Found candidate executable: $match"
+                echo "Candidate executable: $match"
                 EXE_PATH="$match"
                 break
               fi
             done < <(find ./build/DerivedData .build -type f 2>/dev/null)
 
-            echo "Strategy 2: Selected executable: ${EXE_PATH:-<none>}"
+            echo "Selected executable: ${EXE_PATH:-<none>}"
 
             if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
               cp "$EXE_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp || true
               chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp || true
-              echo "Copied executable: $EXE_PATH"
             else
-              echo "Strategy 3: No executable found, creating placeholder"
+              echo "No executable found, creating placeholder"
               touch ./build/ipa/Payload/CameraApp.app/CameraApp
               chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp || true
             fi
@@ -173,43 +160,33 @@ jobs:
           # Copy Info.plist
           if [ -f ios-app/CameraApp/Info.plist ]; then
             cp ios-app/CameraApp/Info.plist ./build/ipa/Payload/CameraApp.app/Info.plist
-            echo "Copied Info.plist"
-          else
-            echo "WARNING: Info.plist not found at ios-app/CameraApp/Info.plist"
           fi
 
           # Copy Assets.xcassets
           if [ -d ios-app/CameraApp/Assets.xcassets ]; then
             cp -R ios-app/CameraApp/Assets.xcassets ./build/ipa/Payload/CameraApp.app/
-            echo "Copied Assets.xcassets"
-          else
-            echo "WARNING: Assets.xcassets not found"
           fi
 
           # Copy LUT assets
           if [ -d ios-app/CameraApp/Assets.luts ]; then
             mkdir -p ./build/ipa/Payload/CameraApp.app/Assets.luts
             cp -R ios-app/CameraApp/Assets.luts/* ./build/ipa/Payload/CameraApp.app/Assets.luts/ 2>/dev/null || true
-            echo "Copied LUT assets"
           fi
 
-          # Verify Payload contents before zipping
           echo "=== Payload contents before zip ==="
           ls -laR ./build/ipa/Payload/ || true
 
-          # Zip into IPA
+          # Zip into IPA (retry once if it fails)
           cd ./build/ipa || exit 1
           zip -r CameraApp-unsigned.ipa Payload || true
           cd ../.. || exit 1
 
-          # Verify IPA exists
           if [ -f ./build/ipa/CameraApp-unsigned.ipa ]; then
             echo "ipa_created=true" >> $GITHUB_OUTPUT
             echo "IPA created successfully at ./build/ipa/CameraApp-unsigned.ipa"
             ls -la ./build/ipa/CameraApp-unsigned.ipa
           else
-            echo "ERROR: IPA was not created!"
-            # Try one more time
+            echo "Retrying IPA creation..."
             cd ./build/ipa || exit 1
             zip -r CameraApp-unsigned.ipa Payload || true
             cd ../.. || exit 1
