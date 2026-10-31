@@ -207,6 +207,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     @Published var lensCorrection: LensCorrection = .wide
     @Published var flashMode: FlashMode = .off
     @Published var errorMessage: String?
+    @Published var zoomLevel: CameraZoomLevel = .oneX
 
     // MARK: - Glare dim & night mode
     @Published var glareDimEnabled = false
@@ -261,6 +262,9 @@ final class CameraViewModel: NSObject, ObservableObject {
 
     /// Night mode enhancement processor
     private let nightEnhancer = NightEnhancer()
+
+    /// Zoom manager with AI upscaling
+    private let zoomManager = ZoomManager()
 
     /// Loaded watermark assets per brand (RGBA8 bytes).
     private var watermarkBytes: [WatermarkBrand: [UInt8]] = [:]
@@ -2095,6 +2099,59 @@ final class ZoomManager: ObservableObject {
         return enhancer.upscale(bytes: cropBytes, width: cropW, height: cropH, bytesPerRow: cropW * 4, factor: factor)
     }
 }
+/// Lens distortion correction model per lens type
+struct LensCorrection: CaseIterable, Codable {
+    case none, wide, ultrawide, telephoto
+    
+    var title: String {
+        switch self {
+        case .none: return "None"
+        case .wide: return "1×"
+        case .ultraWide: return "0.5×"
+        case .telephoto: return "2×"
+        }
+    }
+    
+    var k1: Float {
+        switch self {
+        case .none: return 0.0
+        case .wide: return -0.05
+        case .ultraWide: return -0.10
+        case .telephoto: return 0.03
+        }
+    }
+    
+    var k2: Float {
+        switch self {
+        case .none: return 0.0
+        case .wide: return 0.0
+        case .ultraWide: return 0.05
+        case .telephoto: return -0.02
+        }
+    }
+    
+    var p1: Float {
+        switch self {
+        case .none: return 0.0
+        case .wide: return 0.0
+        case .ultraWide: return 0.001
+        case .telephoto: return 0.0
+        }
+    }
+    
+    var p2: Float {
+        switch self {
+        case .none: return 0.0
+        case .wide: return 0.0
+        case .ultraWide: return -0.001
+        case .telephoto: return 0.0
+        }
+    }
+}
+
+/// Lens correction processing: applies radial distortion, tangential distortion,
+/// and chromatic aberration correction to RGBA8 frame data.
+func applyLensCorrection(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, correction: LensCorrection) {
     guard correction != .none else { return }
 
     let cx = Float(width) / 2.0
@@ -2250,6 +2307,14 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
                                 bytesPerRow: bytesPerRow,
                                 gamma: currentVariant.gamma)
         }
+        
+        // Apply AI zoom enhancement
+        rgbaBytes = zoomManager.process(bytes: &rgbaBytes,
+                                        width: width,
+                                        height: height,
+                                        bytesPerRow: bytesPerRow)
+
+        // Video watermark: write processed frame with watermark to AVAssetWriter.
         if isRecording, videoWatermarkEnabled, let writerInput = videoAssetWriterInput,
            writerInput.isReadyForMoreMediaData, let adaptor = videoAssetWriterAdaptor {
             // Blend style-specific watermark into the processed RGBA bytes via Rust C ABI.
