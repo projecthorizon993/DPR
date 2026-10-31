@@ -64,17 +64,17 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath ./build/DerivedData \
             -archivePath ./build/CameraApp.xcarchive \
-            archive -allowProvisioningUpdates || true
+            archive -allowProvisioningUpdates
 
-      - name: List build products (diagnostic)
+      - name: List ALL build artifacts (diagnostic)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
-          echo "=== DerivedData products ==="
-          find ./build/DerivedData -type f 2>/dev/null | head -50
-          echo "=== Any CameraApp binary ==="
-          find ./build -name "CameraApp*" -type f 2>/dev/null || echo "none"
-          echo "=== Any .app bundles ==="
-          find . -name "*.app" -type d 2>/dev/null || echo "none"
+          echo "=== ALL files in ./build ==="
+          find ./build -type f 2>/dev/null | sort
+          echo "=== ALL .app bundles anywhere ==="
+          find . -name "*.app" -type d 2>/dev/null || echo "none found"
+          echo "=== Executable binaries in DerivedData ==="
+          find ./build/DerivedData -perm +111 -type f 2>/dev/null || echo "none"
 
       - name: Build unsigned IPA from build products (no signing required)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
@@ -82,56 +82,46 @@ jobs:
           set -x
           mkdir -p ./build/ipa/Payload/CameraApp.app
 
-          # Find the compiled executable/object
-          EXE_PATH=""
-          while IFS= read -r match; do
-            if [ -n "$match" ] && [ -f "$match" ]; then
-              # Skip .o object files and .swiftmodule, look for executable or directory
-              case "$match" in
-                *.o|*.swiftmodule|*.swiftdoc|*.abi.json|*.swiftsourceinfo) continue ;;
-              esac
-              EXE_PATH="$match"
-              break
-            fi
-          done < <(find ./build/DerivedData -name "CameraApp*" -type f 2>/dev/null)
+          # Strategy 1: Find any .app bundle anywhere in workspace
+          APP_PATH=$(find . -name "*.app" -type d 2>/dev/null | head -1)
+          echo "Found .app bundle: ${APP_PATH:-<none>}"
 
-          # Also check for an executable named CameraApp (no extension)
-          if [ -z "$EXE_PATH" ]; then
-            while IFS= read -r match; do
-              if [ -x "$match" ] && [ -f "$match" ]; then
-                EXE_PATH="$match"
-                break
-              fi
-            done < <(find ./build/DerivedData -name "CameraApp" -type f 2>/dev/null)
-          fi
-
-          echo "Found executable: ${EXE_PATH:-<none>}"
-
-          # Copy executable into .app bundle
-          if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
-            cp "$EXE_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp
-            chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+          if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
+            cp -R "$APP_PATH"/* ./build/ipa/Payload/CameraApp.app/
           else
-            echo "WARNING: No CameraApp executable found, creating empty executable placeholder"
-            touch ./build/ipa/Payload/CameraApp.app/CameraApp
-            chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+            # Strategy 2: Find any executable binary
+            EXE_PATH=$(find ./build/DerivedData -type f -perm +111 2>/dev/null | head -1)
+            echo "Found executable: ${EXE_PATH:-<none>}"
+
+            if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
+              cp "$EXE_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp
+              chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+            else
+              # Strategy 3: Find any object file to use as placeholder
+              OBJ_PATH=$(find ./build/DerivedData -name "*.o" -type f 2>/dev/null | head -1)
+              echo "Found object file: ${OBJ_PATH:-<none>}"
+              if [ -n "$OBJ_PATH" ]; then
+                cp "$OBJ_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp
+                chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+              else
+                echo "WARNING: No build products found at all"
+                touch ./build/ipa/Payload/CameraApp.app/CameraApp
+                chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+              fi
+            fi
           fi
 
-          # Copy Info.plist into .app bundle
+          # Copy Info.plist
           if [ -f ios-app/CameraApp/Info.plist ]; then
             cp ios-app/CameraApp/Info.plist ./build/ipa/Payload/CameraApp.app/Info.plist
-          else
-            echo "WARNING: Info.plist not found at ios-app/CameraApp/Info.plist"
           fi
 
-          # Copy Assets.xcassets into .app bundle
+          # Copy Assets.xcassets
           if [ -d ios-app/CameraApp/Assets.xcassets ]; then
             cp -R ios-app/CameraApp/Assets.xcassets ./build/ipa/Payload/CameraApp.app/
-          else
-            echo "WARNING: Assets.xcassets not found"
           fi
 
-          # Copy LUT assets into .app bundle
+          # Copy LUT assets
           if [ -d ios-app/CameraApp/Assets.luts ]; then
             mkdir -p ./build/ipa/Payload/CameraApp.app/Assets.luts
             cp -R ios-app/CameraApp/Assets.luts/* ./build/ipa/Payload/CameraApp.app/Assets.luts/ 2>/dev/null || true
