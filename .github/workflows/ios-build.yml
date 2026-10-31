@@ -127,51 +127,53 @@ jobs:
 
           mkdir -p ./build/ipa/Payload/CameraApp.app
 
-          # Strategy 1: Find any .app bundle anywhere in workspace
-          APP_PATH=$(find . -name "*.app" -type d 2>/dev/null | head -1)
-          echo "Found .app bundle: ${APP_PATH:-<none>}"
+          echo "=== Exhaustive file listing in DerivedData ==="
+          find ./build/DerivedData -type f 2>/dev/null | sort
 
-          if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
-            cp -R "$APP_PATH"/* ./build/ipa/Payload/CameraApp.app/
-          else
-            # Strategy 2: Find any executable binary
-            EXE_PATH=""
-            while IFS= read -r match; do
-              if [ -n "$match" ] && [ -f "$match" ]; then
-                case "$match" in
-                  *.o|*.swiftmodule|*.swiftdoc|*.abi.json|*.swiftsourceinfo|*.pch) continue ;;
-                esac
-                EXE_PATH="$match"
-                break
-              fi
-            done < <(find ./build/DerivedData -type f 2>/dev/null)
-
-            echo "Found executable: ${EXE_PATH:-<none>}"
-
-            if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
-              cp "$EXE_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp
-              chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
-            else
-              echo "WARNING: No CameraApp executable found, creating empty placeholder"
-              touch ./build/ipa/Payload/CameraApp.app/CameraApp
-              chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+          echo "=== Executable candidates (any file not .o/.swiftmodule/etc) ==="
+          EXE_PATH=""
+          while IFS= read -r match; do
+            if [ -n "$match" ] && [ -f "$match" ]; then
+              case "$match" in
+                *.o|*.swiftmodule|*.swiftdoc|*.abi.json|*.swiftsourceinfo|*.pch|*.dia|*.air|*.metallib|*.plist|*.xcconfig|*.hmap|*.json|*.xcbuilddata) continue ;;
+              esac
+              echo "Candidate: $match"
+              EXE_PATH="$match"
+              break
             fi
+          done < <(find ./build/DerivedData -type f 2>/dev/null)
+
+          echo "Selected executable: ${EXE_PATH:-<none>}"
+
+          if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
+            cp "$EXE_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp
+            chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+            echo "Copied executable: $EXE_PATH -> CameraApp.app/CameraApp"
+          else
+            echo "WARNING: No executable found, creating placeholder"
+            touch ./build/ipa/Payload/CameraApp.app/CameraApp
+            chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
           fi
 
           # Copy Info.plist
           if [ -f ios-app/CameraApp/Info.plist ]; then
             cp ios-app/CameraApp/Info.plist ./build/ipa/Payload/CameraApp.app/Info.plist
+            echo "Copied Info.plist"
+          else
+            echo "WARNING: Info.plist not found"
           fi
 
           # Copy Assets.xcassets
           if [ -d ios-app/CameraApp/Assets.xcassets ]; then
             cp -R ios-app/CameraApp/Assets.xcassets ./build/ipa/Payload/CameraApp.app/
+            echo "Copied Assets.xcassets"
           fi
 
           # Copy LUT assets
           if [ -d ios-app/CameraApp/Assets.luts ]; then
             mkdir -p ./build/ipa/Payload/CameraApp.app/Assets.luts
             cp -R ios-app/CameraApp/Assets.luts/* ./build/ipa/Payload/CameraApp.app/Assets.luts/ 2>/dev/null || true
+            echo "Copied LUT assets"
           fi
 
           # Zip into IPA
