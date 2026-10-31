@@ -141,13 +141,20 @@ struct ContentView: View {
                 }
                 .padding(.bottom, 24)
 
-                // Lens selector (bottom left).
+                            // Lens selector (bottom left).
                 HStack {
                     lensSelectorButton
                         .padding(.leading, 24)
                         .padding(.bottom, 24)
-
                     Spacer()
+                }
+                
+                // Zoom selector (bottom right).
+                HStack {
+                    Spacer()
+                    zoomSelectorButton
+                        .padding(.trailing, 24)
+                        .padding(.bottom, 24)
                 }
             }
         }
@@ -313,6 +320,34 @@ struct ContentView: View {
             }
         }
         .accessibilityLabel("Select lens: \(viewModel.lens.title)")
+    }
+
+    /// Zoom selector — cycles through available lenses.
+    private var zoomSelectorButton: some View {
+        Menu {
+            ForEach(CameraLens.allCases, id: \.self) { lens in
+                Button {
+                    viewModel.switchLens(lens)
+                } label: {
+                    HStack {
+                        Text(lens.title)
+                        if viewModel.lens == lens {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                    .frame(width: 46, height: 46)
+                Text(viewModel.lens.title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+        }
+        .accessibilityLabel("Select zoom: \(viewModel.lens.title)")
     }
 
     /// Lens correction toggle — applies distortion correction for current lens.

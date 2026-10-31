@@ -182,28 +182,3 @@ final class MetalRenderer {
         return nodes
     }()
 }
-
-/// Single LUT node matching the Metal shader struct (16-byte aligned).
-struct LutNode {
-    var r: Float
-    var g: Float
-    var b: Float
-    var pad: Float = 0
-}
-
-/// Push-constant struct mirrored in the Metal shader.
-struct ProcessParams {
-    var matrix: simd_float3x3
-    var gamma: Float
-    var pad0: Float
-    var pad1: Float
-    var pad2: Float
-}
-
-// Verify ProcessParams stride matches Metal expectations (72 bytes: 36 matrix + 4 gamma + 32 padding).
-#if canImport(Metal)
-extension ProcessParams {
-    static let expectedStride = MemoryLayout<simd_float3x3>.stride +
-                                MemoryLayout<Float>.stride * 4
-}
-#endif
