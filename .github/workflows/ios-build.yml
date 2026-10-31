@@ -130,6 +130,9 @@ jobs:
           echo "=== Exhaustive file listing in DerivedData ==="
           find ./build/DerivedData -type f 2>/dev/null | sort
 
+          echo "=== Exhaustive file listing in .build (SPM) ==="
+          find .build -type f 2>/dev/null | sort || echo "no .build directory"
+
           echo "=== Executable candidates (any file not .o/.swiftmodule/etc) ==="
           EXE_PATH=""
           while IFS= read -r match; do
@@ -141,7 +144,7 @@ jobs:
               EXE_PATH="$match"
               break
             fi
-          done < <(find ./build/DerivedData -type f 2>/dev/null)
+          done < <(find ./build/DerivedData .build -type f 2>/dev/null)
 
           echo "Selected executable: ${EXE_PATH:-<none>}"
 
