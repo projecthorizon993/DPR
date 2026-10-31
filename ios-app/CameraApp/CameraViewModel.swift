@@ -588,7 +588,7 @@ func lutNodesFromPng(fileName: String) -> [LutNode]? {
 
     guard let context = CGContext(data: nil, width: width, height: height,
                                   bitsPerComponent: 8, bytesPerRow: width * 4,
-                                  space: colorSpace, bitmapInfo: bitmapInfo) else {
+                                  space: colorSpace, bitmapInfo: bitmapInfo.rawValue) else {
         return nil
     }
 
@@ -654,7 +654,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     @AppStorage("faceDetectionEnabled") var faceDetectionEnabled = false
     @AppStorage("nightModeEnabledApp") var nightModeEnabledApp = false
     @AppStorage("glareDimEnabledApp") var glareDimEnabledApp = false
-    @AppStorage("nightModeStrength") var nightModeStrength: Float = 0.5
+    @AppStorage("nightModeStrength") var nightModeStrength: Double = 0.5
 
     /// Detected face bounding boxes in normalized coordinates (0..1).
     @Published var detectedFaces: [FaceBox] = []
@@ -769,7 +769,7 @@ final class CameraViewModel: NSObject, ObservableObject {
     private var watermarkBytes: [WatermarkBrand: [UInt8]] = [:]
     private var watermarkSizes: [WatermarkBrand: (width: Int, height: Int)] = [:]
 
-    init() {
+    override init() {
         self.metalRenderer = MetalRenderer()
         super.init()
         loadWatermarkAssets()
@@ -1360,8 +1360,8 @@ final class CameraViewModel: NSObject, ObservableObject {
                 wmBytes,
                 UInt32(wmWidth),
                 UInt32(wmHeight),
-                Int32(width - wmWidth - currentVariant.watermarkMargin),
-                Int32(height - wmHeight - currentVariant.watermarkMargin),
+                Int32(width) - Int32(wmWidth) - currentVariant.watermarkMargin,
+                Int32(height) - Int32(wmHeight) - currentVariant.watermarkMargin,
                 currentVariant.watermarkOpacity
             )
         }
@@ -1641,7 +1641,6 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             kCVPixelBufferWidthKey as String: width,
             kCVPixelBufferHeightKey as String: height,
-            kCVPixelBufferBytesPerRowKey as String: bytesPerRow,
         ]
         let status = CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, attrs as CFDictionary, &pixelBuffer)
         guard status == kCVReturnSuccess, let pb = pixelBuffer else { return nil }
