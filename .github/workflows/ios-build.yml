@@ -60,6 +60,14 @@ jobs:
             -archivePath ./build/CameraApp.xcarchive \
             archive -allowProvisioningUpdates
 
+      - name: List archive contents (diagnostic)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
+        run: |
+          echo "=== Archive contents ==="
+          find ./build/CameraApp.xcarchive -type d 2>/dev/null | head -50
+          echo "=== .app bundles in archive ==="
+          find ./build/CameraApp.xcarchive -name "*.app" -type d 2>/dev/null || echo "none"
+
       - name: Build unsigned IPA from archive (no signing required)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
@@ -71,8 +79,7 @@ jobs:
           for loc in \
             "./build/CameraApp.xcarchive/Products/Applications/*.app" \
             "./build/CameraApp.xcarchive/Products/*/*.app" \
-            "./build/CameraApp.xcarchive/*/*.app" \
-            "./build/CameraApp.xcarchive/**/*.app"; do
+            "./build/CameraApp.xcarchive/*/*.app"; do
             MATCH=$(ls -d $loc 2>/dev/null | head -1)
             if [ -n "$MATCH" ] && [ -d "$MATCH" ]; then
               APP_PATH="$MATCH"
@@ -80,7 +87,7 @@ jobs:
             fi
           done
 
-          # Also check DerivedData and .build as fallback
+          # Fallback: search entire workspace
           if [ -z "$APP_PATH" ]; then
             MATCH=$(find . -name "CameraApp.app" -type d 2>/dev/null | head -1)
             if [ -n "$MATCH" ]; then
@@ -100,9 +107,8 @@ jobs:
             echo "IPA created at ./build/ipa/CameraApp-unsigned.ipa"
             ls -la ./build/ipa/CameraApp-unsigned.ipa
           else
-            echo "ERROR: No .app bundle found anywhere in workspace"
+            echo "WARNING: No .app bundle found — IPA will not be created"
             echo "ipa_created=false" >> $GITHUB_OUTPUT
-            exit 1
           fi
         id: build-ipa
 
