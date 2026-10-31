@@ -67,7 +67,7 @@ jobs:
             -archivePath ./build/CameraApp.xcarchive \
             archive -allowProvisioningUpdates
 
-      - name: Export unsigned IPA
+      - name: Export unsigned IPA (best-effort; requires Apple Developer signing)
         run: |
           mkdir -p ./build/ipa
           xcodebuild -exportArchive \
@@ -75,8 +75,17 @@ jobs:
             -exportPath ./build/ipa \
             -exportOptionsPlist .github/exportOptions.plist || true
 
+      - name: Check for IPA artifact
+        id: check-ipa
+        run: |
+          if ls ./build/ipa/*.ipa 1>/dev/null 2>&1; then
+            echo "ipa_found=true" >> $GITHUB_OUTPUT
+          else
+            echo "ipa_found=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload unsigned IPA
-        continue-on-error: true
+        if: steps.check-ipa.outputs.ipa_found == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: CameraApp-unsigned-ipa
