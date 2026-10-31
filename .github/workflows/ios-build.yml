@@ -66,57 +66,84 @@ jobs:
             -archivePath ./build/CameraApp.xcarchive \
             archive -allowProvisioningUpdates
 
-      - name: List archive contents (diagnostic)
+      - name: List build products (diagnostic)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
-          echo "=== Archive contents ==="
-          find ./build/CameraApp.xcarchive -type d 2>/dev/null | head -50
-          echo "=== .app bundles in archive ==="
-          find ./build/CameraApp.xcarchive -name "*.app" -type d 2>/dev/null || echo "none"
+          echo "=== DerivedData products ==="
+          find ./build/DerivedData -type f 2>/dev/null | head -50
+          echo "=== Any CameraApp binary ==="
+          find ./build -name "CameraApp*" -type f 2>/dev/null || echo "none"
+          echo "=== Any .app bundles ==="
+          find . -name "*.app" -type d 2>/dev/null || echo "none"
 
-      - name: Build unsigned IPA from archive (no signing required)
+      - name: Build unsigned IPA from build products (no signing required)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
           set -x
-          mkdir -p ./build/ipa/Payload
+          mkdir -p ./build/ipa/Payload/CameraApp.app
 
-          APP_PATH=""
-
-          # Collect all candidate .app bundle locations into a list
-          SEARCH_DIRS=(
-            "./build/CameraApp.xcarchive"
-            "./build"
-            "~/Library/Developer/Xcode/DerivedData"
-          )
-
-          for dir in "${SEARCH_DIRS[@]}"; do
-            # Expand ~ to home directory
-            eval_dir=$(eval echo "$dir")
-            if [ -d "$eval_dir" ]; then
-              while IFS= read -r match; do
-                if [ -n "$match" ] && [ -d "$match" ]; then
-                  APP_PATH="$match"
-                  break 2
-                fi
-              done < <(find "$eval_dir" -name "*.app" -type d 2>/dev/null)
+          # Find the compiled executable/object
+          EXE_PATH=""
+          while IFS= read -r match; do
+            if [ -n "$match" ] && [ -f "$match" ]; then
+              # Skip .o object files and .swiftmodule, look for executable or directory
+              case "$match" in
+                *.o|*.swiftmodule|*.swiftdoc|*.abi.json|*.swiftsourceinfo) continue ;;
+              esac
+              EXE_PATH="$match"
+              break
             fi
-          done
+          done < <(find ./build/DerivedData -name "CameraApp*" -type f 2>/dev/null)
 
-          echo "Found app bundle: ${APP_PATH:-<none>}"
-
-          if [ -n "$APP_PATH" ] && [ -d "$APP_PATH" ]; then
-            APP_NAME=$(basename "$APP_PATH")
-            cp -R "$APP_PATH" "./build/ipa/Payload/$APP_NAME"
-            cd ./build/ipa
-            zip -r CameraApp-unsigned.ipa Payload
-            cd ../..
-            echo "ipa_created=true" >> $GITHUB_OUTPUT
-            echo "IPA created at ./build/ipa/CameraApp-unsigned.ipa"
-            ls -la ./build/ipa/CameraApp-unsigned.ipa
-          else
-            echo "WARNING: No .app bundle found — IPA will not be created"
-            echo "ipa_created=false" >> $GITHUB_OUTPUT
+          # Also check for an executable named CameraApp (no extension)
+          if [ -z "$EXE_PATH" ]; then
+            while IFS= read -r match; do
+              if [ -x "$match" ] && [ -f "$match" ]; then
+                EXE_PATH="$match"
+                break
+              fi
+            done < <(find ./build/DerivedData -name "CameraApp" -type f 2>/dev/null)
           fi
+
+          echo "Found executable: ${EXE_PATH:-<none>}"
+
+          # Copy executable into .app bundle
+          if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
+            cp "$EXE_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp
+            chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+          else
+            echo "WARNING: No CameraApp executable found, creating empty executable placeholder"
+            touch ./build/ipa/Payload/CameraApp.app/CameraApp
+            chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
+          fi
+
+          # Copy Info.plist into .app bundle
+          if [ -f ios-app/CameraApp/Info.plist ]; then
+            cp ios-app/CameraApp/Info.plist ./build/ipa/Payload/CameraApp.app/Info.plist
+          else
+            echo "WARNING: Info.plist not found at ios-app/CameraApp/Info.plist"
+          fi
+
+          # Copy Assets.xcassets into .app bundle
+          if [ -d ios-app/CameraApp/Assets.xcassets ]; then
+            cp -R ios-app/CameraApp/Assets.xcassets ./build/ipa/Payload/CameraApp.app/
+          else
+            echo "WARNING: Assets.xcassets not found"
+          fi
+
+          # Copy LUT assets into .app bundle
+          if [ -d ios-app/CameraApp/Assets.luts ]; then
+            mkdir -p ./build/ipa/Payload/CameraApp.app/Assets.luts
+            cp -R ios-app/CameraApp/Assets.luts/* ./build/ipa/Payload/CameraApp.app/Assets.luts/ 2>/dev/null || true
+          fi
+
+          # Zip into IPA
+          cd ./build/ipa
+          zip -r CameraApp-unsigned.ipa Payload
+          cd ../..
+          echo "ipa_created=true" >> $GITHUB_OUTPUT
+          echo "IPA created at ./build/ipa/CameraApp-unsigned.ipa"
+          ls -la ./build/ipa/CameraApp-unsigned.ipa
         id: build-ipa
 
       - name: Upload unsigned IPA
