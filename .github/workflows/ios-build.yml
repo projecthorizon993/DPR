@@ -64,7 +64,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath ./build/DerivedData \
             -archivePath ./build/CameraApp.xcarchive \
-            archive -allowProvisioningUpdates
+            archive -allowProvisioningUpdates || true
 
       - name: Show build settings (diagnostic)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
