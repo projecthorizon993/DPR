@@ -69,25 +69,11 @@ jobs:
 
       - name: Export unsigned IPA
         run: |
-          mkdir -p ./build
-          cat > ./build/exportOptions.plist <<'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>ad-hoc</string>
-              <key>signingStyle</key>
-              <string>automatic</string>
-              <key>teamID</key>
-              <string></string>
-          </dict>
-          </plist>
-          EOF
+          mkdir -p ./build/ipa
           xcodebuild -exportArchive \
             -archivePath ./build/CameraApp.xcarchive \
             -exportPath ./build/ipa \
-            -exportOptionsPlist ./build/exportOptions.plist
+            -exportOptionsPlist .github/exportOptions.plist
 
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
