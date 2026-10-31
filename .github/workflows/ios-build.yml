@@ -87,9 +87,9 @@ jobs:
             fi
           done
 
-          # Fallback: search entire workspace
+          # Fallback: search entire workspace and DerivedData
           if [ -z "$APP_PATH" ]; then
-            MATCH=$(find . -name "CameraApp.app" -type d 2>/dev/null | head -1)
+            MATCH=$(find . ~/Library/Developer/Xcode/DerivedData -name "CameraApp.app" -type d 2>/dev/null | head -1)
             if [ -n "$MATCH" ]; then
               APP_PATH="$MATCH"
             fi
