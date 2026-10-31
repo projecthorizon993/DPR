@@ -1580,13 +1580,14 @@ extension CameraViewModel: AVCaptureVideoDataOutputSampleBufferDelegate {
         memcpy(&bytes, baseAddress, height * bytesPerRow)
 
         // Process through Rust core via C ABI
+        let byteCount = bytes.count
         bytes.withUnsafeMutableBufferPointer { bufPtr in
             guard let base = bufPtr.baseAddress else { return }
             var frame = CameraFrame(
                 width: UInt32(width),
                 height: UInt32(height),
                 bytes: base,
-                byte_count: bytes.count
+                byte_count: byteCount
             )
             _ = camera_process_frame(&frame, currentVariant.styleRawValue)
         }
