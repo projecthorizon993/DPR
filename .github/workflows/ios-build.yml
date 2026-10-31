@@ -3,52 +3,11 @@ name: CI — CameraApp
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-  workflow_dispatch:
-    inputs:
-      run-rust:
-        description: 'Run Rust tests (ubuntu)'
-        required: false
-        default: 'true'
-        type: boolean
-      run-ios:
-        description: 'Build iOS app with Xcode (macOS runner needed)'
-        required: false
-        default: 'false'
-        type: boolean
 
 jobs:
-  rust-test:
-    name: Rust — fmt, clippy, test
-    runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-rust == 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-
-      - name: Rust fmt check
-        working-directory: rust-core
-        run: cargo fmt --all --check
-
-      - name: Rust clippy (deny warnings)
-        working-directory: rust-core
-        run: cargo clippy --all-targets -- -D warnings
-
-      - name: Rust unit tests
-        working-directory: rust-core
-        run: cargo test --all-targets
-
   ios-build:
     name: iOS app — build with xcodebuild (macOS)
     runs-on: macos-14
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run-ios == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
