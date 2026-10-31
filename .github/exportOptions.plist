@@ -4,9 +4,5 @@
 <dict>
     <key>method</key>
     <string>ad-hoc</string>
-    <key>signingStyle</key>
-    <string>automatic</string>
-    <key>teamID</key>
-    <string></string>
 </dict>
 </plist>
