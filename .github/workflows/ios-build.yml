@@ -8,58 +8,51 @@ on:
   workflow_dispatch:
     inputs:
       run-rust:
-        description: 'Run Rust tests (ubuntu)'
+        description: 'Run Rust fmt/clippy/test'
         required: false
         default: 'true'
         type: boolean
       run-ios:
-        description: 'Build iOS app (macOS, requires Xcode)'
+        description: 'Build iOS app with xcodebuild'
         required: false
-        default: 'false'
+        default: 'true'
         type: boolean
 
 jobs:
-  rust-test:
-    name: Rust — fmt, clippy, test
-    runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-rust == 'true'
+  ci:
+    name: Rust + iOS build (macOS)
+    runs-on: macos-14
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-rust == 'true' || github.event.inputs.run-ios == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
+      - name: Install Rust toolchain (macOS)
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
           components: rustfmt, clippy
 
-      - name: Rust fmt check
-        working-directory: rust-core
-        run: cargo fmt --all --check
+      # ---- Rust: fmt, clippy, tests ----
+      - name: Run Rust checks (if enabled)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-rust == 'true'
+        run: |
+          cd rust-core
+          cargo fmt --all --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test --all-targets
 
-      - name: Rust clippy (deny warnings)
-        working-directory: rust-core
-        run: cargo clippy --all-targets -- -D warnings
-
-      - name: Rust unit tests
-        working-directory: rust-core
-        run: cargo test --all-targets
-
-  ios-build:
-    name: iOS app — build with xcodebuild (macOS)
-    runs-on: macos-14
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run-ios == 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      # ---- iOS: xcodebuild ----
       - name: Select Xcode
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: sudo xcode-select -switch /Applications/Xcode_15.4.app/Contents/Developer
 
       - name: Build Swift app for iOS
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: xcodebuild -scheme CameraApp -destination 'generic/platform=iOS' -configuration Release build
 
       - name: Archive iOS app
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
           xcodebuild -scheme CameraApp \
             -configuration Release \
@@ -68,6 +61,7 @@ jobs:
             archive -allowProvisioningUpdates
 
       - name: Build unsigned IPA from archive (no signing required)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
           mkdir -p ./build/ipa/Payload
           APP_PATH=$(find ./build/CameraApp.xcarchive -name "*.app" -maxdepth 6 | head -1)
