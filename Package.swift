@@ -8,14 +8,12 @@ let package = Package(
     defaultLocalization: "en",
     platforms: [.iOS(.v15)],
     products: [
-        // The main application bundle is produced by the Xcode project /
-        // xcodebuild rather than a SwiftPM product, but we declare the library
-        // target so the sources are compiled and linked as a module.
-        .library(name: "CameraApp", targets: ["CameraApp"]),
+        // The main application bundle is produced by xcodebuild from the
+        // executable target; no separate SwiftPM library product is needed.
     ],
     dependencies: [],
     targets: [
-        .target(
+        .executableTarget(
             name: "CameraApp",
             dependencies: [],
             path: "ios-app/CameraApp",
