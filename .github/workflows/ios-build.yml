@@ -67,27 +67,26 @@ jobs:
             -archivePath ./build/CameraApp.xcarchive \
             archive -allowProvisioningUpdates
 
-      - name: Export unsigned IPA (best-effort; requires Apple Developer signing)
+      - name: Build unsigned IPA from archive (no signing required)
         run: |
-          mkdir -p ./build/ipa
-          xcodebuild -exportArchive \
-            -archivePath ./build/CameraApp.xcarchive \
-            -exportPath ./build/ipa \
-            -exportOptionsPlist .github/exportOptions.plist || true
-
-      - name: Check for IPA artifact
-        id: check-ipa
-        run: |
-          if ls ./build/ipa/*.ipa 1>/dev/null 2>&1; then
-            echo "ipa_found=true" >> $GITHUB_OUTPUT
+          mkdir -p ./build/ipa/Payload
+          APP_PATH="./build/CameraApp.xcarchive/Products/Applications/CameraApp.app"
+          if [ -d "$APP_PATH" ]; then
+            cp -R "$APP_PATH" ./build/ipa/Payload/CameraApp.app
+            cd ./build/ipa
+            zip -r CameraApp-unsigned.ipa Payload
+            cd ../..
+            echo "ipa_created=true" >> $GITHUB_OUTPUT
           else
-            echo "ipa_found=false" >> $GITHUB_OUTPUT
+            echo "App bundle not found in archive at $APP_PATH"
+            echo "ipa_created=false" >> $GITHUB_OUTPUT
           fi
+        id: build-ipa
 
       - name: Upload unsigned IPA
-        if: steps.check-ipa.outputs.ipa_found == 'true'
+        if: steps.build-ipa.outputs.ip_created == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: CameraApp-unsigned-ipa
-          path: ./build/ipa/*.ipa
+          path: ./build/ipa/CameraApp-unsigned.ipa
           retention-days: 7
