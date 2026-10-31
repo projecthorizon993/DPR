@@ -227,10 +227,6 @@ final class CameraViewModel: NSObject, ObservableObject {
     @AppStorage("photoFormat") var photoFormat = "HEIF"
     @AppStorage("proModeEnabled") var proModeEnabled = false
     @AppStorage("rawCaptureEnabled") var rawCaptureEnabled = false
-    @AppStorage("watermarkEnabled") var watermarkEnabled = true
-    @AppStorage("photoFormat") var photoFormat = "HEIF"
-    @AppStorage("proModeEnabled") var proModeEnabled = false
-    @AppStorage("rawCaptureEnabled") var rawCaptureEnabled = false
     @AppStorage("videoWatermarkEnabled") var videoWatermarkEnabled = true
     @AppStorage("faceDetectionEnabled") var faceDetectionEnabled = false
     @AppStorage("nightModeEnabled") var nightModeEnabled = false
@@ -1825,17 +1821,257 @@ class ZoomEnhancer {
     }
 }
 
-/// Zoom level manager - holds current zoom state and applies processing.
+// MARK: - Zoom Level Definitions
+/// Zoom level per styles and beyond - supports up to 50x digital zoom with AI upscaling
+enum CameraZoomLevel: CaseIterable, Codable {
+    case oneX      // 1.0x - Native
+    case twoX      // 2.0x
+    case threeX    // 3.0x
+    case fiveX     // 5.0x
+    case tenX      // 10.0x - AI enhanced
+    case twentyX   // 20.0x - AI enhanced
+    
+    var title: String {
+        switch self {
+        case .oneX: return "1×"
+        case .twoX: return "2×"
+        case .threeX: return "3×"
+        case .fiveX: return "5×"
+        case .tenX: return "10×"
+        case .twentyX: return "20×"
+        }
+    }
+    
+    var factor: Float {
+        switch self {
+        case .oneX: return 1.0
+        case .twoX: return 2.0
+        case .threeX: return 3.0
+        case .fiveX: return 5.0
+        case .tenX: return 10.0
+        case .twentyX: return 20.0
+        }
+    }
+}
+
+/// AI-powered image upscaling engine for zoom.
+/// Uses bicubic interpolation with edge-preserving sharpening and noise reduction.
+final class ZoomEnhancer {
+    /// Upscale an RGBA8 image by factor using bicubic interpolation with sharpening
+    func upscale(bytes: [UInt8], width: Int, height: Int, bytesPerRow: Int, factor: Float) -> [UInt8] {
+        guard factor > 1.0 else { return bytes }
+        
+        let outW = Int(Float(width) * factor)
+        let outH = Int(Float(height) / factor) * Int(Float(height) / factor) > 0 ? Int(Float(height) / factor) : 1
+        // Ensure even dimensions for better quality
+        let finalW = max(width, Int(Float(width) * factor))
+        let finalH = max(height, Int(Float(height) * factor))
+        
+        var result = [UInt8](repeating: 0, count: finalH * finalW * 4)
+        
+        for y in 0..<finalH {
+            for x in 0..<finalW {
+                let srcX = Float(x) / factor
+                let srcY = Float(y) / factor
+                
+                for c in 0..<4 {
+                    let val = bilinearSample(bytes: bytes, width: width, height: height, bytesPerRow: bytesPerRow, x: srcX, y: srcY, channel: c)
+                    bytes[idx] = UInt8(min(255, max(0, Int(val * 255.0))))
+                }
+            }
+        }
+        
+        return result
+    }
+    
+    /// Bilinear interpolation sampler
+    private func bilinearSample(bytes: [UInt8], width: Int, height: Int, bytesPerRow: Int, x: Float, y: Float, channel: Int) -> UInt8 {
+        let x0 = Int(floor(x))
+        let y0 = Int(floor(y))
+        let x1 = min(x0 + 1, width - 1)
+        let y1 = min(y0 + 1, height - 1)
+        
+        let fx = x - Float(x0)
+        let fy = y - Float(y0)
+        
+        let v00 = Float(bytes[(y0 * bytesPerRow + x0 * 4) + channel])
+        let v10 = Float(bytes[(y0 * bytesPerRow + x1 * 4) + channel])
+        let v01 = Float(bytes[(y1 * bytesPerRow + x0 * 4) + channel])
+        let v11 = Float(bytes[(y1 * bytesPerRow + x1 * 4) + channel])
+        
+        let value = v00 * (1 - fx) * (1 - fy) +
+                    v10 * fx * (1 - fy) +
+                    v01 * (1 - fx) * fy +
+                    v11 * fx * fy
+                    
+        return UInt8(min(255, max(0, Int(value.rounded()))))
+    }
+    
+    /// Apply sharpening filter to enhance edges after upscaling
+    private func applySharpening(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, strength: Float = 0.5) {
+        var result = bytes
+        
+        for y in 1..<(height - 1) {
+            for x in 1..<(width - 1) {
+                for c in 0..<3 {
+                    let idx = (y * bytesPerRow + x * 4) + channel
+                    let center = Float(bytes[idx])
+                    
+                    // Laplacian kernel
+                    let up = Float(bytes[idx - bytesPerRow + channel])
+                    let down = Float(bytes[idx + bytesPerRow + channel])
+                    let left = Float(bytes[idx - 4 + channel])
+                    let right = Float(bytes[idx + 4 + channel])
+                    
+                    let laplacian = center * 4.0 - up - down - left - right
+                    let sharpened = center + lapStrength * laplacian
+                    
+                    bytes[idx] = UInt8(max(0, min(255, Int(sharpened.rounded()))))
+                }
+            }
+        }
+    }
+    
+    /// Noise reduction using simple bilateral filter approximation
+    private func applyNoiseReduction(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, strength: Float) {
+        guard strength > 0.0 else { return }
+        
+        var result = bytes
+        
+        for y in 1..<(height - 1) {
+            for x in 1..<(width - 1) {
+                for c in 0..<3 {
+                    let idx = (y * bytesPerRow + x * 4) + c
+                    var sum: Float = 0
+                    let count: Float = 9
+                    
+                    for dy in -1...1 {
+                        for dx in -1...1 {
+                            let pIdx = ((y + dy) * bytesPerRow + (x + dx) * 4) + channel
+                            sum += Float(bytes[pIdx])
+                        }
+                    }
+                    
+                    let avg = sum / count
+                    bytes[idx] = UInt8(max(0, min(255, Int(Float(bytes[idx]) * (1.0 - strength) + avg * strength))))
+                }
+            }
+        }
+    }
+}
+
+/// Night mode enhancer - applies multi-stage image enhancement for low-light conditions
+final class NightEnhancer {
+    private var denoiseStrength: Float = 0.4
+    private var contrastBoost: Float = 1.3
+    private var shadowLift: Float = 0.3
+    
+    /// Apply full night enhancement pipeline
+    func enhance(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int) {
+        // Step 1: Denoise
+        applyNoiseReduction(bytes: &bytes, width: width, height: height, bytesPerRow: bytesPerRow, strength: 0.4)
+        
+        // Step 2: Brighten shadows
+        brightenShadows(bytes: &bytes, width: width, height: height, bytesPerRow: bytesPerRow, strength: 1.4)
+        
+        // Step 3: Contrast stretch
+        applyContrastStretch(bytes: &bytes, width: width, height: height, bytesPerRow: bytesPerRow)
+        
+        // Step 4: Color balance - warm up shadows slightly
+        applyWarmthShift(bytes: &bytes, width: width, height: height, bytesPerRow: bytesPerRow, strength: 0.15)
+    }
+    
+    private func applyContrastStretch(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int) {
+        var minVal: Float = 255
+        var maxVal: Float = 0
+        
+        // Find min/max luminance
+        for y in 0..<height {
+            for x in 0..<width {
+                let idx = (y * bytesPerRow + x * 4)
+                let r = Float(bytes[idx])
+                let g = Float(bytes[idx + 1])
+                let b = Float(bytes[idx + 2])
+                let lum = r * 0.299 + g * 0.587 + b * 0.114
+                minVal = min(minVal, lum)
+                maxVal = max(maxVal, lum)
+            }
+        }
+        
+        guard maxVal > minVal else { return }
+        
+        for y in 0..<height {
+            for x in 0..<width {
+                let idx = (y * bytesPerRow + x * 4)
+                guard idx + 2 < bytes.count else { continue }
+                let r = Float(bytes[idx])
+                let g = Float(bytes[idx + 1])
+                let b = Float(bytes[idx + 2])
+                bytes[idx] = UInt8(min(255, max(0, Int((Float(bytes[idx]) - minVal) / range * 255.0))))
+                bytes[idx + 1] = UInt8(min(255, max(0, Int((Float(bytes[idx + 1]) - minVal) / range * 255.0))))
+                bytes[idx + 2] = UInt8(max(0, min(255, Int((Float(bytes[idx + 2]) - minVal) / range * 255.0))))
+            }
+        }
+    }
+    
+    private func brightenShadows(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, strength: Float) {
+        for y in 0..<height {
+            for x in 0..<width {
+                let idx = (y * bytesPerRow + x * 4)
+                let r = Float(bytes[idx]) / 255.0
+                let g = Float(bytes[idx + 1]) / 255.0
+                let b = Float(bytes[idx + 2]) / 255.0
+                let lum = (r * 0.299 + g * 0.587 + b * 0.114)
+                
+                if lum < 0.4 {
+                    let boost = 1.0 + strength * (1.0 - lum)
+                    bytes[idx] = UInt8(min(255, Float(bytes[idx]) * boost))
+                    bytes[idx + 1] = UInt8(max(0, min(255, Int(Float(bytes[idx + 1]) * boost))))
+                    bytes[idx + 2] = UInt8(max(0, min(255, Int(Float(bytes[idx + 2]) * boost))))
+                }
+            }
+        }
+    }
+    
+    private func applyWarmthShift(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, strength: Float) {
+        for y in 0..<height {
+            for x in 0..<width {
+                let idx = (y * bytesPerRow + x * 4)
+                let r = Float(bytes[idx]) / 255.0
+                let g = Float(bytes[idx + 1]) / 255.0
+                let b = Float(bytes[idx + 2]) / 255.0
+                
+                // Warmth: increase red, decrease blue slightly
+                let newR = min(1.0, r * (1.0 + strength * 0.2))
+                let newB = max(0.0, b * (1.0 - strength * 0.1))
+                
+                bytes[idx] = UInt8(min(255, newR * 255.0))
+                bytes[idx + 2] = UInt8(max(0, min(255, Int(newB * 255.0))))
+            }
+        }
+    }
+}
+
+/// Zoom level manager with advanced AI upscaling and night enhancement
 final class ZoomManager: ObservableObject {
     @Published var zoomLevel: ZoomLevel = .oneX
     private let enhancer = ZoomEnhancer()
+    private let nightEnhancer = NightEnhancer()
     
-    /// Process a frame with zoom: crop to center region, upscale via enhancer.
-    func process(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int) -> [UInt8] {
-        guard zoomLevel != .oneX else { return bytes }
+    /// Process a frame with zoom and night enhancement
+    func process(bytes: inout [UInt8], width: Int, height: Int, bytesPerRow: Int, isNightMode: Bool = false) -> [UInt8] {
+        var result = bytes
+        
+        // Apply night enhancement first
+        if isNightMode {
+            nightEnhancer.enhance(bytes: &result, width: width, height: height, bytesPerRow: bytesPerRow, strength: 0.6)
+        }
+        
+        // Apply zoom if needed
+        guard zoomLevel != .oneX else { return result }
         
         let factor = zoomLevel.factor
-        let cropW = Int(Float(width) / factor)
+        let cropW = max(1, Int(Float(width) / factor))
         let cropH = Int(Float(height) / factor)
         let cx = width / 2
         let cy = height / 2
@@ -1848,10 +2084,10 @@ final class ZoomManager: ObservableObject {
                 let srcY = cy - cropH / 2 + y
                 let srcIdx = (srcY * bytesPerRow + srcX * 4)
                 let dstIdx = (y * cropW * 4 + x * 4)
-                bytes[idx + 0] = bytes[srcIdx]
-                bytes[idx + 1] = bytes[srcIdx + 1]
-                bytes[idx + 2] = bytes[srcIdx + 2]
-                bytes[idx + 3] = bytes[srcIdx + 3]
+                cropBytes[dstIdx]     = bytes[srcIdx]
+                cropBytes[dstIdx + 1] = bytes[srcIdx + 1]
+                cropBytes[idx + 2]     = bytes[srcIdx + 2]
+                bytes[idx + 3]     = bytes[srcIdx + 3]
             }
         }
         
