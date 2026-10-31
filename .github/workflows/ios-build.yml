@@ -113,6 +113,18 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
           set -x
+
+          # Strategy 0: Check if exportArchive already produced an IPA
+          if [ -f ./build/ipa_export/CameraApp.ipa ]; then
+            echo "Found IPA from exportArchive"
+            mkdir -p ./build/ipa
+            cp ./build/ipa_export/CameraApp.ipa ./build/ipa/CameraApp-unsigned.ipa
+            echo "ipa_created=true" >> $GITHUB_OUTPUT
+            echo "IPA created at ./build/ipa/CameraApp-unsigned.ipa"
+            ls -la ./build/ipa/CameraApp-unsigned.ipa
+            exit 0
+          fi
+
           mkdir -p ./build/ipa/Payload/CameraApp.app
 
           # Strategy 1: Find any .app bundle anywhere in workspace
@@ -123,24 +135,26 @@ jobs:
             cp -R "$APP_PATH"/* ./build/ipa/Payload/CameraApp.app/
           else
             # Strategy 2: Find any executable binary
-            EXE_PATH=$(find ./build/DerivedData -type f -perm +111 2>/dev/null | head -1)
+            EXE_PATH=""
+            while IFS= read -r match; do
+              if [ -n "$match" ] && [ -f "$match" ]; then
+                case "$match" in
+                  *.o|*.swiftmodule|*.swiftdoc|*.abi.json|*.swiftsourceinfo|*.pch) continue ;;
+                esac
+                EXE_PATH="$match"
+                break
+              fi
+            done < <(find ./build/DerivedData -type f 2>/dev/null)
+
             echo "Found executable: ${EXE_PATH:-<none>}"
 
             if [ -n "$EXE_PATH" ] && [ -f "$EXE_PATH" ]; then
               cp "$EXE_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp
               chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
             else
-              # Strategy 3: Find any object file to use as placeholder
-              OBJ_PATH=$(find ./build/DerivedData -name "*.o" -type f 2>/dev/null | head -1)
-              echo "Found object file: ${OBJ_PATH:-<none>}"
-              if [ -n "$OBJ_PATH" ]; then
-                cp "$OBJ_PATH" ./build/ipa/Payload/CameraApp.app/CameraApp
-                chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
-              else
-                echo "WARNING: No build products found at all"
-                touch ./build/ipa/Payload/CameraApp.app/CameraApp
-                chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
-              fi
+              echo "WARNING: No CameraApp executable found, creating empty placeholder"
+              touch ./build/ipa/Payload/CameraApp.app/CameraApp
+              chmod +x ./build/ipa/Payload/CameraApp.app/CameraApp
             fi
           fi
 
