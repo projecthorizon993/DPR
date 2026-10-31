@@ -66,15 +66,27 @@ jobs:
             -archivePath ./build/CameraApp.xcarchive \
             archive -allowProvisioningUpdates
 
+      - name: Show build settings (diagnostic)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
+        run: |
+          xcodebuild -scheme CameraApp \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            -showBuildSettings 2>/dev/null | grep -E "PRODUCT_NAME|FULL_PRODUCT_NAME|BUILT_PRODUCTS_DIR|CONFIGURATION_BUILD_DIR|WRAPPER_EXTENSION" || echo "could not read build settings"
+
       - name: List ALL build artifacts (diagnostic)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
         run: |
+          echo "=== Archive exists? ==="
+          ls -la ./build/CameraApp.xcarchive 2>/dev/null || echo "no archive"
           echo "=== ALL files in ./build ==="
-          find ./build -type f 2>/dev/null | sort
+          find ./build -type f 2>/dev/null | sort | head -100
           echo "=== ALL .app bundles anywhere ==="
           find . -name "*.app" -type d 2>/dev/null || echo "none found"
-          echo "=== Executable binaries in DerivedData ==="
-          find ./build/DerivedData -perm +111 -type f 2>/dev/null || echo "none"
+          echo "=== Executable binaries ==="
+          find ./build -type f -perm +111 2>/dev/null || echo "none"
+          echo "=== DerivedData structure ==="
+          find ./build/DerivedData -type d 2>/dev/null | head -30
 
       - name: Build unsigned IPA from build products (no signing required)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.run-ios == 'true'
